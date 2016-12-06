@@ -82,7 +82,7 @@ foreach (object::all() as $object) {
            </div>
        </div>
 			 <div class="form-group">
-			 	<label class="col-sm-3 control-label">Identifiant</label>
+			 	<label class="col-sm-3 control-label">{{Identifiant}}</label>
 			 	<div class="col-sm-9">
 				 	<span class="eqLogicAttr label label-info" style="font-size:1em;" data-l1key="logicalId"></span>
 			 	</div>
