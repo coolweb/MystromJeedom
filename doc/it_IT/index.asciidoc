@@ -1,0 +1,15 @@
+:icons:
+== MyStrom
+
+=== Description
+Plugin permettant de piloter les eco lan MyStrom.
+Les équipements doivent être enregistrés sur le serveur de MyStrom.
+
+'''
+=== Configuration du plugin
+include::configuration.asciidoc[]
+
+'''
+
+=== FAQ
+include::faq.asciidoc[]

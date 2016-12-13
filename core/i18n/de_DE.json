@@ -1,0 +1,26 @@
+{
+    "plugins\/mystrom\/core\/class\/mystrom.class.php": {
+		"Etat" : "Zustand",
+		"EtatBinaire" : "Binärer Zustand",
+		"On" : "An",
+		"Off" : "Aus",
+		"Restart" : "Restart",
+		"Consommation" : "Verbrauch",
+		"Consommation journalière" : "Tages Verbrauch",
+		"Consommation mensuel" : "Monats Verbrauch "
+	},
+	"plugins\/mystrom\/desktop\/php\/mystrom.php": {
+		"Rechercher" : "Suchen",
+		"Nom de l'équipement MyStrom" : "MyStrom Gerätename",
+		"Objet parent" : "Elternobjekt",
+		"Activer" : "Aktivieren",
+		"Identifiant" : "Benutzer-ID",
+		"Equipement MyStrom" : "MyStrom Gerät",
+		"Nom" : "Name",
+		"Type" : "Typ",
+		"Action" : "Aktion",
+		"Commandes" : "Befehle",
+		"Supprimer" : "Löschen",
+		"Sauvegarder" : "Speichern"
+	}
+}
