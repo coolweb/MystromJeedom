@@ -1,4 +1,4 @@
-== Configuration du plugin
+=== The plugin configuration
 
 image::../images/docConfiguration.png[]
 
