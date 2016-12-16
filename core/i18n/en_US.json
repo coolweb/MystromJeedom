@@ -1,26 +1,26 @@
 {
     "plugins\/mystrom\/core\/class\/mystrom.class.php": {
-		"Etat" : "Etat",
-		"EtatBinaire" : "EtatBinaire",
+		"Etat" : "State",
+		"EtatBinaire" : "BinaryState",
 		"On" : "On",
 		"Off" : "Off",
 		"Restart" : "Restart",
-		"Consommation" : "Consommation",
-		"Consommation journalière" : "Consommation journalière",
-		"Consommation mensuel" : "Consommation mensuel"
+		"Consommation" : "Consumption",
+		"Consommation journalière" : "Daily consumption",
+		"Consommation mensuel" : "Monthly consumption"
 	},
 	"plugins\/mystrom\/desktop\/php\/mystrom.php": {
-		"Rechercher" : "Rechercher",
-		"Nom de l'équipement MyStrom" : "Nom de l'équipement MyStrom",
-		"Objet parent" : "Objet parent",
-		"Activer" : "Activer",
-		"Identifiant" : "Identifiant",
-		"Equipement MyStrom" : "Equipement MyStrom",
-		"Nom" : "Nom",
+		"Rechercher" : "Search",
+		"Nom de l'équipement MyStrom" : "Name of the MyStrom device",
+		"Objet parent" : "Parent object",
+		"Activer" : "Enable",
+		"Identifiant" : "Identifier",
+		"Equipement MyStrom" : "MyStrom device",
+		"Nom" : "Name",
 		"Type" : "Type",
 		"Action" : "Action",
-		"Commandes" : "Commandes",
-		"Supprimer" : "Supprimer",
-		"Sauvegarder" : "Sauvegarder"
+		"Commandes" : "Commands",
+		"Supprimer" : "Delete",
+		"Sauvegarder" : "Save"
 	}
 }
