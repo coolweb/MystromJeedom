@@ -1,4 +1,4 @@
-== Configuration du plugin
+== Plugin Konfiguration
 
 image::../images/docConfiguration.png[]
 
@@ -8,7 +8,7 @@ Ensuite il est très important de sauver avant de continuer!
 
 Cliquez sur le bouton *Rechercher les équipements MyStrom*.
 
-== Configuration des équipements
+== Geräte Konfiguration
 La configuration des équipements MyStrom est accessible à partir du menu
 plugin :
 
