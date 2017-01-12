@@ -126,4 +126,110 @@ class mystromServiceTest extends TestCase {
         $this->assertEquals($result->devices[1]->type, $device2->type);
         $this->assertEquals($result->devices[1]->name, $device2->name);
     }
+
+    public function testSetStateWhenErrorShouldReturnTheError()
+    {
+        $target = $this->getMockBuilder(MyStromService::class)
+        ->setMethods([
+            'logDebug', 
+            'logWarning', 
+            'logInfo', 
+            'getMyStromConfiguration', 
+            'saveMystromConfiguration',
+            'doJsonCall'])
+        ->getMock();
+
+        $jsonObject = new stdClass();
+        @$jsonObject->status = 'ko';
+        @$jsonObject->error = 'error';
+
+        $target->method('doJsonCall')
+        ->willReturn($jsonObject);
+
+        $result = $target->setState('1234', 'eth', true);
+
+        $this->assertEquals($result->status, 'ko');
+        $this->assertEquals($result->error, 'error');
+    }
+
+    public function testSetStateWhenStateIsOnShouldCallTheCorrectUrl()
+    {
+        $target = $this->getMockBuilder(MyStromService::class)
+        ->setMethods([
+            'logDebug', 
+            'logWarning', 
+            'logInfo', 
+            'getMyStromConfiguration', 
+            'saveMystromConfiguration',
+            'doJsonCall'])
+        ->getMock();
+
+        $jsonObject = new stdClass();
+        @$jsonObject->status = 'ok';
+
+        $target->method('doJsonCall')
+        ->willReturn($jsonObject);
+
+        $target->expects($this->once())
+        ->method('doJsonCall')
+        ->with($this->equalTo('https://www.mystrom.ch/mobile/device/switch?authToken=&id=1234&on=true'));
+
+        $result = $target->setState('1234', 'eth', true);
+
+        $this->assertEquals($result->status, 'ok');
+    }
+
+    public function testSetStateWhenStateIsOffShouldCallTheCorrectUrl()
+    {
+        $target = $this->getMockBuilder(MyStromService::class)
+        ->setMethods([
+            'logDebug', 
+            'logWarning', 
+            'logInfo', 
+            'getMyStromConfiguration', 
+            'saveMystromConfiguration',
+            'doJsonCall'])
+        ->getMock();
+
+        $jsonObject = new stdClass();
+        @$jsonObject->status = 'ok';
+
+        $target->method('doJsonCall')
+        ->willReturn($jsonObject);
+
+        $target->expects($this->once())
+        ->method('doJsonCall')
+        ->with($this->equalTo('https://www.mystrom.ch/mobile/device/switch?authToken=&id=1234&on=false'));
+
+        $result = $target->setState('1234', 'eth', false);
+
+        $this->assertEquals($result->status, 'ok');
+    }
+
+    public function testSetStateWhenDeviceIsMasterShouldDoAReset()
+    {
+        $target = $this->getMockBuilder(MyStromService::class)
+        ->setMethods([
+            'logDebug', 
+            'logWarning', 
+            'logInfo', 
+            'getMyStromConfiguration', 
+            'saveMystromConfiguration',
+            'doJsonCall'])
+        ->getMock();
+
+        $jsonObject = new stdClass();
+        @$jsonObject->status = 'ok';
+
+        $target->method('doJsonCall')
+        ->willReturn($jsonObject);
+
+        $target->expects($this->once())
+        ->method('doJsonCall')
+        ->with($this->equalTo('https://www.mystrom.ch/mobile/device/restart?authToken=&id=1234'));
+
+        $result = $target->setState('1234', 'mst', false);
+
+        $this->assertEquals($result->status, 'ok');
+    }
 }

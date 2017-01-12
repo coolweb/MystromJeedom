@@ -127,4 +127,40 @@ class MyStromService
 
         return $result;
     }
+
+    /**
+     * Set the state on or off of a device, if the device type is the master, reset it.
+     * @param $deviceId string The id of the device to change the state
+     * @param $deviceType string The type of the device
+     * @param $isOn boolean Indicating if the state should be on or off
+     * @return MyStromApiResult The result of the call
+     */
+    public function setState($deviceId, $deviceType, $isOn)
+    {
+        $authToken = $this->getMyStromConfiguration('authToken');
+        $stateUrl = $this->myStromApiUrl . '/device/switch?authToken=' . $authToken
+                  . '&id=' . $deviceId . '&on=' . (($isOn) ? 'true' : 'false');
+        $restartUrl = $this->myStromApiUrl . '/device/restart?authToken=' . $authToken
+                  . '&id=' . $deviceId;
+
+        $url = '';
+
+        if ($deviceType == 'mst') {
+            $url = $restartUrl;
+        } else {
+            $url = $stateUrl;
+        }
+
+        $jsonObj = $this->doJsonCall($url);
+
+        $result = new MyStromApiResult();
+        $result->status = $jsonObj->status;
+
+        if($jsonObj->status !== 'ok')
+        {
+            $result->error = $jsonObj->error;
+        }
+
+        return $result;
+    }
 }
