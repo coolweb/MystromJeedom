@@ -51,8 +51,6 @@ class mystrom extends eqLogic
      */
     public function postSave()
     {
-        $logger = log::getLogger('mystrom');
-
         log::add('mystrom', 'debug', "Ajout des commandes sur l'équipement");
 
         $state = $this->getCmd(null, 'state');
@@ -226,55 +224,20 @@ class mystrom extends eqLogic
     }
 
     /**
-     * Do the authentification of the user.
-     * Use the configuration userId and password and store
-     * the authentification token into the configuration key authToken.
-     * @return boolean indicating the success of the authentification.
-     */
-    public function doAuthentification()
-    {
-        $logger = log::getLogger('mystrom');
-
-        log::add('mystrom', 'info', 'Authentification');
-        $user = config::byKey('userId', 'mystrom');
-        $password = config::byKey('password', 'mystrom');
-
-        $authUrl = mystrom::getMystromUrl() . '/auth?email=' . $user
-                . '&password=' . $password;
-
-        $json = file_get_contents($authUrl);
-        log::add('mystrom', 'debug', $json);
-
-        $jsonObj = json_decode($json);
-        if ($jsonObj->status == 'ok') {
-            config::save('authToken', $jsonObj->authToken, 'mystrom');
-            log::add('mystrom', 'debug', "Clé d'authentification sauvée: " . $jsonObj->authToken);
-            return true;
-        } else {
-            log::add('mystrom', 'warning', "Erreur d'authentification: " . $jsonObj->error);
-            return false;
-        }
-    }
-
-    /**
      * Load all devices from mystrom api, create devices into jeedom if
      * not existing or update names if already exist into jeedom database.
      * @return A string empty if success otherwhise an error message.
      */
     public function syncMyStrom()
     {
-        $logger = log::getLogger('mystrom');
-        if (mystrom::doAuthentification()) {
+        $mystromService = new MyStromService();
+
+        if ($mystromService->doAuthentification()) {
             log::add('mystrom', 'info', 'Recherche des équipements mystrom');
-            $authToken = config::byKey('authToken', 'mystrom');
-            $devicesUrl = mystrom::getMystromUrl() . '/devices?authToken=' . $authToken;
-
-            $json = file_get_contents($devicesUrl);
-            log::add('mystrom', 'debug', $json);
-
-            $jsonObj = json_decode($json);
-            if ($jsonObj->status == 'ok') {
-                foreach ($jsonObj->devices as $device) {
+            $resultDevices = $mystromService->loadAllDevicesFromServer();
+            
+            if ($resultDevices->status == 'ok') {
+                foreach ($resultDevices->devices as $device) {
                     $eqLogic = mystrom::byLogicalId($device->id, 'mystrom');
                     if (!is_object($eqLogic)) {
                         $eqLogic = new self();
@@ -294,7 +257,7 @@ class mystrom extends eqLogic
 
                 return '';
             } else {
-                log::add('mystrom', 'error', "Erreur de recherche des équipements: " . $jsonObj->error);
+                log::add('mystrom', 'error', "Erreur de recherche des équipements: " . $resultDevices->error);
                 return "Erreur de recherche des équipements voir les logs";
             }
         } else {
@@ -303,61 +266,21 @@ class mystrom extends eqLogic
     }
 
     /**
-     * Set state on or off of a device, if the device is the master,
-     * restart it.
-     * @param $eqLogic The jeedom device object to change status.
-     * @param $isOn Boolean indicating to set on or off.
-     * @param $deviceId The mystrom device identifier.
-     */
-    public function setState($eqLogic, $isOn, $deviceId)
-    {
-        $logger = log::getLogger('mystrom');
-        $authToken = config::byKey('authToken', 'mystrom');
-        $stateUrl = mystrom::getMystromUrl() . '/device/switch?authToken=' . $authToken
-                  . '&id=' . $deviceId . '&on=' . (($isOn) ? 'true' : 'false');
-        $restartUrl = mystrom::getMystromUrl() . '/device/restart?authToken=' . $authToken
-                  . '&id=' . $deviceId;
-
-        $url = '';
-
-        if ($eqLogic->getConfiguration('mystromType') == 'mst') {
-            $url = $restartUrl;
-        } else {
-            $url = $stateUrl;
-        }
-
-        $json = file_get_contents($url);
-        log::add('mystrom', 'debug', $url);
-
-        $jsonObj = json_decode($json);
-
-        if ($jsonObj->status != 'ok') {
-            log::add('mystrom', 'error', $json);
-        }
-    }
-
-    /**
      * Refresh data as state, consommation, ... for all devices.
      */
     public function pull($_eqLogic_id = null)
     {
-        $logger = log::getLogger('mystrom');
+        $mystromService = new MyStromService();
 
         if (mystrom::$_eqLogics == null) {
             mystrom::$_eqLogics = mystrom::byType('mystrom');
         }
 
-        $authToken = config::byKey('authToken', 'mystrom');
-        $devicesUrl = mystrom::getMystromUrl() . '/devices?report=true&authToken=' . $authToken;
-
-        $json = file_get_contents($devicesUrl);
-        log::add('mystrom', 'debug', $json);
-
-        $jsonObj = json_decode($json);
+        $resultDevices = $mystromService->loadAllDevicesFromServer(true);
         $foundMystromDevice = null;
 
-        if ($jsonObj->status != 'ok') {
-            log::add('mystrom', 'error', $jsonObj->error);
+        if ($resultDevices->status != 'ok') {
+            log::add('mystrom', 'error', $resultDevices->error);
             return;
         }
 
@@ -365,7 +288,7 @@ class mystrom extends eqLogic
           $foundMystromDevice = null;
           $changed = false;
 
-          foreach ($jsonObj->devices as $device) {
+          foreach ($resultDevices->devices as $device) {
               if ($device->id == $eqLogic->getLogicalId()) {
                   log::add('mystrom', 'debug', "Equipement trouvé avec id " . $device->id);
                   $foundMystromDevice = $device;
@@ -406,30 +329,32 @@ class mystromCmd extends cmd
             return;
         }
 
+        $mystromService = new MyStromService();
         $commandOk = false;
         $eqLogic = $this->getEqLogic();
         $mystromId = $eqLogic->getLogicalId();
+        $deviceType = $eqLogic->getConfiguration('mystromType');
         $state = '';
 
         if ($this->getLogicalId() == 'on') {
             $commandOk = true;
             $state = 'on';
             $stateBinary = '1';
-            mystrom::setState($eqLogic, true, $mystromId);
+            $mystromService->setState($mystromId,  $deviceType, true);
         }
 
         if ($this->getLogicalId() == 'off') {
             $commandOk = true;
             $state = 'off';
             $stateBinary = '0';
-            mystrom::setState($eqLogic, false, $mystromId);
+            $mystromService->setState($mystromId,  $deviceType, false);
         }
 
         if ($this->getLogicalId() == 'restart') {
             $commandOk = true;
             $state = 'off';
             $stateBinary = '0';
-            mystrom::setState($eqLogic, false, $mystromId);
+            $mystromService->setState($mystromId,  $deviceType, false);
         }
 
         if ($commandOk == false) {

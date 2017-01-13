@@ -10,4 +10,6 @@ class MyStromDevice
     public $type = '';
     public $daylyConsumption = '';
     public $monthlyConsumption = '';
+    public $state = '';
+    public $power = '';
 }
