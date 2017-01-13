@@ -1,91 +1,91 @@
 <?php
 
 /**
- * Mystrom service class
- */
+* Mystrom service class
+*/
 class MyStromService
 {
     private $myStromApiUrl = 'https://www.mystrom.ch/mobile';
-
+    
     /**
-     * Get a configuration value of the plugin.
-     * @param $key string The name of the configuration to retrieve
-     * @return The value of the configuration, null il not exists
-     */
+    * Get a configuration value of the plugin.
+    * @param $key string The name of the configuration to retrieve
+    * @return The value of the configuration, null il not exists
+    */
     public function getMyStromConfiguration($key)
     {
         return config::byKey($key, 'mystrom');
     }
-
+    
     /**
-     * Save a configuration key
-     * @param $key string The key of the configuration to save
-     * @param $value string The configuration value to save
-     */
+    * Save a configuration key
+    * @param $key string The key of the configuration to save
+    * @param $value string The configuration value to save
+    */
     public function saveMystromConfiguration($key, $value)
     {
         config::save($key, $value, 'mystrom');
     }
-
+    
     /**
-     * Log a debug message
-     * @param $message string The message to log
-     */
+    * Log a debug message
+    * @param $message string The message to log
+    */
     public function logDebug($message)
     {
         log::add('mystrom', 'debug', $message);
     }
-
+    
     /**
-     * Log an information message
-     * @param $message string The message to log
-     */
+    * Log an information message
+    * @param $message string The message to log
+    */
     public function logInfo($message)
     {
         log::add('mystrom', 'info', $message);
     }
-
+    
     /**
-     * Log a warning message
-     * @param $message string The message to log
-     */
+    * Log a warning message
+    * @param $message string The message to log
+    */
     public function logWarning($message)
     {
         log::add('mystrom', 'warning', $message);
     }
-
+    
     /**
-     * Do a request and get json result.
-     * @param $requestUrl string The request url to call
-     * @return Object A json object.
-     */
+    * Do a request and get json result.
+    * @param $requestUrl string The request url to call
+    * @return Object A json object.
+    */
     public function doJsonCall($requestUrl)
     {
         $this->logDebug('Do http call ' . $requestUrl);
-
+        
         $json = file_get_contents($requestUrl);
         $this->logDebug('Result: ' . $json);
-
+        
         $jsonObj = json_decode($json);
-
+        
         return $jsonObj;
     }
-
+    
     /**
-     * Do the authentification of the user.
-     * Use the configuration userId and password and store
-     * the authentification token into the configuration key authToken.
-     * @return boolean indicating the success of the authentification.
-     */
+    * Do the authentification of the user.
+    * Use the configuration userId and password and store
+    * the authentification token into the configuration key authToken.
+    * @return boolean indicating the success of the authentification.
+    */
     public function doAuthentification()
     {
         $this->logInfo('Authentification');
         $user = $this->getMyStromConfiguration('userId');
         $password = $this->getMyStromConfiguration('password');
-
+        
         $authUrl = $this->myStromApiUrl . '/auth?email=' . $user
-                . '&password=' . $password;
-
+        . '&password=' . $password;
+        
         $jsonObj = $this->doJsonCall($authUrl);
         if ($jsonObj->status == 'ok') {
             $this->saveMystromConfiguration('authToken', $jsonObj->authToken);
@@ -96,71 +96,81 @@ class MyStromService
             return false;
         }
     }
-
+    
     /**
-     * Load all devices from mystrom server
-     * @return GetAllDevicesResult The result of the call
-     */
-    public function loadAllDevicesFromServer()
+    * Load all devices from mystrom server
+    * @param $withReportData boolean Indicates to load report data with the devices, default is false
+    * @return GetAllDevicesResult The result of the call
+    */
+    public function loadAllDevicesFromServer($withReportData = false)
     {
         $this->logInfo('Recherche des équipements mystrom');
         $authToken = $this->getMyStromConfiguration('authToken');
-        $devicesUrl = $this->myStromApiUrl . '/devices?authToken=' . $authToken;
+        $devicesUrl = $this->myStromApiUrl . '/devices?';
+        
+        if ($withReportData) {
+            $devicesUrl = $devicesUrl . 'report=true&';
+        }
 
+        $devicesUrl = $devicesUrl . 'authToken=' . $authToken;
+        
         $result = new GetAllDevicesResult();
         $jsonObj = $this->doJsonCall($devicesUrl);
         $result->status = $jsonObj->status;
-
-        if($jsonObj->status == 'ok')
-        {
+        
+        if ($jsonObj->status == 'ok') {
             foreach ($jsonObj->devices as $device) {
                 $mystromDevice = new MyStromDevice();
                 $mystromDevice->id = $device->id;
                 $mystromDevice->type = $device->type;
                 $mystromDevice->name = $device->name;
+                
+                if ($withReportData) {
+                    $mystromDevice->daylyConsumption = $device->energyReport->daylyConsumption;
+                    $mystromDevice->monthlyConsumption = $device->energyReport->monthlyConsumption;
+                }
 
                 array_push($result->devices, $mystromDevice);
             }
         } else {
             $result->error = $jsonObj->error;
         }
-
+        
         return $result;
     }
-
+    
     /**
-     * Set the state on or off of a device, if the device type is the master, reset it.
-     * @param $deviceId string The id of the device to change the state
-     * @param $deviceType string The type of the device
-     * @param $isOn boolean Indicating if the state should be on or off
-     * @return MyStromApiResult The result of the call
-     */
+    * Set the state on or off of a device, if the device type is the master, reset it.
+    * @param $deviceId string The id of the device to change the state
+    * @param $deviceType string The type of the device
+    * @param $isOn boolean Indicating if the state should be on or off
+    * @return MyStromApiResult The result of the call
+    */
     public function setState($deviceId, $deviceType, $isOn)
     {
         $authToken = $this->getMyStromConfiguration('authToken');
         $stateUrl = $this->myStromApiUrl . '/device/switch?authToken=' . $authToken
-                  . '&id=' . $deviceId . '&on=' . (($isOn) ? 'true' : 'false');
+        . '&id=' . $deviceId . '&on=' . (($isOn) ? 'true' : 'false');
         $restartUrl = $this->myStromApiUrl . '/device/restart?authToken=' . $authToken
-                  . '&id=' . $deviceId;
-
+        . '&id=' . $deviceId;
+        
         $url = '';
-
+        
         if ($deviceType == 'mst') {
             $url = $restartUrl;
         } else {
             $url = $stateUrl;
         }
-
+        
         $jsonObj = $this->doJsonCall($url);
-
+        
         $result = new MyStromApiResult();
         $result->status = $jsonObj->status;
-
-        if($jsonObj->status !== 'ok')
-        {
+        
+        if ($jsonObj->status !== 'ok') {
             $result->error = $jsonObj->error;
         }
-
+        
         return $result;
     }
 }

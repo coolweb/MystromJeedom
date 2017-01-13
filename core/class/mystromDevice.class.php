@@ -3,9 +3,11 @@
 /**
  * Represents a mystrom device
  */
-class MyStromDevice 
+class MyStromDevice
 {
     public $id = '';
     public $name = '';
     public $type = '';
+    public $daylyConsumption = '';
+    public $monthlyConsumption = '';
 }
