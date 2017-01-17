@@ -16,7 +16,7 @@
 * along with Jeedom. If not, see <http://www.gnu.org/licenses/>.
 */
 
-require_once dirname(__FILE__) . '/../class/myStromApiResult.class.php';
+require_once dirname(__FILE__) . '/../class/mystromApiResult.class.php';
 require_once dirname(__FILE__) . '/../class/getAllDevicesResult.class.php';
 require_once dirname(__FILE__) . '/../class/mystromDevice.class.php';
 require_once dirname(__FILE__) . '/../class/mystromService.class.php';

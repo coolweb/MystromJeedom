@@ -17,7 +17,9 @@
  */
 
 /* * ***************************Includes********************************* */
-require_once dirname(__FILE__) . '/../php/mystrom.inc.php';
+if (isset($unitTest) == false) {
+    require_once dirname(__FILE__) . '/../php/mystrom.inc.php';
+}
 
 /*
  * Plugin for mystrom eco power lan device.
@@ -25,6 +27,29 @@ require_once dirname(__FILE__) . '/../php/mystrom.inc.php';
 class mystrom extends eqLogic
 {
     private static $_eqLogics = null;
+
+    /**
+     * Logs an error message
+     * @param $message string The message to log
+     */
+    public function logError(string $message)
+    {
+        log::add('mystrom', 'error', $message);
+    }
+
+    /**
+     * Logs a debug message
+     * @param $message string The message to log
+     */
+    public function logDebug(string $message)
+    {
+        log::add('mystrom', 'debug', $message);
+    }
+
+    public function loadEqLogic()
+    {
+        return mystrom::byType('mystrom');
+    }
 
     /*
      * Fonction exécutée automatiquement toutes les minutes par Jeedom
@@ -230,6 +255,7 @@ class mystrom extends eqLogic
      */
     public function syncMyStrom()
     {
+        log::add('mystrom', 'debug', 'syncMyStrom');
         $mystromService = new MyStromService();
 
         if ($mystromService->doAuthentification()) {
@@ -268,13 +294,13 @@ class mystrom extends eqLogic
     /**
      * Refresh data as state, consommation, ... for all devices.
      */
-    public function pull($_eqLogic_id = null)
+    public function pull($mystromService = null)
     {
-        $mystromService = new MyStromService();
-
-        if (mystrom::$_eqLogics == null) {
-            mystrom::$_eqLogics = mystrom::byType('mystrom');
+        if ($mystromService == null) {
+            $mystromService = new MyStromService();
         }
+
+        mystrom::$_eqLogics = $this->loadEqLogic();
 
         $resultDevices = $mystromService->loadAllDevicesFromServer(true);
         $foundMystromDevice = null;
@@ -285,31 +311,31 @@ class mystrom extends eqLogic
         }
 
         foreach (mystrom::$_eqLogics as $eqLogic) {
-          $foundMystromDevice = null;
-          $changed = false;
+            $foundMystromDevice = null;
+            $changed = false;
 
-          foreach ($resultDevices->devices as $device) {
-              if ($device->id == $eqLogic->getLogicalId()) {
-                  log::add('mystrom', 'debug', "Equipement trouvé avec id " . $device->id);
-                  $foundMystromDevice = $device;
-              }
-          }
+            foreach ($resultDevices->devices as $device) {
+                if ($device->id == $eqLogic->getLogicalId()) {
+                    $this->logDebug("Equipement trouvé avec id " . $device->id);
+                    $foundMystromDevice = $device;
+                }
+            }
 
-          if ($foundMystromDevice == null) {
-              log::add('mystrom', 'error', "Impossible de trouver l'équipement mystrom id "
+            if ($foundMystromDevice == null) {
+                log::add('mystrom', 'error', "Impossible de trouver l'équipement mystrom id "
                 . $eqLogic->getLogicalId());
-              continue;
-          }
+                continue;
+            }
 
-          $changed = $eqLogic->checkAndUpdateCmd('state', $foundMystromDevice->state) || $changed;
-          $changed = $eqLogic->checkAndUpdateCmd('stateBinary', (($foundMystromDevice->state == 'on') ? '1' : '0')) || $changed;
-          $changed = $eqLogic->checkAndUpdateCmd('conso', $foundMystromDevice->power) || $changed;
-          $changed = $eqLogic->checkAndUpdateCmd('dailyConso', $foundMystromDevice->energyReport->daylyConsumption) || $changed;
-          $changed = $eqLogic->checkAndUpdateCmd('monthlyConso', $foundMystromDevice->energyReport->monthlyConsumption) || $changed;
+            $changed = $eqLogic->checkAndUpdateCmd('state', $foundMystromDevice->state) || $changed;
+            $changed = $eqLogic->checkAndUpdateCmd('stateBinary', (($foundMystromDevice->state == 'on') ? '1' : '0')) || $changed;
+            $changed = $eqLogic->checkAndUpdateCmd('conso', $foundMystromDevice->power) || $changed;
+            $changed = $eqLogic->checkAndUpdateCmd('dailyConso', $foundMystromDevice->daylyConsumption) || $changed;
+            $changed = $eqLogic->checkAndUpdateCmd('monthlyConso', $foundMystromDevice->monthlyConsumption) || $changed;
 
-          if ($changed) {
-              $eqLogic->refreshWidget();
-          }
+            if ($changed) {
+                $eqLogic->refreshWidget();
+            }
         }
     }
 }
@@ -340,21 +366,21 @@ class mystromCmd extends cmd
             $commandOk = true;
             $state = 'on';
             $stateBinary = '1';
-            $mystromService->setState($mystromId,  $deviceType, true);
+            $mystromService->setState($mystromId, $deviceType, true);
         }
 
         if ($this->getLogicalId() == 'off') {
             $commandOk = true;
             $state = 'off';
             $stateBinary = '0';
-            $mystromService->setState($mystromId,  $deviceType, false);
+            $mystromService->setState($mystromId, $deviceType, false);
         }
 
         if ($this->getLogicalId() == 'restart') {
             $commandOk = true;
             $state = 'off';
             $stateBinary = '0';
-            $mystromService->setState($mystromId,  $deviceType, false);
+            $mystromService->setState($mystromId, $deviceType, false);
         }
 
         if ($commandOk == false) {

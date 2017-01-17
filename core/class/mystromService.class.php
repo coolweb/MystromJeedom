@@ -148,7 +148,7 @@ class MyStromService
     * @param $isOn boolean Indicating if the state should be on or off
     * @return MyStromApiResult The result of the call
     */
-    public function setState(string $deviceId, string $deviceType, boolean $isOn) : MyStromApiResult
+    public function setState(string $deviceId, string $deviceType, bool $isOn) : MyStromApiResult
     {
         $authToken = $this->getMyStromConfiguration('authToken');
         $stateUrl = $this->myStromApiUrl . '/device/switch?authToken=' . $authToken

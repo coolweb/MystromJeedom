@@ -18,6 +18,7 @@
 
 try {
     require_once dirname(__FILE__) . '/../../../../core/php/core.inc.php';
+
     include_file('core', 'authentification', 'php');
 
     if (!isConnect('admin')) {
@@ -25,18 +26,19 @@ try {
     }
 
     ajax::init();
-	  if (init('action') == 'syncMyStrom') {
-		    $result = mystrom::syncMystrom();
+    if (init('action') == 'syncMyStrom') {
+        $result = mystrom::syncMystrom();        
         if($result == ''){
-          ajax::success();
+            ajax::success();
         } else {
-          ajax::error($result);
+            ajax::error($result);
         }
-	  }
+    }
 
     throw new Exception(__('Aucune méthode correspondante à : ', __FILE__) . init('action'));
     /*     * *********Catch exeption*************** */
 } catch (Exception $e) {
+    log::add('mystrom', 'debug', 'Ajax syncMyStrom 3');                
     ajax::error(displayExeption($e), $e->getCode());
 }
 ?>

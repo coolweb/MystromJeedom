@@ -107,12 +107,16 @@ class mystromServiceTest extends TestCase
         @$device1->id = '1234';
         @$device1->type = 'eth';
         @$device1->name = 'device1';
+        @$device1->state = 'on';
+        @$device1->power = '1';
         array_push($jsonObject->devices, $device1);
         
         $device2 = new stdClass();
         @$device2->id = '4321';
         @$device2->type = 'mst';
         @$device2->name = 'device2';
+        @$device2->state = 'off';
+        @$device2->power = '0';
         array_push($jsonObject->devices, $device2);
         
         $target->method('doJsonCall')
@@ -128,10 +132,13 @@ class mystromServiceTest extends TestCase
         $this->assertEquals($result->devices[0]->id, $device1->id);
         $this->assertEquals($result->devices[0]->type, $device1->type);
         $this->assertEquals($result->devices[0]->name, $device1->name);
+        $this->assertEquals($result->devices[0]->state, $device1->state);
+        $this->assertEquals($result->devices[0]->power, $device1->power);
         
         $this->assertEquals($result->devices[1]->id, $device2->id);
         $this->assertEquals($result->devices[1]->type, $device2->type);
         $this->assertEquals($result->devices[1]->name, $device2->name);
+        $this->assertEquals($result->devices[1]->power, $device2->power);
     }
 
     public function testLoadAllDevicesWhenLoadReportDataShouldReturnTheConsumptions()
@@ -154,6 +161,8 @@ class mystromServiceTest extends TestCase
         @$device1->id = '1234';
         @$device1->type = 'eth';
         @$device1->name = 'device1';
+        @$device1->state = 'on';
+        @$device1->power = '1';
         @$device1->energyReport->daylyConsumption = 12;
         @$device1->energyReport->monthlyConsumption = 100;
         array_push($jsonObject->devices, $device1);
@@ -162,6 +171,8 @@ class mystromServiceTest extends TestCase
         @$device2->id = '4321';
         @$device2->type = 'mst';
         @$device2->name = 'device2';
+        @$device2->state = 'on';
+        @$device2->power = '1';
         @$device2->energyReport->daylyConsumption = 15;
         @$device2->energyReport->monthlyConsumption = 110;
         array_push($jsonObject->devices, $device2);
