@@ -300,7 +300,14 @@ class mystrom extends eqLogic
             $mystromService = new MyStromService();
         }
 
-        mystrom::$_eqLogics = $this->loadEqLogic();
+        
+        if (isset($this)) {
+            mystrom::$_eqLogics = $this->loadEqLogic();
+        } else {
+            $mystromPlugin = new mystrom();
+            mystrom::$_eqLogics = $mystromPlugin->loadEqLogic();
+        }
+        
 
         $resultDevices = $mystromService->loadAllDevicesFromServer(true);
         $foundMystromDevice = null;
@@ -316,7 +323,10 @@ class mystrom extends eqLogic
 
             foreach ($resultDevices->devices as $device) {
                 if ($device->id == $eqLogic->getLogicalId()) {
-                    $this->logDebug("Equipement trouvé avec id " . $device->id);
+                    if (isset($this) == false) {
+                        mystrom::logDebug("Equipement trouvé avec id " . $device->id);
+                    }
+
                     $foundMystromDevice = $device;
                 }
             }
