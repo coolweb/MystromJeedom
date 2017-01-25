@@ -10,7 +10,7 @@ Cliquez sur le bouton *Rechercher les équipements MyStrom*.
 
 == Geräte Konfiguration
 La configuration des équipements MyStrom est accessible à partir du menu
-plugin :
+Plugin :
 
 image::../images/docConfigurationEquipementMenu.png[]
 
@@ -43,4 +43,4 @@ En dessous vous retrouvez la liste des commandes :
 
 WARNING: Si l'équipement est le master, celui-ci n'a pas les commandes
 On et Off mais une commande *Restart* qui permet de redémarrer
-l'équipement.
+Geräte.
