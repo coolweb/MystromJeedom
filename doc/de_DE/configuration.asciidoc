@@ -22,7 +22,7 @@ Une fois que vous cliquez sur un équipement vous obtenez :
 
 image::../images/docConfigurationEquipement.png[]
 
-Vous retrouvez ici toute la configuration de votre équipement :
+Hier finden Sie die ganze Konfiguration des Geräts:
 
 * *Nom de l'équipement MyStrom* : nom de votre équipement dans votre compte
 MyStrom.
