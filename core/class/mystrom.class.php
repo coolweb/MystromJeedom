@@ -32,7 +32,7 @@ class mystrom extends eqLogic
      * Logs an error message
      * @param $message string The message to log
      */
-    public function logError(string $message)
+    public function logError($message)
     {
         log::add('mystrom', 'error', $message);
     }
@@ -41,9 +41,18 @@ class mystrom extends eqLogic
      * Logs a debug message
      * @param $message string The message to log
      */
-    public function logDebug(string $message)
+    public function logDebug($message)
     {
         log::add('mystrom', 'debug', $message);
+    }
+
+    /**
+     * Logs an info message
+     * @param $message string The message to log
+     */
+    public function logInfo($message)
+    {
+        log::add('mystrom', 'info', $message);
     }
 
     public function loadEqLogic()
@@ -56,7 +65,9 @@ class mystrom extends eqLogic
      */
     public static function cron()
     {
-        mystrom::pull();
+        log::add('mystrom', 'debug', 'pull started');
+        $mystromPlugin = new mystrom();
+        $mystromPlugin->pull();
     }
 
     public function preInsert()
@@ -223,6 +234,11 @@ class mystrom extends eqLogic
         return 'https://www.mystrom.ch/mobile';
     }
 
+    public function getEqLogicByLogicalId($id)
+    {
+        return mystrom::byLogicalId($id, 'mystrom');
+    }
+
     /**
      * Get all device from the user account.
      * @return An array with device objects from jeedom database.
@@ -255,16 +271,16 @@ class mystrom extends eqLogic
      */
     public function syncMyStrom()
     {
-        log::add('mystrom', 'debug', 'syncMyStrom');
+        $this->logDebug('syncMyStrom');
         $mystromService = new MyStromService();
 
         if ($mystromService->doAuthentification()) {
-            log::add('mystrom', 'info', 'Recherche des équipements mystrom');
+            $this->logInfo('Recherche des équipements mystrom');
             $resultDevices = $mystromService->loadAllDevicesFromServer();
             
-            if ($resultDevices->status == 'ok') {
+            if (strcmp($resultDevices->status, 'ok') == 1) {
                 foreach ($resultDevices->devices as $device) {
-                    $eqLogic = mystrom::byLogicalId($device->id, 'mystrom');
+                    $eqLogic = $this->getEqLogicByLogicalId($device->id);
                     if (!is_object($eqLogic)) {
                         $eqLogic = new self();
                         $eqLogic->setLogicalId($device->id);
@@ -279,15 +295,15 @@ class mystrom extends eqLogic
                     $eqLogic->save();
                 }
 
-                log::add('mystrom', 'debug', "Ajout des équipements dans la base de données");
+                $this->logDebug('Ajout des équipements dans la base de données');
 
                 return '';
             } else {
-                log::add('mystrom', 'error', "Erreur de recherche des équipements: " . $resultDevices->error);
-                return "Erreur de recherche des équipements voir les logs";
+                $this->logError('Erreur de recherche des équipements: ' . $resultDevices->error);
+                return 'Erreur de recherche des équipements voir les logs';
             }
         } else {
-            throw new Exception("Erreur d'authentification voir les logs");
+            throw new Exception('Erreur d\'authentification voir les logs');
         }
     }
 
@@ -300,20 +316,13 @@ class mystrom extends eqLogic
             $mystromService = new MyStromService();
         }
 
-        
-        if (isset($this)) {
-            mystrom::$_eqLogics = $this->loadEqLogic();
-        } else {
-            $mystromPlugin = new mystrom();
-            mystrom::$_eqLogics = $mystromPlugin->loadEqLogic();
-        }
-        
+        mystrom::$_eqLogics = $this->loadEqLogic();
 
         $resultDevices = $mystromService->loadAllDevicesFromServer(true);
         $foundMystromDevice = null;
 
-        if ($resultDevices->status != 'ok') {
-            log::add('mystrom', 'error', $resultDevices->error);
+        if (strcmp($resultDevices->status, 'ok') == -1) {
+            $this->logError('Error retrieving devices status: ' . $resultDevices->error);
             return;
         }
 
@@ -323,16 +332,14 @@ class mystrom extends eqLogic
 
             foreach ($resultDevices->devices as $device) {
                 if ($device->id == $eqLogic->getLogicalId()) {
-                    if (isset($this) == false) {
-                        mystrom::logDebug("Equipement trouvé avec id " . $device->id);
-                    }
+                    $this->logDebug("Equipement trouvé avec id " . $device->id);
 
                     $foundMystromDevice = $device;
                 }
             }
 
             if ($foundMystromDevice == null) {
-                log::add('mystrom', 'error', "Impossible de trouver l'équipement mystrom id "
+                $this->logError('Impossible de trouver l\'équipement mystrom id '
                 . $eqLogic->getLogicalId());
                 continue;
             }

@@ -16,17 +16,26 @@ include_once('./core/class/myStrom.class.php');
 */
 class mystromTest extends TestCase
 {
+    private $mystromService;
+    private $target;
+
     private function setJeedomDevices($target, $eqLogics)
     {
         $target->method('loadEqLogic')
         ->willReturn($eqLogics);
     }
 
-    private function setMystromDevices(MyStromService $mystromService, $devices)
+    private function setMystromDevices(MyStromService $mystromService, $devices, $error = false)
     {
         $result = new GetAllDevicesResult();
-        $result->status = 'ok';
-        $result->devices = $devices;
+
+        if($error == false){
+            $result->status = 'ok';
+            $result->devices = $devices;
+        } else {
+            $result->status = 'ko';
+            $result->error = 'error description';
+        }
 
         $mystromService->method('loadAllDevicesFromServer')
         ->willReturn($result);
@@ -63,16 +72,19 @@ class mystromTest extends TestCase
         ->method('refreshWidget');
     }
 
-    public function testPullWhen1DeviceExistAt2SidesShouldRefreshJeedom()
+    protected function setUp()
     {
-        $mystromService = $this->getMockBuilder(MyStromService::class)
+        $this->mystromService = $this->getMockBuilder(MyStromService::class)
         ->setMethods(['loadAllDevicesFromServer'])
         ->getMock();
 
-        $target = $this->getMockBuilder(mystrom::class)
+        $this->target = $this->getMockBuilder(mystrom::class)
         ->setMethods(['logError', 'loadEqLogic', 'logDebug'])
         ->getMock();
+    }
 
+    public function testPullWhen1DeviceExistAt2Sides_ItShouldRefreshJeedom()
+    {
         $eqLogic = $this->getMockBuilder(eqLogic::class)
         ->setMethods(['checkAndUpdateCmd', 'refreshWidget'])
         ->getMock();
@@ -89,9 +101,44 @@ class mystromTest extends TestCase
         $devices = array();
         array_push($devices, $device);
 
-        $this->setJeedomDevices($target, $eqLogics);
-        $this->setMystromDevices($mystromService, $devices);
+        $this->setJeedomDevices($this->target, $eqLogics);
+        $this->setMystromDevices($this->mystromService, $devices);
 
-        $target->pull($mystromService);
+        $this->target->pull($this->mystromService);
+    }
+
+    public function testPullWhen1DeviceNotExistAtMystromServer_ItShouldLogError()
+    {
+        $eqLogic = $this->getMockBuilder(eqLogic::class)
+        ->setMethods(['checkAndUpdateCmd', 'refreshWidget'])
+        ->getMock();
+
+        $eqLogic->logicalId = '1234';
+
+        $eqLogics = array();
+        array_push($eqLogics, $eqLogic);
+
+        $device = new MyStromDevice();
+        $device->id = '12';
+
+        $devices = array();
+        array_push($devices, $device);
+
+        $this->setJeedomDevices($this->target, $eqLogics);
+        $this->setMystromDevices($this->mystromService, $devices);
+
+        $this->target->expects($this->once())
+        ->method('logError');
+
+        $this->target->pull($this->mystromService);
+    }
+
+    public function testPullWhenErrorLoadingDevices_ItShouldLogAnError()
+    {
+        $this->setMystromDevices($this->mystromService, null, true);
+        $this->target->expects($this->once())
+        ->method('logError');
+
+        $this->target->pull($this->mystromService);
     }
 }

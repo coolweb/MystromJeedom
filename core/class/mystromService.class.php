@@ -102,7 +102,7 @@ class MyStromService
     * @param boolean $withReportData Indicates to load report data with the devices, default is false
     * @return GetAllDevicesResult The result of the call
     */
-    public function loadAllDevicesFromServer($withReportData = false) : GetAllDevicesResult
+    public function loadAllDevicesFromServer($withReportData = false)
     {
         $this->logInfo('Recherche des équipements mystrom');
         $authToken = $this->getMyStromConfiguration('authToken');
@@ -148,7 +148,7 @@ class MyStromService
     * @param $isOn boolean Indicating if the state should be on or off
     * @return MyStromApiResult The result of the call
     */
-    public function setState(string $deviceId, string $deviceType, bool $isOn) : MyStromApiResult
+    public function setState($deviceId, $deviceType, $isOn)
     {
         $authToken = $this->getMyStromConfiguration('authToken');
         $stateUrl = $this->myStromApiUrl . '/device/switch?authToken=' . $authToken
