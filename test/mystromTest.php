@@ -25,6 +25,12 @@ class mystromTest extends TestCase
         ->willReturn($eqLogics);
     }
 
+    private function setLogicalId($id)
+    {
+        $this->target->method('getLogicalId')
+        ->willReturn($id);
+    }
+
     private function setMystromDevices(MyStromService $mystromService, $devices, $error = false)
     {
         $result = new GetAllDevicesResult();
@@ -79,7 +85,7 @@ class mystromTest extends TestCase
         ->getMock();
 
         $this->target = $this->getMockBuilder(mystrom::class)
-        ->setMethods(['logError', 'loadEqLogic', 'logDebug'])
+        ->setMethods(['logError', 'loadEqLogic', 'logDebug', 'getLogicalId', 'setConfiguration'])
         ->getMock();
     }
 
@@ -140,5 +146,27 @@ class mystromTest extends TestCase
         ->method('logError');
 
         $this->target->pull($this->mystromService);
+    }
+
+    public function testPreInsertWhenUserCreated_ItShouldSetIsLocal()
+    {
+        $this->setLogicalId(null);
+
+        $this->target->expects($this->once())
+        ->method('setConfiguration')
+        ->with($this->equalTo('isLocal'), $this->equalTo(true));
+
+        $this->target->preInsert();
+    }
+
+    public function testPreInsertWhenSystemCreated_ItShouldSetIsLocalToFalse()
+    {
+        $this->setLogicalId('1234');
+
+        $this->target->expects($this->once())
+        ->method('setConfiguration')
+        ->with($this->equalTo('isLocal'), $this->equalTo(false));
+
+        $this->target->preInsert();
     }
 }

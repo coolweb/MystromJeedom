@@ -33,7 +33,7 @@ class MyStromService
     */
     public function logDebug($message)
     {
-        log::add('mystrom', 'debug', $message);
+        log::add('mystrom', 'debug', 'MystromService: ' . $message);
     }
     
     /**
@@ -69,6 +69,25 @@ class MyStromService
         $jsonObj = json_decode($json);
         
         return $jsonObj;
+    }
+
+    public function doHttpCall($url, $data, $method = 'POST')
+    {
+        $header = '';
+
+        $options = array(
+            'http' => array(
+                    'header'  => $header,
+                    'method'  => $method,
+                    'content' => $data,
+                    'ignore_errors' => false
+                )
+            );
+        
+        $context  = stream_context_create($options);
+        $result = file_get_contents($url, false, $context);
+
+        return $result;
     }
     
     /**
@@ -174,5 +193,55 @@ class MyStromService
         }
         
         return $result;
+    }
+
+    /**
+     * Retrieve the information for a local wifi button.
+     * @param ipAddress The ip address of the button.
+     * @return {MystromButtonDevice} The button class if found otherwise null.
+     */
+    public function RetrieveLocalButtonInfo($ipAddress)
+    {
+        $url = 'http://' + $ipAddress + '/api/v1/device';
+        $result = $this->doHttpCall($url, 'GET');
+
+        $jsonObj = json_decode($result);
+        $macAddress = key($properties = get_object_vars($jsonObj));
+
+        $mystromButton = new MystromButtonDevice();
+        $mystromButton->macAddress = $macAddress;
+        $mystromButton->ipAddress = $ipAddress;
+        $mystromButton->doubleUrl = $jsonObj->$macAddress->double;
+        $mystromButton->singleUrl = $jsonObj->$macAddress->single;
+        $mystromButton->longUrl = $jsonObj->$macAddress->long;
+        $mystromButton->touchedUrl = $jsonObj->$macAddress->touch;
+
+        return $mystromButton;
+    }
+
+    /**
+     *  Save urls of jeedom cmd action into the wifibutton
+     *  @param $wifiButton {MystromButtonDevice} The button into which tosavethe urls
+     *  @param $cmdIdSingle {string} The id of the action command
+     *  @param $cmdIdDouble {string} The id of the action command
+     *  @param $cmdIdLong {string} The id of the action command
+     *  @param $cmdIdTouched {string} The id of the action command
+     */
+    public function SaveUrlsForWifiButton($wifiButton, $cmdIdSingle, $cmdIdDouble, $cmdIdLong, $cmdIdTouched)
+    {
+        $this->logDebug('SaveUrlsForWifiButton - ' . $wifiButton->ipAddress);
+        
+        $jeedomIp = gethostbyname(gethostname());
+        $apiKey = jeedom::getApiKey();
+        $url = 'get://' . $jeedomIp . '/core/jeeApi.php?apiKey%3D' . $apiKey .
+            '%26type%3Dcmd%26id%3D';
+        
+        $buttonApiUrl = 'http://' . $wifiButton->ipAddress . '/api/v1/device/' .
+            $wifiButton->macAddress;
+        
+        $this->doHttpCall($buttonApiUrl, $url . $cmdIdSingle);
+        $this->doHttpCall($buttonApiUrl, $url . $cmdIdDouble);
+        $this->doHttpCall($buttonApiUrl, $url . $cmdIdLong);
+        $this->doHttpCall($buttonApiUrl, $url . $cmdIdTouched);
     }
 }

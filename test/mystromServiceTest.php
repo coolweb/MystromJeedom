@@ -1,10 +1,12 @@
 <?php
 use PHPUnit\Framework\TestCase;
 
-include_once('./core/class/myStromDevice.class.php');
-include_once('./core/class/myStromApiResult.class.php');
-include_once('./core/class/getAllDevicesResult.class.php');
-include_once('./core/class/mystromService.class.php');
+include_once('./test/jeedom.php');
+include_once('./core/mystrom/class/myStromDevice.class.php');
+include_once('./core/mystrom/class/myStromApiResult.class.php');
+include_once('./core/mystrom/class/getAllDevicesResult.class.php');
+include_once('./core/mystrom/class/mystromButtonDevice.class.php');
+include_once('./core/mystrom/class/mystromService.class.php');
 
 /**
 * Test class for mystrom service class
@@ -304,5 +306,87 @@ class mystromServiceTest extends TestCase
         $result = $target->setState('1234', 'mst', false);
         
         $this->assertEquals($result->status, 'ok');
+    }
+
+    public function testWhenRetrieveLocalButtonInfo_ShouldGetTheMACAddress()
+    {
+        $target = $this->getMockBuilder(MyStromService::class)
+        ->setMethods([
+        'logDebug',
+        'logWarning',
+        'logInfo',
+        'getMyStromConfiguration',
+        'saveMystromConfiguration',
+        'doHttpCall'])
+        ->getMock();
+
+        $jsonResult = '{"7C2F1D4G5H":{"type": "button", "battery": true, "reachable": true, "meshroot": false, "charge": false, "voltage": 3.705, "fw_version": "2.37", "single": "", "double": "", "long": "", "touch": ""}}';
+        $target->method('doHttpCall')
+        ->willReturn($jsonResult);
+
+        $buttonInfo = $target->RetrieveLocalButtonInfo('192.168.1.2');
+
+        $this->assertEquals($buttonInfo->macAddress, '7C2F1D4G5H');
+    }
+
+    public function testSaveUrlsFOrWifiButtonWhenSaved_ShouldCallTheCorrectUrls()
+    {
+        $target = $this->getMockBuilder(MyStromService::class)
+        ->setMethods([
+        'logDebug',
+        'logWarning',
+        'logInfo',
+        'getMyStromConfiguration',
+        'saveMystromConfiguration',
+        'doHttpCall'])
+        ->getMock();
+
+        $jeedomIp = gethostbyname(gethostname());
+        $button = new MystromButtonDevice();
+        $button->ipAddress = '192.168.1.2';
+        $button->macAddress = 'F1G2H3J5';
+
+        $singleId = '1';
+        $doubleId = '2';
+        $longId = '3';
+        $touchId = '4';
+
+        $target->expects($this->at(1))
+        ->method('doHttpCall')
+        ->with(
+            $this->equalTo('http://' . $button->ipAddress . '/api/v1/device/' . $button->macAddress),
+            $this->equalTo('get://' . $jeedomIp . '/core/jeeApi.php?apiKey%3D' 
+            . jeedom::getApiKey() . '%26type%3Dcmd%26id%3D' . $singleId),
+            'POST')
+        ->willReturn('');
+
+        $target->expects($this->at(2))
+        ->method('doHttpCall')
+        ->with(
+            $this->equalTo('http://' . $button->ipAddress . '/api/v1/device/' . $button->macAddress),
+            $this->equalTo('get://' . $jeedomIp . '/core/jeeApi.php?apiKey%3D' 
+            . jeedom::getApiKey() . '%26type%3Dcmd%26id%3D' . $doubleId),
+            'POST')
+        ->willReturn('');
+
+        $target->expects($this->at(3))
+        ->method('doHttpCall')
+        ->with(
+            $this->equalTo('http://' . $button->ipAddress . '/api/v1/device/' . $button->macAddress),
+            $this->equalTo('get://' . $jeedomIp . '/core/jeeApi.php?apiKey%3D' 
+            . jeedom::getApiKey() . '%26type%3Dcmd%26id%3D' . $longId),
+            'POST')
+        ->willReturn('');
+
+        $target->expects($this->at(4))
+        ->method('doHttpCall')
+        ->with(
+            $this->equalTo('http://' . $button->ipAddress . '/api/v1/device/' . $button->macAddress),
+            $this->equalTo('get://' . $jeedomIp . '/core/jeeApi.php?apiKey%3D' 
+            . jeedom::getApiKey() . '%26type%3Dcmd%26id%3D' . $touchId),
+            'POST')
+        ->willReturn('');
+
+        $target->SaveUrlsForWifiButton($button, $singleId, $doubleId, $longId, $touchId);
     }
 }
