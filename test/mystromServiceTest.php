@@ -389,4 +389,9 @@ class mystromServiceTest extends TestCase
 
         $target->SaveUrlsForWifiButton($button, $singleId, $doubleId, $longId, $touchId);
     }
+
+    public function testSaveUrlsFOrWifiButtonWhenButtonNotReachable_ShouldReturnFalse()
+    {
+        
+    }
 }
