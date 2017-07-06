@@ -16,8 +16,12 @@
  * along with Jeedom. If not, see <http://www.gnu.org/licenses/>.
  */
 
+ini_set('display_errors', 1);
+//ini_set('display_warnings', 1);
+
 try {
     require_once dirname(__FILE__) . '/../../../../core/php/core.inc.php';
+    require_once dirname(__FILE__) . '/../mystrom/class/mystrom.class.php';
 
     include_file('core', 'authentification', 'php');
 
@@ -25,6 +29,8 @@ try {
         throw new Exception(__('401 - Accès non autorisé', __FILE__));
     }
 
+    log::add('mystrom', 'debug', 'Ajax call mystrom' . init('action'));                
+    
     ajax::init();
     if (init('action') == 'syncMyStrom') {
         $result = mystrom::syncMystrom();        
