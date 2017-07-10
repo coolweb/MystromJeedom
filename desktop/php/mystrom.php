@@ -99,10 +99,15 @@ foreach (object::all() as $object) {
        <div class="form-group">
             <label class="col-sm-3 control-label" >{{Activer}}</label>
             <div class="col-sm-9">
-               <input type="checkbox" class="eqLogicAttr bootstrapSwitch" data-label-text="{{Activer}}" data-l1key="isEnable" checked/>
-               <input type="checkbox" class="eqLogicAttr bootstrapSwitch" data-label-text="{{Visible}}" data-l1key="isVisible" checked/>
-           </div>
+               <input type="checkbox" class="eqLogicAttr" data-label-text="{{Activer}}" data-l1key="isEnable" checked/>
+           </div>           
        </div>
+        <div class="form-group">
+            <label class="col-sm-3 control-label" >{{Visible}}</label>
+            <div class="col-sm-9">
+               <input type="checkbox" class="eqLogicAttr" data-label-text="{{Visible}}" data-l1key="isVisible" checked/>
+           </div>
+        </div>
 			 <div class="form-group" id="logicalIdCtrl">
 			 	<label class="col-sm-3 control-label">{{Identifiant}}</label>
 			 	<div class="col-sm-9">
