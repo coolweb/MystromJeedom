@@ -18,7 +18,7 @@
 
 /* * ***************************Includes********************************* */
 if (isset($unitTest) == false) {
-    require_once dirname(__FILE__) . '/../../php/mystrom.inc.php';
+    require_once dirname(__FILE__) . '/../php/mystrom.inc.php';
 }
 
 /*
@@ -395,7 +395,7 @@ class mystrom extends eqLogic
             $this->logInfo('Recherche des équipements mystrom');
             $resultDevices = $mystromService->loadAllDevicesFromServer();
             
-            if (strcmp($resultDevices->status, 'ok') == 1) {
+            if (strcmp($resultDevices->status, 'ok') == 0) {
                 foreach ($resultDevices->devices as $device) {
                     $eqLogic = $this->getEqLogicByLogicalId($device->id);
                     if (!is_object($eqLogic)) {

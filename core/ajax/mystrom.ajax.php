@@ -21,7 +21,7 @@ ini_set('display_errors', 1);
 
 try {
     require_once dirname(__FILE__) . '/../../../../core/php/core.inc.php';
-    require_once dirname(__FILE__) . '/../mystrom/class/mystrom.class.php';
+    require_once dirname(__FILE__) . '/../class/mystrom.class.php';
 
     include_file('core', 'authentification', 'php');
 
@@ -33,7 +33,8 @@ try {
     
     ajax::init();
     if (init('action') == 'syncMyStrom') {
-        $result = mystrom::syncMystrom();        
+        $mystrom = new mystrom();
+        $result = $mystrom->syncMystrom();        
         if($result == ''){
             ajax::success();
         } else {

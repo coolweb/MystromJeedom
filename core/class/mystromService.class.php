@@ -65,7 +65,6 @@ class MyStromService
         
         $json = file_get_contents($requestUrl);
         $this->logDebug('Result: ' . $json);
-        
         $jsonObj = json_decode($json);
         
         return $jsonObj;
@@ -137,7 +136,7 @@ class MyStromService
         $jsonObj = $this->doJsonCall($devicesUrl);
         $result->status = $jsonObj->status;
         
-        if ($jsonObj->status == 'ok') {
+        if (strcmp($jsonObj->status, 'ok') == 0) {
             foreach ($jsonObj->devices as $device) {
                 $mystromDevice = new MyStromDevice();
                 $mystromDevice->id = $device->id;

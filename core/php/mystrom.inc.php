@@ -16,11 +16,11 @@
 * along with Jeedom. If not, see <http://www.gnu.org/licenses/>.
 */
 
-require_once dirname(__FILE__) . '/../mystrom/class/mystromApiResult.class.php';
-require_once dirname(__FILE__) . '/../mystrom/class/getAllDevicesResult.class.php';
-require_once dirname(__FILE__) . '/../mystrom/class/mystromButtonDevice.class.php';
-require_once dirname(__FILE__) . '/../mystrom/class/mystromDevice.class.php';
-require_once dirname(__FILE__) . '/../mystrom/class/mystromService.class.php';
+require_once dirname(__FILE__) . '/../class/mystromApiResult.class.php';
+require_once dirname(__FILE__) . '/../class/getAllDevicesResult.class.php';
+require_once dirname(__FILE__) . '/../class/mystromButtonDevice.class.php';
+require_once dirname(__FILE__) . '/../class/mystromDevice.class.php';
+require_once dirname(__FILE__) . '/../class/mystromService.class.php';
 
 require_once dirname(__FILE__) . '/../../../../core/php/core.inc.php';
 /*
