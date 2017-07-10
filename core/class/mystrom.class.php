@@ -247,6 +247,7 @@ class mystrom extends eqLogic
                 $isTouchedActionCmd->setLogicalId('isTouchedAction');
                 $isTouchedActionCmd->setName(__('Action Touché', __FILE__));
                 $isTouchedActionCmd->setType('action');
+                $isTouchedActionCmd->setSubType('other');
                 $isTouchedActionCmd->setEqLogic_id($this->getId());
                 $isTouchedActionCmd->setDisplay('showNameOndashboard', '0');
                 $isTouchedActionCmd->save();
@@ -271,6 +272,7 @@ class mystrom extends eqLogic
                 $isSingleActionCmd->setLogicalId('isSingleAction');
                 $isSingleActionCmd->setName(__('Action Appuyé 1 fois', __FILE__));
                 $isSingleActionCmd->setType('action');
+                $isSingleActionCmd->setSubType('other');
                 $isSingleActionCmd->setEqLogic_id($this->getId());
                 $isSingleActionCmd->setDisplay('showNameOndashboard', '0');
                 $isSingleActionCmd->save();
@@ -295,6 +297,7 @@ class mystrom extends eqLogic
                 $isDoubleActionCmd->setLogicalId('isDoubleAction');
                 $isDoubleActionCmd->setName(__('Action Appuyé 2 fois', __FILE__));
                 $isDoubleActionCmd->setType('action');
+                $isDoubleActionCmd->setSubType('other');
                 $isDoubleActionCmd->setEqLogic_id($this->getId());
                 $isDoubleActionCmd->setDisplay('showNameOndashboard', '0');
                 $isDoubleActionCmd->save();
@@ -319,6 +322,7 @@ class mystrom extends eqLogic
                 $isLongPressedActionCmd->setLogicalId('isLongPressedAction');
                 $isLongPressedActionCmd->setName(__('Action Appuyé longtemps', __FILE__));
                 $isLongPressedActionCmd->setType('action');
+                $isLongPressedActionCmd->setSubType('other');
                 $isLongPressedActionCmd->setEqLogic_id($this->getId());
                 $isLongPressedActionCmd->setDisplay('showNameOndashboard', '0');
                 $isLongPressedActionCmd->save();
