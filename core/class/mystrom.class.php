@@ -17,7 +17,7 @@
  */
 
 /* * ***************************Includes********************************* */
-if (isset($unitTest) == false) {
+if (file_exists(dirname(__FILE__) . '/../../../../core/php/core.inc.php')) {
     require_once dirname(__FILE__) . '/../php/mystrom.inc.php';
 }
 

@@ -201,7 +201,7 @@ class MyStromService
      */
     public function RetrieveLocalButtonInfo($ipAddress)
     {
-        $url = 'http://' + $ipAddress + '/api/v1/device';
+        $url = 'http://' . $ipAddress . '/api/v1/device';
         $result = $this->doHttpCall($url, 'GET');
 
         $jsonObj = json_decode($result);

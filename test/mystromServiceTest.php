@@ -1,12 +1,14 @@
 <?php
 use PHPUnit\Framework\TestCase;
 
+include_once('eqLogic.php');
+include_once('cmd.php');
 include_once('./test/jeedom.php');
-include_once('./core/mystrom/class/myStromDevice.class.php');
-include_once('./core/mystrom/class/myStromApiResult.class.php');
-include_once('./core/mystrom/class/getAllDevicesResult.class.php');
-include_once('./core/mystrom/class/mystromButtonDevice.class.php');
-include_once('./core/mystrom/class/mystromService.class.php');
+include_once('./core/class/myStromDevice.class.php');
+include_once('./core/class/myStromApiResult.class.php');
+include_once('./core/class/getAllDevicesResult.class.php');
+include_once('./core/class/mystromButtonDevice.class.php');
+include_once('./core/class/mystromService.class.php');
 
 /**
 * Test class for mystrom service class

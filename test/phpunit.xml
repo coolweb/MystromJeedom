@@ -6,7 +6,11 @@
          beStrictAboutOutputDuringTests="true"
          beStrictAboutTestsThatDoNotTestAnything="true"
          beStrictAboutTodoAnnotatedTests="true"
-         verbose="true">
+         verbose="true"
+         bootstrap="bootstrap.php">
+    <php>
+        <var name="unitTest" value="true" />
+    </php>
   <logging>
     <log type="coverage-html" target="d:/temp/report" lowUpperBound="35"
        highLowerBound="70"/>
@@ -15,5 +19,5 @@
         <whitelist processUncoveredFilesFromWhitelist="true">
             <directory suffix=".php">../core/class/</directory>
         </whitelist>
-    </filter>
+    </filter>    
 </phpunit>

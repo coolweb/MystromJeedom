@@ -1,8 +1,6 @@
 <?php
 use PHPUnit\Framework\TestCase;
 
-$unitTest = true;
-
 include_once('eqLogic.php');
 include_once('cmd.php');
 include_once('./core/class/myStromDevice.class.php');
