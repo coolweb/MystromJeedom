@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<info>
+    <id>mystrom</id>
+    <name>MyStrom</name>
+    <description>Gestion des équipements Eco Power Lan de MyStrom</description>
+    <icon>fa fa-keyboard-o</icon>
+    <licence>AGPL</licence>
+    <author>Christophe Jordens</author>
+    <installation>Aucune</installation>
+    <require>2.4.6</require>
+    <category>energy</category>
+    <version>1.1.0</version>
+</info>

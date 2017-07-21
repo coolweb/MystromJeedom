@@ -4,6 +4,6 @@
     "licence": "AGPL",
     "author": "Christophe Jordens",
     "installation" : "Aucune",
-    "require": "3.0",
+    "require": "2.4.6",
     "category": "energy"
 }
