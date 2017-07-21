@@ -1,4 +1,5 @@
 <?php
+
 /* This file is part of Jeedom.
  *
  * Jeedom is free software: you can redistribute it and/or modify
@@ -54,7 +55,7 @@ if (!isConnect()) {
             	action: "syncMyStrom",
             },
             dataType: 'json',
-            error: function (request, status, error) {
+            error: function (request, status, error) {                
             	handleAjaxError(request, status, error);
             },
             success: function (data) { // si l'appel a bien fonctionné

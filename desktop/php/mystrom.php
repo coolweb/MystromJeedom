@@ -2,14 +2,16 @@
 if (!isConnect('admin')) {
 	throw new Exception('{{401 - Accès non autorisé}}');
 }
-sendVarToJS('eqType', 'mystrom');
-$eqLogics = eqLogic::byType('mystrom');
+$plugin = plugin::byId('mystrom');
+sendVarToJS('eqType', $plugin->getId());
+$eqLogics = eqLogic::byType($plugin->getId());
 ?>
 
 <div class="row row-overflow">
     <div class="col-lg-2 col-md-3 col-sm-4">
         <div class="bs-sidebar">
             <ul id="ul_eqLogic" class="nav nav-list bs-sidenav">
+                <!--<a class="btn btn-default eqLogicAction" style="width : 100%;margin-top : 5px;margin-bottom: 5px;" data-action="add"><i class="fa fa-plus-circle"></i> {{Ajouter un équipement}}</a>-->
                 <li class="filter" style="margin-bottom: 5px;"><input class="filter form-control input-sm" placeholder="{{Rechercher}}" style="width: 100%"/></li>
                 <?php
 foreach ($eqLogics as $eqLogic) {
@@ -50,6 +52,7 @@ foreach ($eqLogics as $eqLogic) {
 </div>
 </div>
 
+<!-- edit/new form -->
 <div class="col-lg-10 col-md-9 col-sm-8 eqLogic" style="border-left: solid 1px #EEE; padding-left: 25px;display: none;">
     <form class="form-horizontal">
         <fieldset>
@@ -59,6 +62,25 @@ foreach ($eqLogics as $eqLogic) {
                 <div class="col-sm-3">
                     <input type="text" class="eqLogicAttr form-control" data-l1key="id" style="display : none;" />
                     <input disabled type="text" class="eqLogicAttr form-control" data-l1key="name" placeholder="{{Nom de l'équipement MyStrom}}"/>
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="col-sm-3 control-label" >{{Type}}</label>
+                <div class="col-sm-3">
+                    <select id="sel_object" class="eqLogicAttr form-control" data-l1key="configuration" data-l2key="mystromType">
+                        <option value="">{{Aucun}}</option>
+                        <option value="mst">{{CPL master (rouge)}}</option>
+                        <option value="sw">{{CPL escalve (blanc)}}</option>
+                        <option value="eth">{{CPL avec internet (bleu)}}</option>
+                        <option value="wsw">{{Interrupteur wifi}}</option>
+                        <option value="wbp">{{Wifi bouton plus}}</option>
+                   </select>
+               </div>
+           </div>
+            <div class="form-group" id="ipAddressCtrl">
+                <label class="col-sm-3 control-label">{{Adresse IP}}</label>
+                <div class="col-sm-3">
+                    <input type="text" class="eqLogicAttr form-control" data-l1key="configuration" data-l2key="ipAddress" placeholder="{{192.168.1.12}}"/>
                 </div>
             </div>
             <div class="form-group">
@@ -77,11 +99,16 @@ foreach (object::all() as $object) {
        <div class="form-group">
             <label class="col-sm-3 control-label" >{{Activer}}</label>
             <div class="col-sm-9">
-               <input type="checkbox" class="eqLogicAttr bootstrapSwitch" data-label-text="{{Activer}}" data-l1key="isEnable" checked/>
-               <input type="checkbox" class="eqLogicAttr bootstrapSwitch" data-label-text="{{Visible}}" data-l1key="isVisible" checked/>
-           </div>
+               <input type="checkbox" class="eqLogicAttr" data-label-text="{{Activer}}" data-l1key="isEnable" checked/>
+           </div>           
        </div>
-			 <div class="form-group">
+        <div class="form-group">
+            <label class="col-sm-3 control-label" >{{Visible}}</label>
+            <div class="col-sm-9">
+               <input type="checkbox" class="eqLogicAttr" data-label-text="{{Visible}}" data-l1key="isVisible" checked/>
+           </div>
+        </div>
+			 <div class="form-group" id="logicalIdCtrl">
 			 	<label class="col-sm-3 control-label">{{Identifiant}}</label>
 			 	<div class="col-sm-9">
 				 	<span class="eqLogicAttr label label-info" style="font-size:1em;" data-l1key="logicalId"></span>
@@ -114,5 +141,5 @@ foreach (object::all() as $object) {
 </div>
 </div>
 
-<?php include_file('desktop', 'mystrom', 'js', 'mystrom');?>
 <?php include_file('core', 'plugin.template', 'js');?>
+<?php include_file('desktop', 'mystrom', 'js', 'mystrom');?>
