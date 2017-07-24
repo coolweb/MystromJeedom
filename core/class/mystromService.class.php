@@ -238,9 +238,14 @@ class MyStromService
         $buttonApiUrl = 'http://' . $wifiButton->ipAddress . '/api/v1/device/' .
             $wifiButton->macAddress;
         
-        $this->doHttpCall($buttonApiUrl, $url . $cmdIdSingle);
-        $this->doHttpCall($buttonApiUrl, $url . $cmdIdDouble);
-        $this->doHttpCall($buttonApiUrl, $url . $cmdIdLong);
-        $this->doHttpCall($buttonApiUrl, $url . $cmdIdTouched);
+        try {
+            $this->doHttpCall($buttonApiUrl, $url . $cmdIdSingle);
+            $this->doHttpCall($buttonApiUrl, $url . $cmdIdDouble);
+            $this->doHttpCall($buttonApiUrl, $url . $cmdIdLong);
+            $this->doHttpCall($buttonApiUrl, $url . $cmdIdTouched);
+        } catch (Exception $e) {
+            $this->logWarning('SaveUrlsForWifiButton - ' . $e);
+            return false;
+        }
     }
 }

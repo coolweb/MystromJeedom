@@ -394,6 +394,37 @@ class mystromServiceTest extends TestCase
 
     public function testSaveUrlsFOrWifiButtonWhenButtonNotReachable_ShouldReturnFalse()
     {
-        
+        $target = $this->getMockBuilder(MyStromService::class)
+        ->setMethods([
+        'logDebug',
+        'logWarning',
+        'logInfo',
+        'getMyStromConfiguration',
+        'saveMystromConfiguration',
+        'doHttpCall'])
+        ->getMock();
+
+        $jeedomIp = gethostbyname(gethostname());
+        $button = new MystromButtonDevice();
+        $button->ipAddress = '192.168.1.2';
+        $button->macAddress = 'F1G2H3J5';
+
+        $singleId = '1';
+        $doubleId = '2';
+        $longId = '3';
+        $touchId = '4';
+
+        $target->expects($this->at(1))
+        ->method('doHttpCall')
+        ->with(
+            $this->equalTo('http://' . $button->ipAddress . '/api/v1/device/' . $button->macAddress),
+            $this->equalTo('get://' . $jeedomIp . '/core/jeeApi.php?apiKey%3D' 
+            . jeedom::getApiKey() . '%26type%3Dcmd%26id%3D' . $singleId),
+            'POST')
+        ->will($this->throwException(new Exception));
+
+        $result = $target->SaveUrlsForWifiButton($button, $singleId, $doubleId, $longId, $touchId);
+
+        $this->assertFalse(false);
     }
 }
