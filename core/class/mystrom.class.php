@@ -76,7 +76,7 @@ class mystrom extends eqLogic
             // new device created by user
             $this->setConfiguration('isLocal', true);
         } else {
-            $this->setConfiguration('isLocal', false);                
+            $this->setConfiguration('isLocal', false);
         }
     }
 
@@ -86,19 +86,16 @@ class mystrom extends eqLogic
 
     public function preSave()
     {
-        if($this->getConfiguration('isLocal') == true)
-        {
+        if ($this->getConfiguration('isLocal') == true) {
             // only mystrom button is supported for the moment
-            if($this->getConfiguration('mystromType') !== 'wbp')
-            {
+            if ($this->getConfiguration('mystromType') !== 'wbp') {
                 throw new Exception('Vous ne pouvez créer que le type Wifi Bouton Plus', 1);
             }
 
-            if($this->getConfiguration('ipAddress') == null || $this->getConfiguration('ipAddress') == '')
-            {
+            if ($this->getConfiguration('ipAddress') == null || $this->getConfiguration('ipAddress') == '') {
                 throw new Exception('Veuillez introduire l\'adresse ip de l\'équipement', 1);
             }
-        }        
+        }
     }
 
     /**
@@ -484,56 +481,102 @@ class mystrom extends eqLogic
 class mystromCmd extends cmd
 {
 
+    public function getEqLogicLogicalId()
+    {
+        $eqLogic = $this->getEqLogic();
+        $logicalId = $eqLogic->getLogicalId();
+
+        return $logicalId;
+    }
+
+    public function getEqLogicConfiguration($configurationName)
+    {
+        $eqLogic = $this->getEqLogic();
+        $configurationValue = $eqLogic->getConfiguration($configurationName);
+
+        return $configurationValue;
+    }
+
+    public function checkAndUpdateCmd($cmdName, $cmdValue)
+    {
+        $eqLogic = $this->getEqLogic();
+        $changed = $eqLogic->checkAndUpdateCmd($cmdName, $cmdValue);
+
+        return $changed;
+    }
+
+    public function refreshWidget()
+    {
+        $eqLogic = $this->getEqLogic();
+        $eqLogic->refreshWidget();
+    }
+
     /**
      * Method called by jeedom when a command is executed on a device.
      */
-    public function execute($_options = array())
+    public function execute($_options = array(), $mystromService = null)
     {
         if ($this->getType() == 'info') {
             return;
         }
 
-        $mystromService = new MyStromService();
+        if ($mystromService == null) {
+            $mystromService = new MyStromService();
+        }
+        
         $commandOk = false;
-        $eqLogic = $this->getEqLogic();
-        $mystromId = $eqLogic->getLogicalId();
-        $deviceType = $eqLogic->getConfiguration('mystromType');
+        $commandWifiButton = false;
+        $changed = false;
+        
+        $mystromId = $this->getEqLogicLogicalId();
+        $deviceType = $this->getEqLogicConfiguration('mystromType');
         $state = '';
+        $cmdLogicalId = $this->getLogicalId();
 
-        if ($this->getLogicalId() == 'on') {
+        if ($cmdLogicalId == 'on') {
             $commandOk = true;
             $state = 'on';
             $stateBinary = '1';
             $mystromService->setState($mystromId, $deviceType, true);
         }
 
-        if ($this->getLogicalId() == 'off') {
+        if ($cmdLogicalId == 'off') {
             $commandOk = true;
             $state = 'off';
             $stateBinary = '0';
             $mystromService->setState($mystromId, $deviceType, false);
         }
 
-        if ($this->getLogicalId() == 'restart') {
+        if ($cmdLogicalId == 'restart') {
             $commandOk = true;
             $state = 'off';
             $stateBinary = '0';
             $mystromService->setState($mystromId, $deviceType, false);
+        }
+
+        if ($cmdLogicalId == 'isTouchedAction') {
+            $commandOk = true;
+            $commandWifiButton = true;
+
+            $changed = $this->checkAndUpdateCmd('isTouched', 1) || $changed;
+            $changed = $this->checkAndUpdateCmd('isTouched', 0) || $changed;
         }
 
         if ($commandOk == false) {
             log::add('mystrom', 'error', "Commande non reconnue " . $this->getLogicalId());
         } else {
-            $changed = $eqLogic->checkAndUpdateCmd('state', $state) || $changed;
-            $changed = $eqLogic->checkAndUpdateCmd('stateBinary', $stateBinary) || $changed;
+            if ($commandWifiButton == false) {
+                $changed = $this->checkAndUpdateCmd('state', $state) || $changed;
+                $changed = $this->checkAndUpdateCmd('stateBinary', $stateBinary) || $changed;
 
-            $this->event($state);
+                $this->event($state);
 
-            if ($changed) {
-                $eqLogic->refreshWidget();
+                if ($changed) {
+                    $this->refreshWidget();
+                }
+
+                return $state;
             }
-
-            return $state;
         }
     }
 }
