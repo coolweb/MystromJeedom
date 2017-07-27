@@ -324,6 +324,24 @@ class mystrom extends eqLogic
                 $isLongPressedActionCmd->setDisplay('showNameOndashboard', '0');
                 $isLongPressedActionCmd->save();
             }
+
+            // save url of cmd into the button
+            $buttonIp = $this->getConfiguration('ipAddress');
+
+            if (is_null($buttonIp) === false && $buttonIp != '') {
+                $mystromService = new MyStromService();
+                $button = $mystromService->RetrieveLocalButtonInfo($buttonIp);
+                $mystromService->SaveUrlsForWifiButton(
+                $button,
+                $isSingleActionCmd->getId(),
+                $isDoubleActionCmd->getId(),
+                $isLongPressedActionCmd->getId(),
+                $isTouchedActionCmd->getId());
+
+                if ($button === null) {
+                    throw new Exception('Le bouton ne semble pas accessible, vérifiez l\'ip ou enlever les piles, remettez les et réessayez', 1);
+                }
+            }
         }
     }
 
@@ -480,6 +498,14 @@ class mystrom extends eqLogic
  */
 class mystromCmd extends cmd
 {
+    /**
+     * Logs a debug message
+     * @param $message string The message to log
+     */
+    public function logDebug($message)
+    {
+        log::add('mystrom', 'debug', $message);
+    }
 
     public function getEqLogicLogicalId()
     {
@@ -533,6 +559,8 @@ class mystromCmd extends cmd
         $state = '';
         $cmdLogicalId = $this->getLogicalId();
 
+        $this->logDebug('Execute cmd ' . $cmdLogicalId);
+
         if ($cmdLogicalId == 'on') {
             $commandOk = true;
             $state = 'on';
@@ -560,6 +588,30 @@ class mystromCmd extends cmd
 
             $changed = $this->checkAndUpdateCmd('isTouched', 1) || $changed;
             $changed = $this->checkAndUpdateCmd('isTouched', 0) || $changed;
+        }
+
+        if ($cmdLogicalId == 'isSingleAction') {
+            $commandOk = true;
+            $commandWifiButton = true;
+
+            $changed = $this->checkAndUpdateCmd('isSingle', 1) || $changed;
+            $changed = $this->checkAndUpdateCmd('isSingle', 0) || $changed;
+        }
+
+        if ($cmdLogicalId == 'isDoubleAction') {
+            $commandOk = true;
+            $commandWifiButton = true;
+
+            $changed = $this->checkAndUpdateCmd('isDouble', 1) || $changed;
+            $changed = $this->checkAndUpdateCmd('isDouble', 0) || $changed;
+        }
+
+        if ($cmdLogicalId == 'isLongPressedAction') {
+            $commandOk = true;
+            $commandWifiButton = true;
+
+            $changed = $this->checkAndUpdateCmd('isLongPressed', 1) || $changed;
+            $changed = $this->checkAndUpdateCmd('isLongPressed', 0) || $changed;
         }
 
         if ($commandOk == false) {
