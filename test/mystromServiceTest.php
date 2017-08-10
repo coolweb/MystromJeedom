@@ -343,7 +343,19 @@ class mystromServiceTest extends TestCase
         'doHttpCall'])
         ->getMock();
 
-        $jeedomIp = gethostbyname(gethostname());
+        $target->method('logWarning')
+        ->will($this->returnCallback(function($message){
+            throw new Exception($message);
+        }));
+
+        $jeedomIp = '192.168.1.10';
+        $target->method('getMyStromConfiguration')
+        ->with(
+            $this->equalTo('internalAddr'),
+            $this->equalTo(true)
+        )
+        ->willReturn($jeedomIp);
+
         $button = new MystromButtonDevice();
         $button->ipAddress = '192.168.1.2';
         $button->macAddress = 'F1G2H3J5';
@@ -353,41 +365,25 @@ class mystromServiceTest extends TestCase
         $longId = '3';
         $touchId = '4';
 
-        $target->expects($this->at(1))
-        ->method('doHttpCall')
-        ->with(
-            $this->equalTo('http://' . $button->ipAddress . '/api/v1/device/' . $button->macAddress),
-            $this->equalTo('get://' . $jeedomIp . '/core/jeeApi.php?apiKey%3D' 
-            . jeedom::getApiKey() . '%26type%3Dcmd%26id%3D' . $singleId),
-            'POST')
-        ->willReturn('');
+        $buttonUrl = 'http://' . $button->ipAddress . '/api/v1/device/' . $button->macAddress;
+        $singleUrl = 'single=get://' . $jeedomIp . '/core/api/jeeApi.php?apikey%3D' 
+            . jeedom::getApiKey() . '%26type%3Dcmd%26id%3D' . $singleId;
+        $doubleUrl = 'double=get://' . $jeedomIp . '/core/api/jeeApi.php?apikey%3D' 
+            . jeedom::getApiKey() . '%26type%3Dcmd%26id%3D' . $doubleId;
+        $longUrl = 'long=get://' . $jeedomIp . '/core/api/jeeApi.php?apikey%3D' 
+            . jeedom::getApiKey() . '%26type%3Dcmd%26id%3D' . $longId;
+        $touchUrl = 'touch=get://' . $jeedomIp . '/core/api/jeeApi.php?apikey%3D' 
+            . jeedom::getApiKey() . '%26type%3Dcmd%26id%3D' . $touchId;
 
-        $target->expects($this->at(2))
+        $target->expects($this->exactly(4))
         ->method('doHttpCall')
-        ->with(
-            $this->equalTo('http://' . $button->ipAddress . '/api/v1/device/' . $button->macAddress),
-            $this->equalTo('get://' . $jeedomIp . '/core/jeeApi.php?apiKey%3D' 
-            . jeedom::getApiKey() . '%26type%3Dcmd%26id%3D' . $doubleId),
-            'POST')
-        ->willReturn('');
-
-        $target->expects($this->at(3))
-        ->method('doHttpCall')
-        ->with(
-            $this->equalTo('http://' . $button->ipAddress . '/api/v1/device/' . $button->macAddress),
-            $this->equalTo('get://' . $jeedomIp . '/core/jeeApi.php?apiKey%3D' 
-            . jeedom::getApiKey() . '%26type%3Dcmd%26id%3D' . $longId),
-            'POST')
-        ->willReturn('');
-
-        $target->expects($this->at(4))
-        ->method('doHttpCall')
-        ->with(
-            $this->equalTo('http://' . $button->ipAddress . '/api/v1/device/' . $button->macAddress),
-            $this->equalTo('get://' . $jeedomIp . '/core/jeeApi.php?apiKey%3D' 
-            . jeedom::getApiKey() . '%26type%3Dcmd%26id%3D' . $touchId),
-            'POST')
-        ->willReturn('');
+        ->withConsecutive(
+            [$this->equalTo($buttonUrl), $this->equalTo($singleUrl), $this->equalTo('POST')],
+            [$this->equalTo($buttonUrl), $this->equalTo($doubleUrl), $this->equalTo('POST')],
+            [$this->equalTo($buttonUrl), $this->equalTo($longUrl), $this->equalTo('POST')],
+            [$this->equalTo($buttonUrl), $this->equalTo($touchUrl), $this->equalTo('POST')]
+        )
+        ->willReturnOnConsecutiveCalls('','','','');
 
         $target->SaveUrlsForWifiButton($button, $singleId, $doubleId, $longId, $touchId);
     }
@@ -404,7 +400,14 @@ class mystromServiceTest extends TestCase
         'doHttpCall'])
         ->getMock();
 
-        $jeedomIp = gethostbyname(gethostname());
+        $jeedomIp = '192.168.1.10';
+        $target->method('getMyStromConfiguration')
+        ->with(
+            $this->equalTo('internalAddr'),
+            $this->equalTo(true)
+        )
+        ->willReturn($jeedomIp);
+
         $button = new MystromButtonDevice();
         $button->ipAddress = '192.168.1.2';
         $button->macAddress = 'F1G2H3J5';
@@ -414,11 +417,11 @@ class mystromServiceTest extends TestCase
         $longId = '3';
         $touchId = '4';
 
-        $target->expects($this->at(1))
+        $target->expects($this->once())
         ->method('doHttpCall')
         ->with(
             $this->equalTo('http://' . $button->ipAddress . '/api/v1/device/' . $button->macAddress),
-            $this->equalTo('get://' . $jeedomIp . '/core/jeeApi.php?apiKey%3D' 
+            $this->equalTo('single=get://' . $jeedomIp . '/core/api/jeeApi.php?apikey%3D' 
             . jeedom::getApiKey() . '%26type%3Dcmd%26id%3D' . $singleId),
             'POST')
         ->will($this->throwException(new Exception));

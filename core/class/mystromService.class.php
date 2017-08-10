@@ -10,11 +10,13 @@ class MyStromService
     /**
     * Get a configuration value of the plugin.
     * @param $key string The name of the configuration to retrieve
+    * @param $isCoreConfig Optional (Default is false) Indicate if retrieve configuration in core jeedom or
+    *        mystrom plugin.
     * @return The value of the configuration, null il not exists
     */
-    public function getMyStromConfiguration($key)
+    public function getMyStromConfiguration($key, $isCoreConfig = false)
     {
-        return config::byKey($key, 'mystrom');
+        return config::byKey($key, $isCoreConfig == true ? 'core' : 'mystrom');
     }
     
     /**
@@ -283,7 +285,7 @@ class MyStromService
     {
         $this->logDebug('SaveUrlsForWifiButton - ' . $wifiButton->ipAddress);
         
-        $jeedomIp = config::byKey('internalAddr', 'core');
+        $jeedomIp = $this->getMyStromConfiguration('internalAddr', true);
         $apiKey = jeedom::getApiKey();
         $url = 'get://' . $jeedomIp . '/core/api/jeeApi.php?apikey%3D' . $apiKey .
             '%26type%3Dcmd%26id%3D';

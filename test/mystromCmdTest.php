@@ -48,7 +48,7 @@ class mystromCmdTest extends TestCase
         ->getMock();
 
         $this->target = $this->getMockBuilder(mystromCmd::class)
-        ->setMethods(['getEqLogicLogicalId', 'getEqLogicConfiguration', 'getLogicalId', 'getType', 'checkAndUpdateCmd'])
+        ->setMethods(['getEqLogicLogicalId', 'getEqLogicConfiguration', 'getLogicalId', 'getType', 'checkAndUpdateCmd', 'logDebug'])
         ->getMock();
     }
 
