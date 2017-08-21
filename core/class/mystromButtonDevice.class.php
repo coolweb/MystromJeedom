@@ -3,10 +3,8 @@
 /**
  * Entity class for mystrom wifi button.
  */
-class MystromButtonDevice
-{
-    public $macAddress = '';
-    public $ipAddress = '';
+class MystromButtonDevice extends MystromBaseDevice
+{    
     public $singleUrl ='';
     public $doubleUrl = '';
     public $longUrl = '';

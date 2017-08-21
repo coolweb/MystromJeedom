@@ -3,13 +3,9 @@
 /**
  * Represents a mystrom device
  */
-class MyStromDevice
+class MyStromDevice extends MystromBaseDevice
 {
-    public $id = '';
-    public $name = '';
-    public $type = '';
     public $daylyConsumption = '';
     public $monthlyConsumption = '';
-    public $state = '';
     public $power = '';
 }

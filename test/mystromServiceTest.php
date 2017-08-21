@@ -4,6 +4,7 @@ use PHPUnit\Framework\TestCase;
 include_once('eqLogic.php');
 include_once('cmd.php');
 include_once('./test/jeedom.php');
+include_once('./core/class/mystromBaseDevice.class.php');
 include_once('./core/class/myStromDevice.class.php');
 include_once('./core/class/myStromApiResult.class.php');
 include_once('./core/class/getAllDevicesResult.class.php');
@@ -143,6 +144,47 @@ class mystromServiceTest extends TestCase
         $this->assertEquals($result->devices[1]->type, $device2->type);
         $this->assertEquals($result->devices[1]->name, $device2->name);
         $this->assertEquals($result->devices[1]->power, $device2->power);
+    }
+
+    public function testLoadAllDevicesWhenButtonShouldReturnTheButtonClass()
+    {
+        $target = $this->getMockBuilder(MyStromService::class)
+        ->setMethods([
+        'logDebug',
+        'logWarning',
+        'logInfo',
+        'getMyStromConfiguration',
+        'saveMystromConfiguration',
+        'doJsonCall'])
+        ->getMock();
+        
+        $jsonObject = new stdClass();
+        @$jsonObject->status = 'ok';
+        @$jsonObject->devices = array();
+        
+        $device1 = new stdClass();
+        @$device1->id = '1234';
+        @$device1->type = 'wbp';
+        @$device1->name = 'device1';
+        @$device1->state = 'offline';
+        @$device1->power = '0';
+        array_push($jsonObject->devices, $device1);
+        
+        $target->method('doJsonCall')
+        ->willReturn($jsonObject);
+
+        $target->expects($this->once())
+        ->method('doJsonCall')
+        ->with($this->equalTo('https://www.mystrom.ch/mobile/devices?authToken='));
+        
+        $result = $target->loadAllDevicesFromServer();
+        
+        $this->assertEquals(count($result->devices), 1);
+        $this->assertEquals($result->devices[0]->id, $device1->id);
+        $this->assertEquals($result->devices[0]->type, $device1->type);
+        $this->assertEquals($result->devices[0]->name, $device1->name);
+        $this->assertEquals($result->devices[0]->state, $device1->state);
+        $this->assertTrue($result->devices[0] instanceof MystromButtonDevice);
     }
 
     public function testLoadAllDevicesWhenLoadReportDataShouldReturnTheConsumptions()
@@ -331,7 +373,7 @@ class mystromServiceTest extends TestCase
         $this->assertEquals($buttonInfo->macAddress, '7C2F1D4G5H');
     }
 
-    public function testSaveUrlsFOrWifiButtonWhenSaved_ShouldCallTheCorrectUrls()
+    public function testSaveUrlsForLocalWifiButtonWhenSaved_ShouldCallTheCorrectUrls()
     {
         $target = $this->getMockBuilder(MyStromService::class)
         ->setMethods([
@@ -359,6 +401,7 @@ class mystromServiceTest extends TestCase
         $button = new MystromButtonDevice();
         $button->ipAddress = '192.168.1.2';
         $button->macAddress = 'F1G2H3J5';
+        $button->isLocal= true;
 
         $singleId = '1';
         $doubleId = '2';
@@ -388,7 +431,7 @@ class mystromServiceTest extends TestCase
         $target->SaveUrlsForWifiButton($button, $singleId, $doubleId, $longId, $touchId);
     }
 
-    public function testSaveUrlsFOrWifiButtonWhenButtonNotReachable_ShouldReturnFalse()
+    public function testSaveUrlsForLocalWifiButtonWhenButtonNotReachable_ShouldReturnFalse()
     {
         $target = $this->getMockBuilder(MyStromService::class)
         ->setMethods([
@@ -411,6 +454,7 @@ class mystromServiceTest extends TestCase
         $button = new MystromButtonDevice();
         $button->ipAddress = '192.168.1.2';
         $button->macAddress = 'F1G2H3J5';
+        $button->isLocal= true;
 
         $singleId = '1';
         $doubleId = '2';
@@ -429,5 +473,64 @@ class mystromServiceTest extends TestCase
         $result = $target->SaveUrlsForWifiButton($button, $singleId, $doubleId, $longId, $touchId);
 
         $this->assertFalse(false);
+    }
+
+    public function testSaveUrlsForServerWifiButtonWhenSaved_ShouldCallTheCorrectUrls()
+    {
+        $target = $this->getMockBuilder(MyStromService::class)
+        ->setMethods([
+        'logDebug',
+        'logWarning',
+        'logInfo',
+        'getMyStromConfiguration',
+        'saveMystromConfiguration',
+        'doHttpCall'])
+        ->getMock();
+
+        $target->method('logWarning')
+        ->will($this->returnCallback(function($message){
+            throw new Exception($message);
+        }));
+
+        $jeedomIp = '192.168.1.10';
+        $authToken = 'xyz';
+        $target->method('getMyStromConfiguration')
+        ->withConsecutive(
+            [$this->equalTo('internalAddr'), $this->equalTo(true)],
+            [$this->equalTo('authToken')]
+        )
+        ->willReturnOnConsecutiveCalls($jeedomIp, $authToken);
+
+        $button = new MystromButtonDevice();
+        $button->id = '123456';
+        $button->isLocal = false;
+
+        $singleId = '1';
+        $doubleId = '2';
+        $longId = '3';
+        $touchId = '4';
+
+        $serverUrl = 'https://www.mystrom.ch/mobile/device/setSettings?authToken=' . $authToken .
+        '&id=' . $button->id;
+        $singleUrl = 'get://' . $jeedomIp . '/core/api/jeeApi.php?apikey%3D' 
+            . jeedom::getApiKey() . '%26type%3Dcmd%26id%3D' . $singleId;
+        $doubleUrl = 'get://' . $jeedomIp . '/core/api/jeeApi.php?apikey%3D' 
+            . jeedom::getApiKey() . '%26type%3Dcmd%26id%3D' . $doubleId;
+        $longUrl = 'get://' . $jeedomIp . '/core/api/jeeApi.php?apikey%3D' 
+            . jeedom::getApiKey() . '%26type%3Dcmd%26id%3D' . $longId;
+        $touchUrl = 'get://' . $jeedomIp . '/core/api/jeeApi.php?apikey%3D' 
+            . jeedom::getApiKey() . '%26type%3Dcmd%26id%3D' . $touchId;
+        $urlToBeCalled = $serverUrl .
+                        '&localSingleUrl=' . $singleUrl .
+                        '&localDoubleUrl=' . $doubleUrl .
+                        '&localLongUrl=' . $longUrl .
+                        '&localTouchUrl=' . $touchUrl;
+
+        $target->expects($this->once())
+        ->method('doHttpCall')
+        ->with($this->equalTo($urlToBeCalled), null, $this->equalTo('GET'))
+        ->willReturn('');
+
+        $target->SaveUrlsForWifiButton($button, $singleId, $doubleId, $longId, $touchId);
     }
 }

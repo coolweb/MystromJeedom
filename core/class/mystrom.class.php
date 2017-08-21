@@ -1,20 +1,20 @@
 <?php
 
 /* This file is part of Jeedom.
- *
- * Jeedom is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * Jeedom is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with Jeedom. If not, see <http://www.gnu.org/licenses/>.
- */
+*
+* Jeedom is free software: you can redistribute it and/or modify
+* it under the terms of the GNU General Public License as published by
+* the Free Software Foundation, either version 3 of the License, or
+* (at your option) any later version.
+*
+* Jeedom is distributed in the hope that it will be useful,
+* but WITHOUT ANY WARRANTY; without even the implied warranty of
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+* GNU General Public License for more details.
+*
+* You should have received a copy of the GNU General Public License
+* along with Jeedom. If not, see <http://www.gnu.org/licenses/>.
+*/
 
 /* * ***************************Includes********************************* */
 if (file_exists(dirname(__FILE__) . '/../../../../core/php/core.inc.php')) {
@@ -22,54 +22,54 @@ if (file_exists(dirname(__FILE__) . '/../../../../core/php/core.inc.php')) {
 }
 
 /*
- * Plugin for mystrom eco power lan device.
- */
+* Plugin for mystrom eco power lan device.
+*/
 class mystrom extends eqLogic
 {
     private static $_eqLogics = null;
-
+    
     /**
-     * Logs an error message
-     * @param $message string The message to log
-     */
+    * Logs an error message
+    * @param $message string The message to log
+    */
     public function logError($message)
     {
         log::add('mystrom', 'error', $message);
     }
-
+    
     /**
-     * Logs a debug message
-     * @param $message string The message to log
-     */
+    * Logs a debug message
+    * @param $message string The message to log
+    */
     public function logDebug($message)
     {
         log::add('mystrom', 'debug', $message);
     }
-
+    
     /**
-     * Logs an info message
-     * @param $message string The message to log
-     */
+    * Logs an info message
+    * @param $message string The message to log
+    */
     public function logInfo($message)
     {
         log::add('mystrom', 'info', $message);
     }
-
+    
     public function loadEqLogic()
     {
         return mystrom::byType('mystrom');
     }
-
+    
     /*
-     * Fonction exécutée automatiquement toutes les minutes par Jeedom
-     */
+    * Fonction exécutée automatiquement toutes les minutes par Jeedom
+    */
     public static function cron()
     {
         log::add('mystrom', 'debug', 'pull started');
         $mystromPlugin = new mystrom();
         $mystromPlugin->pull();
     }
-
+    
     public function preInsert()
     {
         if ($this->getLogicalId() == null || $this->getLogicalId() == "") {
@@ -79,11 +79,11 @@ class mystrom extends eqLogic
             $this->setConfiguration('isLocal', false);
         }
     }
-
+    
     public function postInsert()
     {
     }
-
+    
     public function preSave()
     {
         if ($this->getConfiguration('isLocal') == true) {
@@ -91,21 +91,22 @@ class mystrom extends eqLogic
             if ($this->getConfiguration('mystromType') !== 'wbp') {
                 throw new Exception('Vous ne pouvez créer que le type Wifi Bouton Plus', 1);
             }
-
+            
             if ($this->getConfiguration('ipAddress') == null || $this->getConfiguration('ipAddress') == '') {
                 throw new Exception('Veuillez introduire l\'adresse ip de l\'équipement', 1);
             }
         }
     }
-
+    
     /**
-     * Function called by jeedom after the save of a device.
-     */
+    * Function called by jeedom after the save of a device.
+    */
     public function postSave()
     {
         log::add('mystrom', 'debug', "Ajout des commandes sur l'équipement");
-
-        if ($this->getConfiguration('isLocal') == null || $this->getConfiguration('isLocal') == false) {
+        $deviceType = $this->getConfiguration('mystromType');
+        
+        if ($deviceType == 'mst' || $deviceType == 'eth' || $deviceType == 'sw' || $deviceType == 'wsw') {
             $state = $this->getCmd(null, 'state');
             if (!is_object($state)) {
                 $state = new mystromCmd();
@@ -117,7 +118,7 @@ class mystrom extends eqLogic
                 $state->setDisplay('showOndashboard', '0');
                 $state->save();
             }
-
+            
             $stateBinary = $this->getCmd(null, 'stateBinary');
             if (!is_object($stateBinary)) {
                 $stateBinary = new mystromCmd();
@@ -132,9 +133,9 @@ class mystrom extends eqLogic
                 $stateBinary->setSubType('binary');
             }
             $stateBinary->save();
-
+            
             $cmdid = $stateBinary->getId();
-
+            
             if ($this->getConfiguration('mystromType') != 'mst') {
                 $on = $this->getCmd(null, 'on');
                 if (!is_object($on)) {
@@ -151,7 +152,7 @@ class mystrom extends eqLogic
                     $on->setValue($cmdid);
                     $on->save();
                 }
-
+                
                 $off = $this->getCmd(null, 'off');
                 if (!is_object($off)) {
                     $off = new mystromCmd();
@@ -180,7 +181,7 @@ class mystrom extends eqLogic
                     $restart->save();
                 }
             }
-
+            
             $conso = $this->getCmd(null, 'conso');
             if (!is_object($conso)) {
                 $conso = new mystromCmd();
@@ -194,7 +195,7 @@ class mystrom extends eqLogic
                 $conso->setUnite('w');
                 $conso->save();
             }
-
+            
             $cmd = $this->getCmd(null, 'dailyConso');
             if (!is_object($cmd)) {
                 $cmd = new mystromCmd();
@@ -209,7 +210,7 @@ class mystrom extends eqLogic
                 $cmd->setIsHistorized(1);
                 $cmd->save();
             }
-
+            
             $cmd = $this->getCmd(null, 'monthlyConso');
             if (!is_object($cmd)) {
                 $cmd = new mystromCmd();
@@ -237,7 +238,7 @@ class mystrom extends eqLogic
                 $isTouchedCmd->setDisplay('showNameOndashboard', '1');
                 $isTouchedCmd->save();
             }
-
+            
             $isTouchedActionCmd = $this->getCmd(null, 'isTouchedAction');
             if (!is_object($isTouchedActionCmd)) {
                 $isTouchedActionCmd = new mystromCmd();
@@ -249,7 +250,7 @@ class mystrom extends eqLogic
                 $isTouchedActionCmd->setDisplay('showNameOndashboard', '0');
                 $isTouchedActionCmd->save();
             }
-
+            
             $isSingleCmd = $this->getCmd(null, 'isSingle');
             if (!is_object($isSingleCmd)) {
                 $isSingleCmd = new mystromCmd();
@@ -262,7 +263,7 @@ class mystrom extends eqLogic
                 $isSingleCmd->setDisplay('showNameOndashboard', '1');
                 $isSingleCmd->save();
             }
-
+            
             $isSingleActionCmd = $this->getCmd(null, 'isSingleAction');
             if (!is_object($isSingleActionCmd)) {
                 $isSingleActionCmd = new mystromCmd();
@@ -274,7 +275,7 @@ class mystrom extends eqLogic
                 $isSingleActionCmd->setDisplay('showNameOndashboard', '0');
                 $isSingleActionCmd->save();
             }
-
+            
             $isDoubleCmd = $this->getCmd(null, 'isDouble');
             if (!is_object($isDoubleCmd)) {
                 $isDoubleCmd = new mystromCmd();
@@ -287,7 +288,7 @@ class mystrom extends eqLogic
                 $isDoubleCmd->setDisplay('showNameOndashboard', '1');
                 $isDoubleCmd->save();
             }
-
+            
             $isDoubleActionCmd = $this->getCmd(null, 'isDoubleAction');
             if (!is_object($isDoubleActionCmd)) {
                 $isDoubleActionCmd = new mystromCmd();
@@ -299,7 +300,7 @@ class mystrom extends eqLogic
                 $isDoubleActionCmd->setDisplay('showNameOndashboard', '0');
                 $isDoubleActionCmd->save();
             }
-
+            
             $isLongPressedCmd = $this->getCmd(null, 'isLongPressed');
             if (!is_object($isLongPressedCmd)) {
                 $isLongPressedCmd = new mystromCmd();
@@ -312,7 +313,7 @@ class mystrom extends eqLogic
                 $isLongPressedCmd->setDisplay('showNameOndashboard', '1');
                 $isLongPressedCmd->save();
             }
-
+            
             $isLongPressedActionCmd = $this->getCmd(null, 'isLongPressedAction');
             if (!is_object($isLongPressedActionCmd)) {
                 $isLongPressedActionCmd = new mystromCmd();
@@ -324,70 +325,86 @@ class mystrom extends eqLogic
                 $isLongPressedActionCmd->setDisplay('showNameOndashboard', '0');
                 $isLongPressedActionCmd->save();
             }
-
+            
             // save url of cmd into the button
-            $buttonIp = $this->getConfiguration('ipAddress');
-
-            if (is_null($buttonIp) === false && $buttonIp != '') {
-                $mystromService = new MyStromService();
-                $button = $mystromService->RetrieveLocalButtonInfo($buttonIp);
-                $mystromService->SaveUrlsForWifiButton(
-                $button,
-                $isSingleActionCmd->getId(),
-                $isDoubleActionCmd->getId(),
-                $isLongPressedActionCmd->getId(),
-                $isTouchedActionCmd->getId());
-
-                if ($button === null) {
-                    throw new Exception('Le bouton ne semble pas accessible, vérifiez l\'ip ou enlever les piles, remettez les et réessayez', 1);
+            if ($this->getConfiguration('isLocal') == true) {
+                $buttonIp = $this->getConfiguration('ipAddress');
+                
+                if (is_null($buttonIp) === false && $buttonIp != '') {
+                    $mystromService = new MyStromService();
+                    $button = $mystromService->RetrieveLocalButtonInfo($buttonIp);
+                    $mystromService->SaveUrlsForWifiButton(
+                    $button,
+                    $isSingleActionCmd->getId(),
+                    $isDoubleActionCmd->getId(),
+                    $isLongPressedActionCmd->getId(),
+                    $isTouchedActionCmd->getId());
+                    
+                    if ($button === null) {
+                        throw new Exception('Le bouton ne semble pas accessible, vérifiez l\'ip ou enlever les piles, remettez les et réessayez', 1);
+                    }
                 }
+            } else {
+                $this->setConfiguration('ipAddress', null);
+                
+                $button = new MystromButtonDevice();
+                $button->id = $this->getLogicalId();
+                $button->isLocal = false;
+
+                $mystromService = new MyStromService();
+                $mystromService->SaveUrlsForWifiButton(
+                    $button,
+                    $isSingleActionCmd->getId(),
+                    $isDoubleActionCmd->getId(),
+                    $isLongPressedActionCmd->getId(),
+                    $isTouchedActionCmd->getId());
             }
         }
     }
-
+    
     public function preUpdate()
     {
     }
-
+    
     public function postUpdate()
     {
     }
-
+    
     public function preRemove()
     {
     }
-
+    
     public function postRemove()
     {
     }
-
+    
     /**
-     * Returns the mystrom api url.
-     * @return A string containing the url.
-     */
+    * Returns the mystrom api url.
+    * @return A string containing the url.
+    */
     public function getMystromUrl()
     {
         return 'https://www.mystrom.ch/mobile';
     }
-
+    
     public function getEqLogicByLogicalId($id)
     {
         return mystrom::byLogicalId($id, 'mystrom');
     }
-
+    
     /**
-     * Get all device from the user account.
-     * @return An array with device objects from jeedom database.
-     */
+    * Get all device from the user account.
+    * @return An array with device objects from jeedom database.
+    */
     public static function getAllDevices()
     {
         $logger = log::getLogger('mystrom');
         log::add('mystrom', 'debug', 'getAllDevices');
-
+        
         $devices = array();
         $jeedomDevices = eqLogic::byType('mystrom');
         log::add('mystrom', 'debug', 'jeedom devices retrieved');
-
+        
         foreach ($jeedomDevices as $eqLogic) {
             $device = new stdClass();
             @$device->logicalId = $eqLogic->getLogicalId();
@@ -396,20 +413,20 @@ class mystrom extends eqLogic
             @$device->isEnable = $eqLogic->getIsEnable();
             $devices[] = $device;
         }
-
+        
         return $devices;
     }
-
+    
     /**
-     * Load all devices from mystrom api, create devices into jeedom if
-     * not existing or update names if already exist into jeedom database.
-     * @return A string empty if success otherwhise an error message.
-     */
+    * Load all devices from mystrom api, create devices into jeedom if
+    * not existing or update names if already exist into jeedom database.
+    * @return A string empty if success otherwhise an error message.
+    */
     public function syncMyStrom()
     {
         $this->logDebug('syncMyStrom');
         $mystromService = new MyStromService();
-
+        
         if ($mystromService->doAuthentification()) {
             $this->logInfo('Recherche des équipements mystrom');
             $resultDevices = $mystromService->loadAllDevicesFromServer();
@@ -426,13 +443,13 @@ class mystrom extends eqLogic
                         $eqLogic->setCategory('energy', 1);
                         $eqLogic->setConfiguration('mystromType', $device->type);
                     }
-
+                    
                     $eqLogic->setName($device->name);
                     $eqLogic->save();
                 }
-
+                
                 $this->logDebug('Ajout des équipements dans la base de données');
-
+                
                 return '';
             } else {
                 $this->logError('Erreur de recherche des équipements: ' . $resultDevices->error);
@@ -442,50 +459,50 @@ class mystrom extends eqLogic
             throw new Exception('Erreur d\'authentification voir les logs');
         }
     }
-
+    
     /**
-     * Refresh data as state, consommation, ... for all devices.
-     */
+    * Refresh data as state, consommation, ... for all devices.
+    */
     public function pull($mystromService = null)
     {
         if ($mystromService == null) {
             $mystromService = new MyStromService();
         }
-
+        
         mystrom::$_eqLogics = $this->loadEqLogic();
-
+        
         $resultDevices = $mystromService->loadAllDevicesFromServer(true);
         $foundMystromDevice = null;
-
+        
         if (strcmp($resultDevices->status, 'ok') == -1) {
             $this->logError('Error retrieving devices status: ' . $resultDevices->error);
             return;
         }
-
+        
         foreach (mystrom::$_eqLogics as $eqLogic) {
             $foundMystromDevice = null;
             $changed = false;
-
+            
             foreach ($resultDevices->devices as $device) {
                 if ($device->id == $eqLogic->getLogicalId()) {
                     $this->logDebug("Equipement trouvé avec id " . $device->id);
-
+                    
                     $foundMystromDevice = $device;
                 }
             }
-
+            
             if ($foundMystromDevice == null) {
                 $this->logError('Impossible de trouver l\'équipement mystrom id '
                 . $eqLogic->getLogicalId());
                 continue;
             }
-
+            
             $changed = $eqLogic->checkAndUpdateCmd('state', $foundMystromDevice->state) || $changed;
             $changed = $eqLogic->checkAndUpdateCmd('stateBinary', (($foundMystromDevice->state == 'on') ? '1' : '0')) || $changed;
             $changed = $eqLogic->checkAndUpdateCmd('conso', $foundMystromDevice->power) || $changed;
             $changed = $eqLogic->checkAndUpdateCmd('dailyConso', $foundMystromDevice->daylyConsumption) || $changed;
             $changed = $eqLogic->checkAndUpdateCmd('monthlyConso', $foundMystromDevice->monthlyConsumption) || $changed;
-
+            
             if ($changed) {
                 $eqLogic->refreshWidget();
             }
@@ -494,58 +511,58 @@ class mystrom extends eqLogic
 }
 
 /**
- * Command class for mystrom plugin.
- */
+* Command class for mystrom plugin.
+*/
 class mystromCmd extends cmd
 {
     /**
-     * Logs a debug message
-     * @param $message string The message to log
-     */
+    * Logs a debug message
+    * @param $message string The message to log
+    */
     public function logDebug($message)
     {
         log::add('mystrom', 'debug', $message);
     }
-
+    
     public function getEqLogicLogicalId()
     {
         $eqLogic = $this->getEqLogic();
         $logicalId = $eqLogic->getLogicalId();
-
+        
         return $logicalId;
     }
-
+    
     public function getEqLogicConfiguration($configurationName)
     {
         $eqLogic = $this->getEqLogic();
         $configurationValue = $eqLogic->getConfiguration($configurationName);
-
+        
         return $configurationValue;
     }
-
+    
     public function checkAndUpdateCmd($cmdName, $cmdValue)
     {
         $eqLogic = $this->getEqLogic();
         $changed = $eqLogic->checkAndUpdateCmd($cmdName, $cmdValue);
-
+        
         return $changed;
     }
-
+    
     public function refreshWidget()
     {
         $eqLogic = $this->getEqLogic();
         $eqLogic->refreshWidget();
     }
-
+    
     /**
-     * Method called by jeedom when a command is executed on a device.
-     */
+    * Method called by jeedom when a command is executed on a device.
+    */
     public function execute($_options = array(), $mystromService = null)
     {
         if ($this->getType() == 'info') {
             return;
         }
-
+        
         if ($mystromService == null) {
             $mystromService = new MyStromService();
         }
@@ -558,75 +575,75 @@ class mystromCmd extends cmd
         $deviceType = $this->getEqLogicConfiguration('mystromType');
         $state = '';
         $cmdLogicalId = $this->getLogicalId();
-
+        
         $this->logDebug('Execute cmd ' . $cmdLogicalId);
-
+        
         if ($cmdLogicalId == 'on') {
             $commandOk = true;
             $state = 'on';
             $stateBinary = '1';
             $mystromService->setState($mystromId, $deviceType, true);
         }
-
+        
         if ($cmdLogicalId == 'off') {
             $commandOk = true;
             $state = 'off';
             $stateBinary = '0';
             $mystromService->setState($mystromId, $deviceType, false);
         }
-
+        
         if ($cmdLogicalId == 'restart') {
             $commandOk = true;
             $state = 'off';
             $stateBinary = '0';
             $mystromService->setState($mystromId, $deviceType, false);
         }
-
+        
         if ($cmdLogicalId == 'isTouchedAction') {
             $commandOk = true;
             $commandWifiButton = true;
-
+            
             $changed = $this->checkAndUpdateCmd('isTouched', 1) || $changed;
             $changed = $this->checkAndUpdateCmd('isTouched', 0) || $changed;
         }
-
+        
         if ($cmdLogicalId == 'isSingleAction') {
             $commandOk = true;
             $commandWifiButton = true;
-
+            
             $changed = $this->checkAndUpdateCmd('isSingle', 1) || $changed;
             $changed = $this->checkAndUpdateCmd('isSingle', 0) || $changed;
         }
-
+        
         if ($cmdLogicalId == 'isDoubleAction') {
             $commandOk = true;
             $commandWifiButton = true;
-
+            
             $changed = $this->checkAndUpdateCmd('isDouble', 1) || $changed;
             $changed = $this->checkAndUpdateCmd('isDouble', 0) || $changed;
         }
-
+        
         if ($cmdLogicalId == 'isLongPressedAction') {
             $commandOk = true;
             $commandWifiButton = true;
-
+            
             $changed = $this->checkAndUpdateCmd('isLongPressed', 1) || $changed;
             $changed = $this->checkAndUpdateCmd('isLongPressed', 0) || $changed;
         }
-
+        
         if ($commandOk == false) {
             log::add('mystrom', 'error', "Commande non reconnue " . $this->getLogicalId());
         } else {
             if ($commandWifiButton == false) {
                 $changed = $this->checkAndUpdateCmd('state', $state) || $changed;
                 $changed = $this->checkAndUpdateCmd('stateBinary', $stateBinary) || $changed;
-
+                
                 $this->event($state);
-
+                
                 if ($changed) {
                     $this->refreshWidget();
                 }
-
+                
                 return $state;
             }
         }

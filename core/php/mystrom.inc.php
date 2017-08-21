@@ -18,6 +18,7 @@
 
 require_once dirname(__FILE__) . '/../class/mystromApiResult.class.php';
 require_once dirname(__FILE__) . '/../class/getAllDevicesResult.class.php';
+require_once dirname(__FILE__) . '/../class/mystromBaseDevice.class.php';
 require_once dirname(__FILE__) . '/../class/mystromButtonDevice.class.php';
 require_once dirname(__FILE__) . '/../class/mystromDevice.class.php';
 require_once dirname(__FILE__) . '/../class/mystromService.class.php';
