@@ -1,10 +1,10 @@
 {
     "id": "mystrom",
-    "name": "MyStrom Beta 1.2.0",
+    "name": "MyStrom Beta 1.3.0",
     "licence": "AGPL",
     "author": "Christophe Jordens",
     "installation" : "Aucune",
     "require": "2.4.6",
     "category": "energy",
-    "version": "1.2.0"
+    "version": "1.3.0"
 }
