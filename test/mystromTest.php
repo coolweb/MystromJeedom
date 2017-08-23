@@ -84,7 +84,7 @@ class mystromTest extends TestCase
         ->getMock();
 
         $this->target = $this->getMockBuilder(mystrom::class)
-        ->setMethods(['logError', 'loadEqLogic', 'logDebug', 'getLogicalId', 'setConfiguration'])
+        ->setMethods(['logError', 'loadEqLogic', 'logDebug', 'getLogicalId', 'setConfiguration', 'getConfiguration'])
         ->getMock();
     }
 

@@ -228,17 +228,17 @@ class mystrom extends eqLogic
         } else {
             $isTouchedCmd = $this->getCmd(null, 'isTouched');
             $isTouchedActionCmd = $this->getCmd(null, 'isTouchedAction');
-
+            
             if ($deviceType == 'wbs'){
                 if (is_object($isTouchedCmd)) {
                     $isTouchedCmd->remove();
                 }
-
+                
                 if (is_object($isTouchedActionCmd)) {
                     $isTouchedActionCmd->remove();
                 }
             }
-
+            
             if ($deviceType == 'wbp'){
                 $isTouchedCmd = $this->getCmd(null, 'isTouched');
                 if (!is_object($isTouchedCmd)) {
@@ -252,7 +252,7 @@ class mystrom extends eqLogic
                     $isTouchedCmd->setDisplay('showNameOndashboard', '1');
                     $isTouchedCmd->save();
                 }
-                                
+                
                 if (!is_object($isTouchedActionCmd)) {
                     $isTouchedActionCmd = new mystromCmd();
                     $isTouchedActionCmd->setLogicalId('isTouchedAction');
@@ -347,12 +347,12 @@ class mystrom extends eqLogic
                     
                     if (is_null($buttonIp) === false && $buttonIp != '') {
                         $mystromService = new MyStromService();
-                        $button = $mystromService->RetrieveLocalButtonInfo($buttonIp);                        
+                        $button = $mystromService->RetrieveLocalButtonInfo($buttonIp);
                         
                         if ($button === null) {
                             throw new Exception('Le bouton ne semble pas accessible, vérifiez l\'ip ou enlever les piles, remettez les et réessayez', 1);
                         }
-
+                        
                         $button->type = $deviceType;
                         $button->isLocal = true;
                         $mystromService->SaveUrlsForWifiButton(
@@ -502,29 +502,35 @@ class mystrom extends eqLogic
         foreach (mystrom::$_eqLogics as $eqLogic) {
             $foundMystromDevice = null;
             $changed = false;
+            $isLocal = $this->getConfiguration('isLocal');
             
-            foreach ($resultDevices->devices as $device) {
-                if ($device->id == $eqLogic->getLogicalId()) {
-                    $this->logDebug("Equipement trouvé avec id " . $device->id);
-                    
-                    $foundMystromDevice = $device;
+            if($isLocal != true)
+            {
+                foreach ($resultDevices->devices as $device) {
+                    if ($device->id == $eqLogic->getLogicalId()) {
+                        $this->logDebug("Equipement trouvé avec id " . $device->id);
+                        
+                        $foundMystromDevice = $device;
+                    }
                 }
-            }
-            
-            if ($foundMystromDevice == null) {
-                $this->logError('Impossible de trouver l\'équipement mystrom id '
-                . $eqLogic->getLogicalId());
+                
+                if ($foundMystromDevice == null) {
+                    $this->logError('Impossible de trouver l\'équipement mystrom id '
+                    . $eqLogic->getLogicalId());
+                    continue;
+                }
+                
+                $changed = $eqLogic->checkAndUpdateCmd('state', $foundMystromDevice->state) || $changed;
+                $changed = $eqLogic->checkAndUpdateCmd('stateBinary', (($foundMystromDevice->state == 'on') ? '1' : '0')) || $changed;
+                $changed = $eqLogic->checkAndUpdateCmd('conso', $foundMystromDevice->power) || $changed;
+                $changed = $eqLogic->checkAndUpdateCmd('dailyConso', $foundMystromDevice->daylyConsumption) || $changed;
+                $changed = $eqLogic->checkAndUpdateCmd('monthlyConso', $foundMystromDevice->monthlyConsumption) || $changed;
+                
+                if ($changed) {
+                    $eqLogic->refreshWidget();
+                }
+            } else {
                 continue;
-            }
-            
-            $changed = $eqLogic->checkAndUpdateCmd('state', $foundMystromDevice->state) || $changed;
-            $changed = $eqLogic->checkAndUpdateCmd('stateBinary', (($foundMystromDevice->state == 'on') ? '1' : '0')) || $changed;
-            $changed = $eqLogic->checkAndUpdateCmd('conso', $foundMystromDevice->power) || $changed;
-            $changed = $eqLogic->checkAndUpdateCmd('dailyConso', $foundMystromDevice->daylyConsumption) || $changed;
-            $changed = $eqLogic->checkAndUpdateCmd('monthlyConso', $foundMystromDevice->monthlyConsumption) || $changed;
-            
-            if ($changed) {
-                $eqLogic->refreshWidget();
             }
         }
     }

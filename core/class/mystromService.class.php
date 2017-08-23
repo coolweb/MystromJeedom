@@ -323,19 +323,19 @@ class MyStromService
                 
                 try {
                     $result = $this->doHttpCall($buttonApiUrl, 'single=' . $singleUrl, 'POST');
-                    if($result == false)
+                    if($result === false)
                     {
                         return $result;
                     }
 
                     $result = $this->doHttpCall($buttonApiUrl, 'double=' . $doubleUrl, 'POST');
-                    if($result == false)
+                    if($result === false)
                     {
                         return $result;
                     }
 
                     $result = $this->doHttpCall($buttonApiUrl, 'long=' . $longUrl, 'POST');
-                    if($result == false)
+                    if($result === false)
                     {
                         return $result;
                     }
@@ -343,7 +343,7 @@ class MyStromService
                     if($cmdIdTouched != -1)
                     {
                         $result = $this->doHttpCall($buttonApiUrl, 'touch=' . $touchedUrl, 'POST');
-                        if($result == false)
+                        if($result === false)
                         {
                             return $result;
                         }
@@ -372,7 +372,7 @@ class MyStromService
                 $result = $this->doHttpCall($url, null, 'GET');
                 $resultApi = json_decode($result);
                 
-                if($resultApi->status == 'ok')
+                if($resultApi->status === 'ok')
                 {
                     $this->logInfo('Url saved for wifi button id:' .
                         $wifiButton->id . ' value: ' . $resultApi->value);
