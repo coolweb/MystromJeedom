@@ -508,7 +508,7 @@ class mystrom extends eqLogic
             {
                 foreach ($resultDevices->devices as $device) {
                     if ($device->id == $eqLogic->getLogicalId()) {
-                        $this->logDebug("Equipement trouvé avec id " . $device->id);
+                        $this->logDebug('Equipement trouvé avec id ' . $device->id . ' (' . $device->name . ')');
                         
                         $foundMystromDevice = $device;
                     }
@@ -516,7 +516,7 @@ class mystrom extends eqLogic
                 
                 if ($foundMystromDevice == null) {
                     $this->logError('Impossible de trouver l\'équipement mystrom id '
-                    . $eqLogic->getLogicalId());
+                    . $eqLogic->getLogicalId() . ' (' . $eqLogic->getName() . ')');
                     continue;
                 }
                 
