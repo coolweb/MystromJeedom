@@ -373,7 +373,7 @@ class mystromServiceTest extends TestCase
         $this->assertEquals($buttonInfo->macAddress, '7C2F1D4G5H');
     }
 
-    public function testSaveUrlsForLocalWifiButtonWhenSaved_ShouldCallTheCorrectUrls()
+    public function testSaveUrlsForLocalWifiButtonPlusWhenSaved_ShouldCallTheCorrectUrls()
     {
         $target = $this->getMockBuilder(MyStromService::class)
         ->setMethods([
@@ -431,6 +431,61 @@ class mystromServiceTest extends TestCase
         $target->SaveUrlsForWifiButton($button, $singleId, $doubleId, $longId, $touchId);
     }
 
+    public function testSaveUrlsForLocalWifiButtonSimpleWhenSaved_ShouldCallTheCorrectUrls()
+    {
+        $target = $this->getMockBuilder(MyStromService::class)
+        ->setMethods([
+        'logDebug',
+        'logWarning',
+        'logInfo',
+        'getMyStromConfiguration',
+        'saveMystromConfiguration',
+        'doHttpCall'])
+        ->getMock();
+
+        $target->method('logWarning')
+        ->will($this->returnCallback(function($message){
+            throw new Exception($message);
+        }));
+
+        $jeedomIp = '192.168.1.10';
+        $target->method('getMyStromConfiguration')
+        ->with(
+            $this->equalTo('internalAddr'),
+            $this->equalTo(true)
+        )
+        ->willReturn($jeedomIp);
+
+        $button = new MystromButtonDevice();
+        $button->ipAddress = '192.168.1.2';
+        $button->macAddress = 'F1G2H3J5';
+        $button->isLocal= true;
+        $button->type = 'wbs';
+
+        $singleId = '1';
+        $doubleId = '2';
+        $longId = '3';
+
+        $buttonUrl = 'http://' . $button->ipAddress . '/api/v1/device/' . $button->macAddress;
+        $singleUrl = 'single=get://' . $jeedomIp . '/core/api/jeeApi.php?apikey%3D' 
+            . jeedom::getApiKey() . '%26type%3Dcmd%26id%3D' . $singleId;
+        $doubleUrl = 'double=get://' . $jeedomIp . '/core/api/jeeApi.php?apikey%3D' 
+            . jeedom::getApiKey() . '%26type%3Dcmd%26id%3D' . $doubleId;
+        $longUrl = 'long=get://' . $jeedomIp . '/core/api/jeeApi.php?apikey%3D' 
+            . jeedom::getApiKey() . '%26type%3Dcmd%26id%3D' . $longId;
+       
+        $target->expects($this->exactly(3))
+        ->method('doHttpCall')
+        ->withConsecutive(
+            [$this->equalTo($buttonUrl), $this->equalTo($singleUrl), $this->equalTo('POST')],
+            [$this->equalTo($buttonUrl), $this->equalTo($doubleUrl), $this->equalTo('POST')],
+            [$this->equalTo($buttonUrl), $this->equalTo($longUrl), $this->equalTo('POST')]            
+        )
+        ->willReturnOnConsecutiveCalls('','','');
+
+        $target->SaveUrlsForWifiButton($button, $singleId, $doubleId, $longId);
+    }
+
     public function testSaveUrlsForLocalWifiButtonWhenButtonNotReachable_ShouldReturnFalse()
     {
         $target = $this->getMockBuilder(MyStromService::class)
@@ -475,7 +530,67 @@ class mystromServiceTest extends TestCase
         $this->assertFalse(false);
     }
 
-    public function testSaveUrlsForServerWifiButtonWhenSaved_ShouldCallTheCorrectUrls()
+    public function testSaveUrlsForServerWifiButtonSimpleWhenSaved_ShouldCallTheCorrectUrls()
+    {
+        $target = $this->getMockBuilder(MyStromService::class)
+        ->setMethods([
+        'logDebug',
+        'logWarning',
+        'logInfo',
+        'getMyStromConfiguration',
+        'saveMystromConfiguration',
+        'doHttpCall'])
+        ->getMock();
+
+        $target->method('logWarning')
+        ->will($this->returnCallback(function($message){
+            throw new Exception($message);
+        }));
+
+        $jeedomIp = '192.168.1.10';
+        $authToken = 'xyz';
+        $target->method('getMyStromConfiguration')
+        ->withConsecutive(
+            [$this->equalTo('internalAddr'), $this->equalTo(true)],
+            [$this->equalTo('authToken')]
+        )
+        ->willReturnOnConsecutiveCalls($jeedomIp, $authToken);
+
+        $button = new MystromButtonDevice();
+        $button->id = '123456';
+        $button->isLocal = false;
+        $button->type = 'wbs';
+
+        $singleId = '1';
+        $doubleId = '2';
+        $longId = '3';
+
+        $serverUrl = 'https://www.mystrom.ch/mobile/device/setSettings?authToken=' . $authToken .
+        '&id=' . $button->id;
+        $singleUrl = 'get://' . $jeedomIp . '/core/api/jeeApi.php?apikey%3D' 
+            . jeedom::getApiKey() . '%26type%3Dcmd%26id%3D' . $singleId;
+        $doubleUrl = 'get://' . $jeedomIp . '/core/api/jeeApi.php?apikey%3D' 
+            . jeedom::getApiKey() . '%26type%3Dcmd%26id%3D' . $doubleId;
+        $longUrl = 'get://' . $jeedomIp . '/core/api/jeeApi.php?apikey%3D' 
+            . jeedom::getApiKey() . '%26type%3Dcmd%26id%3D' . $longId;
+        $urlToBeCalled = $serverUrl .
+                        '&localSingleUrl=' . $singleUrl .
+                        '&localDoubleUrl=' . $doubleUrl .
+                        '&localLongUrl=' . $longUrl;
+        
+        $resultHttp = new MyStromApiResult();
+        $resultHttp->status = 'ok';
+
+        $target->expects($this->once())
+        ->method('doHttpCall')
+        ->with($this->equalTo($urlToBeCalled), null, $this->equalTo('GET'))
+        ->willReturn(json_encode($resultHttp));
+
+        $result = $target->SaveUrlsForWifiButton($button, $singleId, $doubleId, $longId);
+        $this->assertTrue($result);
+    }
+
+    public function testSaveUrlsForServerWifiButtonPlusWhenSaved_ShouldCallTheCorrectUrls()
     {
         $target = $this->getMockBuilder(MyStromService::class)
         ->setMethods([
@@ -525,12 +640,75 @@ class mystromServiceTest extends TestCase
                         '&localDoubleUrl=' . $doubleUrl .
                         '&localLongUrl=' . $longUrl .
                         '&localTouchUrl=' . $touchUrl;
+        
+        $resultHttp = new MyStromApiResult();
+        $resultHttp->status = 'ok';
 
         $target->expects($this->once())
         ->method('doHttpCall')
         ->with($this->equalTo($urlToBeCalled), null, $this->equalTo('GET'))
-        ->willReturn('');
+        ->willReturn(json_encode($resultHttp));
 
-        $target->SaveUrlsForWifiButton($button, $singleId, $doubleId, $longId, $touchId);
+        $result = $target->SaveUrlsForWifiButton($button, $singleId, $doubleId, $longId, $touchId);
+        $this->assertTrue($result);
+    }
+
+    public function testSaveUrlsForServerWifiButtonWhenErrorFromServer_ShouldReturnFalse()
+    {
+        $target = $this->getMockBuilder(MyStromService::class)
+        ->setMethods([
+        'logDebug',
+        'logWarning',
+        'logInfo',
+        'getMyStromConfiguration',
+        'saveMystromConfiguration',
+        'doHttpCall'])
+        ->getMock();
+
+        $jeedomIp = '192.168.1.10';
+        $authToken = 'xyz';
+        $target->method('getMyStromConfiguration')
+        ->withConsecutive(
+            [$this->equalTo('internalAddr'), $this->equalTo(true)],
+            [$this->equalTo('authToken')]
+        )
+        ->willReturnOnConsecutiveCalls($jeedomIp, $authToken);
+
+        $button = new MystromButtonDevice();
+        $button->id = '123456';
+        $button->isLocal = false;
+
+        $singleId = '1';
+        $doubleId = '2';
+        $longId = '3';
+        $touchId = '4';
+
+        $serverUrl = 'https://www.mystrom.ch/mobile/device/setSettings?authToken=' . $authToken .
+        '&id=' . $button->id;
+        $singleUrl = 'get://' . $jeedomIp . '/core/api/jeeApi.php?apikey%3D' 
+            . jeedom::getApiKey() . '%26type%3Dcmd%26id%3D' . $singleId;
+        $doubleUrl = 'get://' . $jeedomIp . '/core/api/jeeApi.php?apikey%3D' 
+            . jeedom::getApiKey() . '%26type%3Dcmd%26id%3D' . $doubleId;
+        $longUrl = 'get://' . $jeedomIp . '/core/api/jeeApi.php?apikey%3D' 
+            . jeedom::getApiKey() . '%26type%3Dcmd%26id%3D' . $longId;
+        $touchUrl = 'get://' . $jeedomIp . '/core/api/jeeApi.php?apikey%3D' 
+            . jeedom::getApiKey() . '%26type%3Dcmd%26id%3D' . $touchId;
+        $urlToBeCalled = $serverUrl .
+                        '&localSingleUrl=' . $singleUrl .
+                        '&localDoubleUrl=' . $doubleUrl .
+                        '&localLongUrl=' . $longUrl .
+                        '&localTouchUrl=' . $touchUrl;
+
+        $resultHttp = new MyStromApiResult();
+        $resultHttp->status = 'ko';
+        $resultHttp->error = 'settings.update.failed';
+
+        $target->expects($this->once())
+        ->method('doHttpCall')
+        ->with($this->equalTo($urlToBeCalled), null, $this->equalTo('GET'))
+        ->willReturn(json_encode($resultHttp));
+
+        $result = $target->SaveUrlsForWifiButton($button, $singleId, $doubleId, $longId, $touchId);
+        $this->assertFalse($result);
     }
 }

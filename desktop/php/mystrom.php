@@ -40,7 +40,7 @@ foreach ($eqLogics as $eqLogic) {
 			if($eqLogic->getConfiguration('mystromType') == 'wsw'){
 				echo '<img src="plugins/mystrom/doc/images/ecn_wsw.png" height="105" />';
 			} else {
-                if($eqLogic->getConfiguration('mystromType') == 'wbp'){
+                if($eqLogic->getConfiguration('mystromType') == 'wbp' || $eqLogic->getConfiguration('mystromType') == 'wbs'){
                     echo '<img src="plugins/mystrom/doc/images/wpb.png" height="105" />';
                 } else {
 				    echo '<img src="plugins/mystrom/doc/images/ecn_sw_fr.png" height="105" />';
@@ -78,6 +78,7 @@ foreach ($eqLogics as $eqLogic) {
                         <option value="eth">{{CPL avec internet (bleu)}}</option>
                         <option value="wsw">{{Interrupteur wifi}}</option>
                         <option value="wbp">{{Wifi bouton plus}}</option>
+                        <option value="wbs">{{Wifi bouton}}</option>
                    </select>
                </div>
            </div>

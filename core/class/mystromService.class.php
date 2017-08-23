@@ -121,7 +121,7 @@ class MyStromService
         
         if ($err) {
             $this->logDebug('cURL Error #:' . $err);
-            return false;
+            $result = false;
         }
         
         if ($result === false) {
@@ -302,46 +302,87 @@ class MyStromService
         *  @param $cmdIdLong {string} The id of the action command
         *  @param $cmdIdTouched {string} The id of the action command
         */
-        public function SaveUrlsForWifiButton($wifiButton, $cmdIdSingle, $cmdIdDouble, $cmdIdLong, $cmdIdTouched)
-        {      
+        public function SaveUrlsForWifiButton($wifiButton, $cmdIdSingle, $cmdIdDouble, $cmdIdLong, $cmdIdTouched = -1)
+        {
             $jeedomIp = $this->getMyStromConfiguration('internalAddr', true);
             $apiKey = jeedom::getApiKey();
             $url = 'get://' . $jeedomIp . '/core/api/jeeApi.php?apikey%3D' . $apiKey .
             '%26type%3Dcmd%26id%3D';
-
+            
             $singleUrl = $url . $cmdIdSingle;
             $doubleUrl = $url . $cmdIdDouble;
             $longUrl = $url . $cmdIdLong;
             $touchedUrl = $url . $cmdIdTouched;
-
+            
             if($wifiButton->isLocal == true)
-            {      
-                $this->logDebug('SaveUrlsForWifiButton - ' . $wifiButton->ipAddress);                                
+            {
+                $this->logDebug('SaveUrlsForWifiButton - ' . $wifiButton->ipAddress);
                 
                 $buttonApiUrl = 'http://' . $wifiButton->ipAddress . '/api/v1/device/' .
                 $wifiButton->macAddress;
                 
                 try {
-                    $this->doHttpCall($buttonApiUrl, 'single=' . $singleUrl, 'POST');
-                    $this->doHttpCall($buttonApiUrl, 'double=' . $doubleUrl, 'POST');
-                    $this->doHttpCall($buttonApiUrl, 'long=' . $longUrl, 'POST');
-                    $this->doHttpCall($buttonApiUrl, 'touch=' . $touchedUrl, 'POST');
+                    $result = $this->doHttpCall($buttonApiUrl, 'single=' . $singleUrl, 'POST');
+                    if($result == false)
+                    {
+                        return $result;
+                    }
+
+                    $result = $this->doHttpCall($buttonApiUrl, 'double=' . $doubleUrl, 'POST');
+                    if($result == false)
+                    {
+                        return $result;
+                    }
+
+                    $result = $this->doHttpCall($buttonApiUrl, 'long=' . $longUrl, 'POST');
+                    if($result == false)
+                    {
+                        return $result;
+                    }
+                    
+                    if($cmdIdTouched != -1)
+                    {
+                        $result = $this->doHttpCall($buttonApiUrl, 'touch=' . $touchedUrl, 'POST');
+                        if($result == false)
+                        {
+                            return $result;
+                        }
+                    }
+
+                    return true;
                 } catch (Exception $e) {
                     $this->logWarning('SaveUrlsForWifiButton - ' . $e);
                     return false;
                 }
             } else {
                 $authToken = $this->getMyStromConfiguration('authToken');
-                $this->logDebug('SaveUrlsForWifiButton - ' . $wifiButton->id);     
-
+                $this->logDebug('SaveUrlsForWifiButton - ' . $wifiButton->id);
+                
                 $url = $this->myStromApiUrl . '/device/setSettings?' . 'authToken=' . $authToken .
-                    '&id=' . $wifiButton->id .
-                    '&localSingleUrl=' . $singleUrl . 
-                    '&localDoubleUrl=' . $doubleUrl .
-                    '&localLongUrl=' . $longUrl .
-                    '&localTouchUrl=' . $touchedUrl;
-
-                $this->doHttpCall($url, null, 'GET');
+                '&id=' . $wifiButton->id .
+                '&localSingleUrl=' . $singleUrl .
+                '&localDoubleUrl=' . $doubleUrl .
+                '&localLongUrl=' . $longUrl;
+                
+                if($cmdIdTouched != -1)
+                {
+                    $url = $url . '&localTouchUrl=' . $touchedUrl;
+                }
+                
+                $result = $this->doHttpCall($url, null, 'GET');
+                $resultApi = json_decode($result);
+                
+                if($resultApi->status == 'ok')
+                {
+                    $this->logInfo('Url saved for wifi button id:' .
+                        $wifiButton->id . ' value: ' . $resultApi->value);
+                    return true;
+                } else {
+                    $this->logWarning('Unable to save url for wifi button id:' .
+                        $wifiButton->id . ' error: ' . $resultApi->error);
+                    
+                    return false;
+                }
             }
         }
     }

@@ -7,4 +7,5 @@ class MyStromApiResult
 {
     public $status = '';
     public $error = '';
+    public $value = '';
 }

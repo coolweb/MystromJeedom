@@ -88,8 +88,8 @@ class mystrom extends eqLogic
     {
         if ($this->getConfiguration('isLocal') == true) {
             // only mystrom button is supported for the moment
-            if ($this->getConfiguration('mystromType') !== 'wbp') {
-                throw new Exception('Vous ne pouvez créer que le type Wifi Bouton Plus', 1);
+            if (!($this->getConfiguration('mystromType') == 'wbp' || $this->getConfiguration('mystromType') == 'wbs')) {
+                throw new Exception('Vous ne pouvez créer que le type Wifi Bouton Plus ou Wifi Bouton', 1);
             }
             
             if ($this->getConfiguration('ipAddress') == null || $this->getConfiguration('ipAddress') == '') {
@@ -227,137 +227,157 @@ class mystrom extends eqLogic
             }
         } else {
             $isTouchedCmd = $this->getCmd(null, 'isTouched');
-            if (!is_object($isTouchedCmd)) {
-                $isTouchedCmd = new mystromCmd();
-                $isTouchedCmd->setLogicalId('isTouched');
-                $isTouchedCmd->setName(__('Touché', __FILE__));
-                $isTouchedCmd->setType('info');
-                $isTouchedCmd->setSubType('binary');
-                $isTouchedCmd->setTemplate('dashboard', 'line');
-                $isTouchedCmd->setEqLogic_id($this->getId());
-                $isTouchedCmd->setDisplay('showNameOndashboard', '1');
-                $isTouchedCmd->save();
-            }
-            
             $isTouchedActionCmd = $this->getCmd(null, 'isTouchedAction');
-            if (!is_object($isTouchedActionCmd)) {
-                $isTouchedActionCmd = new mystromCmd();
-                $isTouchedActionCmd->setLogicalId('isTouchedAction');
-                $isTouchedActionCmd->setName(__('Action Touché', __FILE__));
-                $isTouchedActionCmd->setType('action');
-                $isTouchedActionCmd->setSubType('other');
-                $isTouchedActionCmd->setEqLogic_id($this->getId());
-                $isTouchedActionCmd->setDisplay('showNameOndashboard', '0');
-                $isTouchedActionCmd->save();
+
+            if ($deviceType == 'wbs'){
+                if (is_object($isTouchedCmd)) {
+                    $isTouchedCmd->remove();
+                }
+
+                if (is_object($isTouchedActionCmd)) {
+                    $isTouchedActionCmd->remove();
+                }
+            }
+
+            if ($deviceType == 'wbp'){
+                $isTouchedCmd = $this->getCmd(null, 'isTouched');
+                if (!is_object($isTouchedCmd)) {
+                    $isTouchedCmd = new mystromCmd();
+                    $isTouchedCmd->setLogicalId('isTouched');
+                    $isTouchedCmd->setName(__('Touché', __FILE__));
+                    $isTouchedCmd->setType('info');
+                    $isTouchedCmd->setSubType('binary');
+                    $isTouchedCmd->setTemplate('dashboard', 'line');
+                    $isTouchedCmd->setEqLogic_id($this->getId());
+                    $isTouchedCmd->setDisplay('showNameOndashboard', '1');
+                    $isTouchedCmd->save();
+                }
+                                
+                if (!is_object($isTouchedActionCmd)) {
+                    $isTouchedActionCmd = new mystromCmd();
+                    $isTouchedActionCmd->setLogicalId('isTouchedAction');
+                    $isTouchedActionCmd->setName(__('Action Touché', __FILE__));
+                    $isTouchedActionCmd->setType('action');
+                    $isTouchedActionCmd->setSubType('other');
+                    $isTouchedActionCmd->setEqLogic_id($this->getId());
+                    $isTouchedActionCmd->setDisplay('showNameOndashboard', '0');
+                    $isTouchedActionCmd->save();
+                }
             }
             
-            $isSingleCmd = $this->getCmd(null, 'isSingle');
-            if (!is_object($isSingleCmd)) {
-                $isSingleCmd = new mystromCmd();
-                $isSingleCmd->setLogicalId('isSingle');
-                $isSingleCmd->setName(__('Appuyé 1 fois', __FILE__));
-                $isSingleCmd->setType('info');
-                $isSingleCmd->setSubType('binary');
-                $isSingleCmd->setTemplate('dashboard', 'line');
-                $isSingleCmd->setEqLogic_id($this->getId());
-                $isSingleCmd->setDisplay('showNameOndashboard', '1');
-                $isSingleCmd->save();
-            }
-            
-            $isSingleActionCmd = $this->getCmd(null, 'isSingleAction');
-            if (!is_object($isSingleActionCmd)) {
-                $isSingleActionCmd = new mystromCmd();
-                $isSingleActionCmd->setLogicalId('isSingleAction');
-                $isSingleActionCmd->setName(__('Action Appuyé 1 fois', __FILE__));
-                $isSingleActionCmd->setType('action');
-                $isSingleActionCmd->setSubType('other');
-                $isSingleActionCmd->setEqLogic_id($this->getId());
-                $isSingleActionCmd->setDisplay('showNameOndashboard', '0');
-                $isSingleActionCmd->save();
-            }
-            
-            $isDoubleCmd = $this->getCmd(null, 'isDouble');
-            if (!is_object($isDoubleCmd)) {
-                $isDoubleCmd = new mystromCmd();
-                $isDoubleCmd->setLogicalId('isDouble');
-                $isDoubleCmd->setName(__('Appuyé 2 fois', __FILE__));
-                $isDoubleCmd->setType('info');
-                $isDoubleCmd->setSubType('binary');
-                $isDoubleCmd->setTemplate('dashboard', 'line');
-                $isDoubleCmd->setEqLogic_id($this->getId());
-                $isDoubleCmd->setDisplay('showNameOndashboard', '1');
-                $isDoubleCmd->save();
-            }
-            
-            $isDoubleActionCmd = $this->getCmd(null, 'isDoubleAction');
-            if (!is_object($isDoubleActionCmd)) {
-                $isDoubleActionCmd = new mystromCmd();
-                $isDoubleActionCmd->setLogicalId('isDoubleAction');
-                $isDoubleActionCmd->setName(__('Action Appuyé 2 fois', __FILE__));
-                $isDoubleActionCmd->setType('action');
-                $isDoubleActionCmd->setSubType('other');
-                $isDoubleActionCmd->setEqLogic_id($this->getId());
-                $isDoubleActionCmd->setDisplay('showNameOndashboard', '0');
-                $isDoubleActionCmd->save();
-            }
-            
-            $isLongPressedCmd = $this->getCmd(null, 'isLongPressed');
-            if (!is_object($isLongPressedCmd)) {
-                $isLongPressedCmd = new mystromCmd();
-                $isLongPressedCmd->setLogicalId('isLongPressed');
-                $isLongPressedCmd->setName(__('Appuyé longtemps', __FILE__));
-                $isLongPressedCmd->setType('info');
-                $isLongPressedCmd->setSubType('binary');
-                $isLongPressedCmd->setTemplate('dashboard', 'line');
-                $isLongPressedCmd->setEqLogic_id($this->getId());
-                $isLongPressedCmd->setDisplay('showNameOndashboard', '1');
-                $isLongPressedCmd->save();
-            }
-            
-            $isLongPressedActionCmd = $this->getCmd(null, 'isLongPressedAction');
-            if (!is_object($isLongPressedActionCmd)) {
-                $isLongPressedActionCmd = new mystromCmd();
-                $isLongPressedActionCmd->setLogicalId('isLongPressedAction');
-                $isLongPressedActionCmd->setName(__('Action Appuyé longtemps', __FILE__));
-                $isLongPressedActionCmd->setType('action');
-                $isLongPressedActionCmd->setSubType('other');
-                $isLongPressedActionCmd->setEqLogic_id($this->getId());
-                $isLongPressedActionCmd->setDisplay('showNameOndashboard', '0');
-                $isLongPressedActionCmd->save();
-            }
-            
-            // save url of cmd into the button
-            if ($this->getConfiguration('isLocal') == true) {
-                $buttonIp = $this->getConfiguration('ipAddress');
+            if ($deviceType == 'wbp' || $deviceType == 'wbs'){
+                $isSingleCmd = $this->getCmd(null, 'isSingle');
+                if (!is_object($isSingleCmd)) {
+                    $isSingleCmd = new mystromCmd();
+                    $isSingleCmd->setLogicalId('isSingle');
+                    $isSingleCmd->setName(__('Appuyé 1 fois', __FILE__));
+                    $isSingleCmd->setType('info');
+                    $isSingleCmd->setSubType('binary');
+                    $isSingleCmd->setTemplate('dashboard', 'line');
+                    $isSingleCmd->setEqLogic_id($this->getId());
+                    $isSingleCmd->setDisplay('showNameOndashboard', '1');
+                    $isSingleCmd->save();
+                }
                 
-                if (is_null($buttonIp) === false && $buttonIp != '') {
+                $isSingleActionCmd = $this->getCmd(null, 'isSingleAction');
+                if (!is_object($isSingleActionCmd)) {
+                    $isSingleActionCmd = new mystromCmd();
+                    $isSingleActionCmd->setLogicalId('isSingleAction');
+                    $isSingleActionCmd->setName(__('Action Appuyé 1 fois', __FILE__));
+                    $isSingleActionCmd->setType('action');
+                    $isSingleActionCmd->setSubType('other');
+                    $isSingleActionCmd->setEqLogic_id($this->getId());
+                    $isSingleActionCmd->setDisplay('showNameOndashboard', '0');
+                    $isSingleActionCmd->save();
+                }
+                
+                $isDoubleCmd = $this->getCmd(null, 'isDouble');
+                if (!is_object($isDoubleCmd)) {
+                    $isDoubleCmd = new mystromCmd();
+                    $isDoubleCmd->setLogicalId('isDouble');
+                    $isDoubleCmd->setName(__('Appuyé 2 fois', __FILE__));
+                    $isDoubleCmd->setType('info');
+                    $isDoubleCmd->setSubType('binary');
+                    $isDoubleCmd->setTemplate('dashboard', 'line');
+                    $isDoubleCmd->setEqLogic_id($this->getId());
+                    $isDoubleCmd->setDisplay('showNameOndashboard', '1');
+                    $isDoubleCmd->save();
+                }
+                
+                $isDoubleActionCmd = $this->getCmd(null, 'isDoubleAction');
+                if (!is_object($isDoubleActionCmd)) {
+                    $isDoubleActionCmd = new mystromCmd();
+                    $isDoubleActionCmd->setLogicalId('isDoubleAction');
+                    $isDoubleActionCmd->setName(__('Action Appuyé 2 fois', __FILE__));
+                    $isDoubleActionCmd->setType('action');
+                    $isDoubleActionCmd->setSubType('other');
+                    $isDoubleActionCmd->setEqLogic_id($this->getId());
+                    $isDoubleActionCmd->setDisplay('showNameOndashboard', '0');
+                    $isDoubleActionCmd->save();
+                }
+                
+                $isLongPressedCmd = $this->getCmd(null, 'isLongPressed');
+                if (!is_object($isLongPressedCmd)) {
+                    $isLongPressedCmd = new mystromCmd();
+                    $isLongPressedCmd->setLogicalId('isLongPressed');
+                    $isLongPressedCmd->setName(__('Appuyé longtemps', __FILE__));
+                    $isLongPressedCmd->setType('info');
+                    $isLongPressedCmd->setSubType('binary');
+                    $isLongPressedCmd->setTemplate('dashboard', 'line');
+                    $isLongPressedCmd->setEqLogic_id($this->getId());
+                    $isLongPressedCmd->setDisplay('showNameOndashboard', '1');
+                    $isLongPressedCmd->save();
+                }
+                
+                $isLongPressedActionCmd = $this->getCmd(null, 'isLongPressedAction');
+                if (!is_object($isLongPressedActionCmd)) {
+                    $isLongPressedActionCmd = new mystromCmd();
+                    $isLongPressedActionCmd->setLogicalId('isLongPressedAction');
+                    $isLongPressedActionCmd->setName(__('Action Appuyé longtemps', __FILE__));
+                    $isLongPressedActionCmd->setType('action');
+                    $isLongPressedActionCmd->setSubType('other');
+                    $isLongPressedActionCmd->setEqLogic_id($this->getId());
+                    $isLongPressedActionCmd->setDisplay('showNameOndashboard', '0');
+                    $isLongPressedActionCmd->save();
+                }
+                
+                // save url of cmd into the button
+                if ($this->getConfiguration('isLocal') == true) {
+                    $buttonIp = $this->getConfiguration('ipAddress');
+                    
+                    if (is_null($buttonIp) === false && $buttonIp != '') {
+                        $mystromService = new MyStromService();
+                        $button = $mystromService->RetrieveLocalButtonInfo($buttonIp);                        
+                        
+                        if ($button === null) {
+                            throw new Exception('Le bouton ne semble pas accessible, vérifiez l\'ip ou enlever les piles, remettez les et réessayez', 1);
+                        }
+
+                        $button->type = $deviceType;
+                        $button->isLocal = true;
+                        $mystromService->SaveUrlsForWifiButton(
+                        $button,
+                        $isSingleActionCmd->getId(),
+                        $isDoubleActionCmd->getId(),
+                        $isLongPressedActionCmd->getId(),
+                        $isTouchedActionCmd->getId());
+                    }
+                } else {
+                    $this->setConfiguration('ipAddress', null);
+                    
+                    $button = new MystromButtonDevice();
+                    $button->id = $this->getLogicalId();
+                    $button->isLocal = false;
+                    
                     $mystromService = new MyStromService();
-                    $button = $mystromService->RetrieveLocalButtonInfo($buttonIp);
+                    $button->type = $deviceType;
                     $mystromService->SaveUrlsForWifiButton(
                     $button,
                     $isSingleActionCmd->getId(),
                     $isDoubleActionCmd->getId(),
                     $isLongPressedActionCmd->getId(),
                     $isTouchedActionCmd->getId());
-                    
-                    if ($button === null) {
-                        throw new Exception('Le bouton ne semble pas accessible, vérifiez l\'ip ou enlever les piles, remettez les et réessayez', 1);
-                    }
                 }
-            } else {
-                $this->setConfiguration('ipAddress', null);
-                
-                $button = new MystromButtonDevice();
-                $button->id = $this->getLogicalId();
-                $button->isLocal = false;
-
-                $mystromService = new MyStromService();
-                $mystromService->SaveUrlsForWifiButton(
-                    $button,
-                    $isSingleActionCmd->getId(),
-                    $isDoubleActionCmd->getId(),
-                    $isLongPressedActionCmd->getId(),
-                    $isTouchedActionCmd->getId());
             }
         }
     }
