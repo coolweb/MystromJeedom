@@ -5,11 +5,17 @@
  */
 class eqLogic
 {
-    public $logicalId = '';
-    
+    public $logicalId = "";
+    public $name = "";
+
     public function getLogicalId()
     {
         return $this->logicalId;
+    }
+
+    public function getName()
+    {
+        return $this->name;
     }
 
     public function checkAndUpdateCmd($cmdName, $cmdValue)

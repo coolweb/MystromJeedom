@@ -20,7 +20,7 @@ class mystromTest extends TestCase
 
     private function setJeedomDevices($target, $eqLogics)
     {
-        $target->method('loadEqLogic')
+        $this->target->method('loadEqLogic')
         ->willReturn($eqLogics);
     }
 
@@ -80,6 +80,7 @@ class mystromTest extends TestCase
     protected function setUp()
     {
         $this->mystromService = $this->getMockBuilder(MyStromService::class)
+        ->disableOriginalConstructor()
         ->setMethods(['loadAllDevicesFromServer'])
         ->getMock();
 
@@ -115,7 +116,7 @@ class mystromTest extends TestCase
     public function testPullWhen1DeviceNotExistAtMystromServer_ItShouldLogError()
     {
         $eqLogic = $this->getMockBuilder(eqLogic::class)
-        ->setMethods(['checkAndUpdateCmd', 'refreshWidget'])
+        ->setMethods(['checkAndUpdateCmd', 'refreshWidget', 'getName'])
         ->getMock();
 
         $eqLogic->logicalId = '1234';

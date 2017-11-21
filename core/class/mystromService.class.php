@@ -6,56 +6,15 @@
 class MyStromService
 {
     private $myStromApiUrl = 'https://www.mystrom.ch/mobile';
-    
-    /**
-    * Get a configuration value of the plugin.
-    * @param $key string The name of the configuration to retrieve
-    * @param $isCoreConfig Optional (Default is false) Indicate if retrieve configuration in core jeedom or
-    *        mystrom plugin.
-    * @return The value of the configuration, null il not exists
-    */
-    public function getMyStromConfiguration($key, $isCoreConfig = false)
+
+    /** @var \coolweb\mystrom\JeedomHelper */
+    private $jeedomHelper;
+
+    public function __construct(\coolweb\mystrom\JeedomHelper $jeedomHelper)
     {
-        return config::byKey($key, $isCoreConfig == true ? 'core' : 'mystrom');
+        $this->jeedomHelper = $jeedomHelper;
     }
-    
-    /**
-    * Save a configuration key
-    * @param $key string The key of the configuration to save
-    * @param $value string The configuration value to save
-    */
-    public function saveMystromConfiguration($key, $value)
-    {
-        config::save($key, $value, 'mystrom');
-    }
-    
-    /**
-    * Log a debug message
-    * @param $message string The message to log
-    */
-    public function logDebug($message)
-    {
-        log::add('mystrom', 'debug', 'MystromService: ' . $message);
-    }
-    
-    /**
-    * Log an information message
-    * @param $message string The message to log
-    */
-    public function logInfo($message)
-    {
-        log::add('mystrom', 'info', $message);
-    }
-    
-    /**
-    * Log a warning message
-    * @param $message string The message to log
-    */
-    public function logWarning($message)
-    {
-        log::add('mystrom', 'warning', $message);
-    }
-    
+
     /**
     * Do a request and get json result.
     * @param $requestUrl string The request url to call
@@ -63,18 +22,18 @@ class MyStromService
     */
     public function doJsonCall($requestUrl)
     {
-        $this->logDebug('Do http call ' . $requestUrl);
+        $this->jeedomHelper->logDebug("Do http call " . $requestUrl);
         
         $json = file_get_contents($requestUrl);
-        $this->logDebug('Result: ' . $json);
+        $this->jeedomHelper->logDebug("Result: " . $json);
         $jsonObj = json_decode($json);
         
         return $jsonObj;
     }
     
-    public function doHttpCall($url, $data, $method = 'POST')
+    public function doHttpCall($url, $data, $method = "POST")
     {
-        $this->logDebug('Do http call url: ' . $url);
+        $this->jeedomHelper->logDebug("Do http call url: " . $url);
         
         if ($method == "POST") {
             $curl = curl_init();
@@ -89,7 +48,7 @@ class MyStromService
             CURLOPT_CUSTOMREQUEST => "POST",
             CURLOPT_POSTFIELDS => $data,
             CURLOPT_HTTPHEADER => array(
-            'cache-control: no-cache'
+            "cache-control: no-cache"
             ),
             ));
             
@@ -109,7 +68,7 @@ class MyStromService
             CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
             CURLOPT_CUSTOMREQUEST => "GET",
             CURLOPT_HTTPHEADER => array(
-            'cache-control: no-cache',
+            "cache-control: no-cache",
             ),
             ));
             
@@ -120,16 +79,16 @@ class MyStromService
         }
         
         if ($err) {
-            $this->logDebug('cURL Error #:' . $err);
+            $this->jeedomHelper->logDebug("cURL Error #:" . $err);
             $result = false;
         }
         
         if ($result === false) {
-            $this->logDebug('Error');
+            $this->jeedomHelper->logDebug("Error");
         }
         
-        $this->logDebug('Result: ' . print_r($result, true));
-        $this->logDebug('Http code: ' .print_r($http_response_header, true));
+        $this->jeedomHelper->logDebug("Result: " . print_r($result, true));
+        $this->jeedomHelper->logDebug("Http code: " .print_r($http_response_header, true));
         
         return $result;
     }
@@ -142,20 +101,20 @@ class MyStromService
     */
     public function doAuthentification()
     {
-        $this->logInfo('Authentification');
-        $user = $this->getMyStromConfiguration('userId');
-        $password = $this->getMyStromConfiguration('password');
+        $this->jeedomHelper->logInfo("Authentification");
+        $user = $this->jeedomHelper->loadPluginConfiguration("userId");
+        $password = $this->jeedomHelper->loadPluginConfiguration("password");
         
-        $authUrl = $this->myStromApiUrl . '/auth?email=' . $user
-        . '&password=' . $password;
+        $authUrl = $this->myStromApiUrl . "/auth?email=" . $user
+        . "&password=" . $password;
         
         $jsonObj = $this->doJsonCall($authUrl);
-        if ($jsonObj->status == 'ok') {
-            $this->saveMystromConfiguration('authToken', $jsonObj->authToken);
-            $this->logDebug("Clé d'authentification sauvée: " . $jsonObj->authToken);
+        if ($jsonObj->status == "ok") {
+            $this->jeedomHelper->savePluginConfiguration("authToken", $jsonObj->authToken);
+            $this->jeedomHelper->logDebug("Clé d'authentification sauvée: " . $jsonObj->authToken);
             return true;
         } else {
-            $this->logWarning("Erreur d'authentification: " . $jsonObj->error);
+            $this->jeedomHelper->logWarning("Erreur d'authentification: " . $jsonObj->error);
             return false;
         }
     }
@@ -167,29 +126,29 @@ class MyStromService
     */
     public function loadAllDevicesFromServer($withReportData = false)
     {
-        $this->logInfo('Recherche des équipements mystrom');
-        $authToken = $this->getMyStromConfiguration('authToken');
-        $devicesUrl = $this->myStromApiUrl . '/devices?';
+        $this->jeedomHelper->logInfo("Recherche des équipements mystrom");
+        $authToken = $this->jeedomHelper->loadPluginConfiguration("authToken");
+        $devicesUrl = $this->myStromApiUrl . "/devices?";
         
         if ($withReportData) {
-            $devicesUrl = $devicesUrl . 'report=true&';
+            $devicesUrl = $devicesUrl . "report=true&";
         }
         
-        $devicesUrl = $devicesUrl . 'authToken=' . $authToken;
+        $devicesUrl = $devicesUrl . "authToken=" . $authToken;
         
         $result = new GetAllDevicesResult();
         $jsonObj = $this->doJsonCall($devicesUrl);
         $result->status = $jsonObj->status;
         
-        if (strcmp($jsonObj->status, 'ok') == 0) {
+        if (strcmp($jsonObj->status, "ok") == 0) {
             foreach ($jsonObj->devices as $device) {
                 $mystromDevice = null;
                 
                 switch ($device->type) {
-                    case 'sw':
-                        case 'eth':
-                            case 'mst':
-                                case 'wsw':
+                    case "sw":
+                        case "eth":
+                            case "mst":
+                                case "wsw":
                                     $mystromDevice = new MyStromDevice();
                                     $mystromDevice->power = $device->power;
                                     
@@ -199,12 +158,12 @@ class MyStromService
                                 }
                                 break;
                             
-                            case 'wbp':
+                            case "wbp":
                                 $mystromDevice = new MystromButtonDevice();
                                 break;
                             
                             default:
-                                $this->logWarning('Unsupported device type: ' . $device->type);
+                                $this->jeedomHelper->logWarning("Unsupported device type: " . $device->type);
                                 break;
                     }
                     
@@ -234,15 +193,15 @@ class MyStromService
         */
         public function setState($deviceId, $deviceType, $isOn)
         {
-            $authToken = $this->getMyStromConfiguration('authToken');
-            $stateUrl = $this->myStromApiUrl . '/device/switch?authToken=' . $authToken
-            . '&id=' . $deviceId . '&on=' . (($isOn) ? 'true' : 'false');
-            $restartUrl = $this->myStromApiUrl . '/device/restart?authToken=' . $authToken
-            . '&id=' . $deviceId;
+            $authToken = $this->jeedomHelper->loadPluginConfiguration("authToken");
+            $stateUrl = $this->myStromApiUrl . "/device/switch?authToken=" . $authToken
+            . "&id=" . $deviceId . "&on=" . (($isOn) ? "true" : "false");
+            $restartUrl = $this->myStromApiUrl . "/device/restart?authToken=" . $authToken
+            . "&id=" . $deviceId;
             
-            $url = '';
+            $url = "";
             
-            if ($deviceType == 'mst') {
+            if ($deviceType == "mst") {
                 $url = $restartUrl;
             } else {
                 $url = $stateUrl;
@@ -253,7 +212,7 @@ class MyStromService
             $result = new MyStromApiResult();
             $result->status = $jsonObj->status;
             
-            if ($jsonObj->status !== 'ok') {
+            if ($jsonObj->status !== "ok") {
                 $result->error = $jsonObj->error;
             }
             
@@ -268,9 +227,9 @@ class MyStromService
         public function RetrieveLocalButtonInfo($ipAddress)
         {
             try {
-                $this->logDebug('Retrieve info of wifi button ' . $ipAddress);
-                $url = 'http://' . $ipAddress . '/api/v1/device';
-                $result = $this->doHttpCall($url, null, 'GET');
+                $this->jeedomHelper->logDebug("Retrieve info of wifi button " . $ipAddress);
+                $url = "http://" . $ipAddress . "/api/v1/device";
+                $result = $this->doHttpCall($url, null, "GET");
                 if ($result === false) {
                     return null;
                 }
@@ -289,7 +248,7 @@ class MyStromService
                 
                 return $mystromButton;
             } catch (Exception $e) {
-                $this->logWarning('RetrieveLocalButtonInfo - ' . $e);
+                $this->jeedomHelper->logWarning("RetrieveLocalButtonInfo - " . $e);
                 return null;
             }
         }
@@ -304,10 +263,10 @@ class MyStromService
         */
         public function SaveUrlsForWifiButton($wifiButton, $cmdIdSingle, $cmdIdDouble, $cmdIdLong, $cmdIdTouched = -1)
         {
-            $jeedomIp = $this->getMyStromConfiguration('internalAddr', true);
+            $jeedomIp = $this->jeedomHelper->loadPluginConfiguration("internalAddr", true);
             $apiKey = jeedom::getApiKey();
-            $url = 'get://' . $jeedomIp . '/core/api/jeeApi.php?apikey%3D' . $apiKey .
-            '%26type%3Dcmd%26id%3D';
+            $url = "get://" . $jeedomIp . "/core/api/jeeApi.php?apikey%3D" . $apiKey .
+            "%26type%3Dcmd%26id%3D";
             
             $singleUrl = $url . $cmdIdSingle;
             $doubleUrl = $url . $cmdIdDouble;
@@ -316,25 +275,25 @@ class MyStromService
             
             if($wifiButton->isLocal == true)
             {
-                $this->logDebug('SaveUrlsForWifiButton - ' . $wifiButton->ipAddress);
+                $this->jeedomHelper->logDebug("SaveUrlsForWifiButton - " . $wifiButton->ipAddress);
                 
-                $buttonApiUrl = 'http://' . $wifiButton->ipAddress . '/api/v1/device/' .
+                $buttonApiUrl = "http://" . $wifiButton->ipAddress . "/api/v1/device/" .
                 $wifiButton->macAddress;
                 
                 try {
-                    $result = $this->doHttpCall($buttonApiUrl, 'single=' . $singleUrl, 'POST');
+                    $result = $this->doHttpCall($buttonApiUrl, "single=" . $singleUrl, "POST");
                     if($result === false)
                     {
                         return $result;
                     }
 
-                    $result = $this->doHttpCall($buttonApiUrl, 'double=' . $doubleUrl, 'POST');
+                    $result = $this->doHttpCall($buttonApiUrl, "double=" . $doubleUrl, "POST");
                     if($result === false)
                     {
                         return $result;
                     }
 
-                    $result = $this->doHttpCall($buttonApiUrl, 'long=' . $longUrl, 'POST');
+                    $result = $this->doHttpCall($buttonApiUrl, "long=" . $longUrl, "POST");
                     if($result === false)
                     {
                         return $result;
@@ -342,7 +301,7 @@ class MyStromService
                     
                     if($cmdIdTouched != -1)
                     {
-                        $result = $this->doHttpCall($buttonApiUrl, 'touch=' . $touchedUrl, 'POST');
+                        $result = $this->doHttpCall($buttonApiUrl, "touch=" . $touchedUrl, "POST");
                         if($result === false)
                         {
                             return $result;
@@ -351,35 +310,35 @@ class MyStromService
 
                     return true;
                 } catch (Exception $e) {
-                    $this->logWarning('SaveUrlsForWifiButton - ' . $e);
+                    $this->jeedomHelper->logWarning("SaveUrlsForWifiButton - " . $e);
                     return false;
                 }
             } else {
-                $authToken = $this->getMyStromConfiguration('authToken');
-                $this->logDebug('SaveUrlsForWifiButton - ' . $wifiButton->id);
+                $authToken = $this->jeedomHelper->loadPluginConfiguration("authToken");
+                $this->jeedomHelper->logDebug("SaveUrlsForWifiButton - " . $wifiButton->id);
                 
-                $url = $this->myStromApiUrl . '/device/setSettings?' . 'authToken=' . $authToken .
-                '&id=' . $wifiButton->id .
-                '&localSingleUrl=' . $singleUrl .
-                '&localDoubleUrl=' . $doubleUrl .
-                '&localLongUrl=' . $longUrl;
+                $url = $this->myStromApiUrl . "/device/setSettings?" . "authToken=" . $authToken .
+                "&id=" . $wifiButton->id .
+                "&localSingleUrl=" . $singleUrl .
+                "&localDoubleUrl=" . $doubleUrl .
+                "&localLongUrl=" . $longUrl;
                 
                 if($cmdIdTouched != -1)
                 {
-                    $url = $url . '&localTouchUrl=' . $touchedUrl;
+                    $url = $url . "&localTouchUrl=" . $touchedUrl;
                 }
                 
-                $result = $this->doHttpCall($url, null, 'GET');
+                $result = $this->doHttpCall($url, null, "GET");
                 $resultApi = json_decode($result);
                 
-                if($resultApi->status === 'ok')
+                if($resultApi->status === "ok")
                 {
-                    $this->logInfo('Url saved for wifi button id:' .
-                        $wifiButton->id . ' value: ' . $resultApi->value);
+                    $this->jeedomHelper->logInfo("Url saved for wifi button id:" .
+                        $wifiButton->id . " value: " . $resultApi->value);
                     return true;
                 } else {
-                    $this->logWarning('Unable to save url for wifi button id:' .
-                        $wifiButton->id . ' error: ' . $resultApi->error);
+                    $this->jeedomHelper->logWarning("Unable to save url for wifi button id:" .
+                        $wifiButton->id . " error: " . $resultApi->error);
                     
                     return false;
                 }

@@ -45,6 +45,7 @@ class mystromCmdTest extends TestCase
     protected function setUp()
     {
         $this->mystromService = $this->getMockBuilder(MyStromService::class)
+        ->disableOriginalConstructor()
         ->setMethods([])
         ->getMock();
 

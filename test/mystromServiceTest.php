@@ -1,5 +1,6 @@
 <?php
 use PHPUnit\Framework\TestCase;
+use coolweb\mystrom\jeedomHelper;
 
 include_once('eqLogic.php');
 include_once('cmd.php');
@@ -16,94 +17,82 @@ include_once('./core/class/mystromService.class.php');
 */
 class mystromServiceTest extends TestCase
 {
-    public function testDoAuthentificationWhenErrorShouldReturnFalse()
+    /** @var \PHPUnit_Framework_MockObject_MockObject */
+    private $jeedomHelper;
+
+    /** @var \MystromService */
+    private $target;
+
+    protected function setUp()
     {
-        $target = $this->getMockBuilder(MyStromService::class)
+        $this->jeedomHelper = $this->getMockBuilder(JeedomHelper::class)
         ->setMethods([
         'logDebug',
         'logWarning',
         'logInfo',
-        'getMyStromConfiguration',
-        'saveMystromConfiguration',
-        'doJsonCall'])
+        'logError',
+        'loadPluginConfiguration',
+        'savePluginConfiguration',
+        'getEqLogicByLogicalId',
+        'createAndSaveEqLogic',
+        'createCmd'])
         ->getMock();
-        
+
+        $this->target = $this->getMockBuilder(MyStromService::class)
+        ->enableOriginalConstructor()
+        ->setConstructorArgs([$this->jeedomHelper])
+        ->setMethods(["doJsonCall", "doHttpCall"])
+        ->getMock();
+    }
+
+    public function testDoAuthentificationWhenErrorShouldReturnFalse()
+    {
         $jsonObject = new stdClass();
         @$jsonObject->status = 'ko';
         @$jsonObject->error = 'error';
         
-        $target->method('doJsonCall')
+        $this->target->method('doJsonCall')
         ->willReturn($jsonObject);
         
-        $result = $target->doAuthentification();
+        $result = $this->target->doAuthentification();
         
         $this->assertFalse($result);
     }
     
     public function testDoAuthentificationWhenOkShouldSaveTheToken()
     {
-        $target = $this->getMockBuilder(MyStromService::class)
-        ->setMethods([
-        'logDebug',
-        'logWarning',
-        'logInfo',
-        'getMyStromConfiguration',
-        'saveMystromConfiguration',
-        'doJsonCall'])
-        ->getMock();
-        
         $jsonObject = new stdClass();
         @$jsonObject->status = 'ok';
         @$jsonObject->authToken = '1234';
         
-        $target->method('doJsonCall')
+        $this->target->method('doJsonCall')
         ->willReturn($jsonObject);
         
-        $target->expects($this->once())
-        ->method('saveMystromConfiguration')
+        $this->jeedomHelper->expects($this->once())
+        ->method('savePluginConfiguration')
         ->with($this->equalTo('authToken'), $this->equalTo($jsonObject->authToken));
         
-        $result = $target->doAuthentification();
+        $result = $this->target->doAuthentification();
         
         $this->assertTrue($result);
     }
     
     public function testLoadAllDevicesWhenErrorShouldReturnTheError()
     {
-        $target = $this->getMockBuilder(MyStromService::class)
-        ->setMethods([
-        'logDebug',
-        'logWarning',
-        'logInfo',
-        'getMyStromConfiguration',
-        'saveMystromConfiguration',
-        'doJsonCall'])
-        ->getMock();
-        
         $jsonObject = new stdClass();
         @$jsonObject->status = 'ko';
         @$jsonObject->error = 'error';
         
-        $target->method('doJsonCall')
+        $this->target->method('doJsonCall')
         ->willReturn($jsonObject);
         
-        $result = $target->loadAllDevicesFromServer();
+        $result = $this->target->loadAllDevicesFromServer();
         
         $this->assertEquals($result->error, $jsonObject->error);
     }
     
     public function testLoadAllDevicesWhenOkShouldReturnTheDevices()
     {
-        $target = $this->getMockBuilder(MyStromService::class)
-        ->setMethods([
-        'logDebug',
-        'logWarning',
-        'logInfo',
-        'getMyStromConfiguration',
-        'saveMystromConfiguration',
-        'doJsonCall'])
-        ->getMock();
-        
         $jsonObject = new stdClass();
         @$jsonObject->status = 'ok';
         @$jsonObject->devices = array();
@@ -124,14 +113,14 @@ class mystromServiceTest extends TestCase
         @$device2->power = '0';
         array_push($jsonObject->devices, $device2);
         
-        $target->method('doJsonCall')
+        $this->target->method('doJsonCall')
         ->willReturn($jsonObject);
 
-        $target->expects($this->once())
+        $this->target->expects($this->once())
         ->method('doJsonCall')
         ->with($this->equalTo('https://www.mystrom.ch/mobile/devices?authToken='));
         
-        $result = $target->loadAllDevicesFromServer();
+        $result = $this->target->loadAllDevicesFromServer();
         
         $this->assertEquals(count($result->devices), 2);
         $this->assertEquals($result->devices[0]->id, $device1->id);
@@ -148,16 +137,6 @@ class mystromServiceTest extends TestCase
 
     public function testLoadAllDevicesWhenButtonShouldReturnTheButtonClass()
     {
-        $target = $this->getMockBuilder(MyStromService::class)
-        ->setMethods([
-        'logDebug',
-        'logWarning',
-        'logInfo',
-        'getMyStromConfiguration',
-        'saveMystromConfiguration',
-        'doJsonCall'])
-        ->getMock();
-        
         $jsonObject = new stdClass();
         @$jsonObject->status = 'ok';
         @$jsonObject->devices = array();
@@ -170,14 +149,14 @@ class mystromServiceTest extends TestCase
         @$device1->power = '0';
         array_push($jsonObject->devices, $device1);
         
-        $target->method('doJsonCall')
+        $this->target->method('doJsonCall')
         ->willReturn($jsonObject);
 
-        $target->expects($this->once())
+        $this->target->expects($this->once())
         ->method('doJsonCall')
         ->with($this->equalTo('https://www.mystrom.ch/mobile/devices?authToken='));
         
-        $result = $target->loadAllDevicesFromServer();
+        $result = $this->target->loadAllDevicesFromServer();
         
         $this->assertEquals(count($result->devices), 1);
         $this->assertEquals($result->devices[0]->id, $device1->id);
@@ -189,16 +168,6 @@ class mystromServiceTest extends TestCase
 
     public function testLoadAllDevicesWhenLoadReportDataShouldReturnTheConsumptions()
     {
-        $target = $this->getMockBuilder(MyStromService::class)
-        ->setMethods([
-        'logDebug',
-        'logWarning',
-        'logInfo',
-        'getMyStromConfiguration',
-        'saveMystromConfiguration',
-        'doJsonCall'])
-        ->getMock();
-        
         $jsonObject = new stdClass();
         @$jsonObject->status = 'ok';
         @$jsonObject->devices = array();
@@ -223,14 +192,14 @@ class mystromServiceTest extends TestCase
         @$device2->energyReport->monthlyConsumption = 110;
         array_push($jsonObject->devices, $device2);
         
-        $target->method('doJsonCall')
+        $this->target->method('doJsonCall')
         ->willReturn($jsonObject);
 
-        $target->expects($this->once())
+        $this->target->expects($this->once())
         ->method('doJsonCall')
         ->with($this->equalTo('https://www.mystrom.ch/mobile/devices?report=true&authToken='));
         
-        $result = $target->loadAllDevicesFromServer(true);
+        $result = $this->target->loadAllDevicesFromServer(true);
         
         $this->assertEquals(count($result->devices), 2);
         $this->assertEquals($result->devices[0]->id, $device1->id);
@@ -248,24 +217,14 @@ class mystromServiceTest extends TestCase
     
     public function testSetStateWhenErrorShouldReturnTheError()
     {
-        $target = $this->getMockBuilder(MyStromService::class)
-        ->setMethods([
-        'logDebug',
-        'logWarning',
-        'logInfo',
-        'getMyStromConfiguration',
-        'saveMystromConfiguration',
-        'doJsonCall'])
-        ->getMock();
-        
         $jsonObject = new stdClass();
         @$jsonObject->status = 'ko';
         @$jsonObject->error = 'error';
         
-        $target->method('doJsonCall')
+        $this->target->method('doJsonCall')
         ->willReturn($jsonObject);
         
-        $result = $target->setState('1234', 'eth', true);
+        $result = $this->target->setState('1234', 'eth', true);
         
         $this->assertEquals($result->status, 'ko');
         $this->assertEquals($result->error, 'error');
@@ -273,125 +232,75 @@ class mystromServiceTest extends TestCase
     
     public function testSetStateWhenStateIsOnShouldCallTheCorrectUrl()
     {
-        $target = $this->getMockBuilder(MyStromService::class)
-        ->setMethods([
-        'logDebug',
-        'logWarning',
-        'logInfo',
-        'getMyStromConfiguration',
-        'saveMystromConfiguration',
-        'doJsonCall'])
-        ->getMock();
-        
         $jsonObject = new stdClass();
         @$jsonObject->status = 'ok';
         
-        $target->method('doJsonCall')
+        $this->target->method('doJsonCall')
         ->willReturn($jsonObject);
         
-        $target->expects($this->once())
+        $this->target->expects($this->once())
         ->method('doJsonCall')
         ->with($this->equalTo('https://www.mystrom.ch/mobile/device/switch?authToken=&id=1234&on=true'));
         
-        $result = $target->setState('1234', 'eth', true);
+        $result = $this->target->setState('1234', 'eth', true);
         
         $this->assertEquals($result->status, 'ok');
     }
     
     public function testSetStateWhenStateIsOffShouldCallTheCorrectUrl()
     {
-        $target = $this->getMockBuilder(MyStromService::class)
-        ->setMethods([
-        'logDebug',
-        'logWarning',
-        'logInfo',
-        'getMyStromConfiguration',
-        'saveMystromConfiguration',
-        'doJsonCall'])
-        ->getMock();
-        
         $jsonObject = new stdClass();
         @$jsonObject->status = 'ok';
         
-        $target->method('doJsonCall')
+        $this->target->method('doJsonCall')
         ->willReturn($jsonObject);
         
-        $target->expects($this->once())
+        $this->target->expects($this->once())
         ->method('doJsonCall')
         ->with($this->equalTo('https://www.mystrom.ch/mobile/device/switch?authToken=&id=1234&on=false'));
         
-        $result = $target->setState('1234', 'eth', false);
+        $result = $this->target->setState('1234', 'eth', false);
         
         $this->assertEquals($result->status, 'ok');
     }
     
     public function testSetStateWhenDeviceIsMasterShouldDoAReset()
     {
-        $target = $this->getMockBuilder(MyStromService::class)
-        ->setMethods([
-        'logDebug',
-        'logWarning',
-        'logInfo',
-        'getMyStromConfiguration',
-        'saveMystromConfiguration',
-        'doJsonCall'])
-        ->getMock();
-        
         $jsonObject = new stdClass();
         @$jsonObject->status = 'ok';
         
-        $target->method('doJsonCall')
+        $this->target->method('doJsonCall')
         ->willReturn($jsonObject);
         
-        $target->expects($this->once())
+        $this->target->expects($this->once())
         ->method('doJsonCall')
         ->with($this->equalTo('https://www.mystrom.ch/mobile/device/restart?authToken=&id=1234'));
         
-        $result = $target->setState('1234', 'mst', false);
+        $result = $this->target->setState('1234', 'mst', false);
         
         $this->assertEquals($result->status, 'ok');
     }
 
     public function testWhenRetrieveLocalButtonInfo_ShouldGetTheMACAddress()
     {
-        $target = $this->getMockBuilder(MyStromService::class)
-        ->setMethods([
-        'logDebug',
-        'logWarning',
-        'logInfo',
-        'getMyStromConfiguration',
-        'saveMystromConfiguration',
-        'doHttpCall'])
-        ->getMock();
-
         $jsonResult = '{"7C2F1D4G5H":{"type": "button", "battery": true, "reachable": true, "meshroot": false, "charge": false, "voltage": 3.705, "fw_version": "2.37", "single": "", "double": "", "long": "", "touch": ""}}';
-        $target->method('doHttpCall')
+        $this->target->method('doHttpCall')
         ->willReturn($jsonResult);
 
-        $buttonInfo = $target->RetrieveLocalButtonInfo('192.168.1.2');
+        $buttonInfo = $this->target->RetrieveLocalButtonInfo('192.168.1.2');
 
         $this->assertEquals($buttonInfo->macAddress, '7C2F1D4G5H');
     }
 
     public function testSaveUrlsForLocalWifiButtonPlusWhenSaved_ShouldCallTheCorrectUrls()
     {
-        $target = $this->getMockBuilder(MyStromService::class)
-        ->setMethods([
-        'logDebug',
-        'logWarning',
-        'logInfo',
-        'getMyStromConfiguration',
-        'saveMystromConfiguration',
-        'doHttpCall'])
-        ->getMock();
-
-        $target->method('logWarning')
+        $this->jeedomHelper->method('logWarning')
         ->will($this->returnCallback(function($message){
             throw new Exception($message);
         }));
 
         $jeedomIp = '192.168.1.10';
-        $target->method('getMyStromConfiguration')
+        $this->jeedomHelper->method("loadPluginConfiguration")
         ->with(
             $this->equalTo('internalAddr'),
             $this->equalTo(true)
@@ -418,7 +327,7 @@ class mystromServiceTest extends TestCase
         $touchUrl = 'touch=get://' . $jeedomIp . '/core/api/jeeApi.php?apikey%3D' 
             . jeedom::getApiKey() . '%26type%3Dcmd%26id%3D' . $touchId;
 
-        $target->expects($this->exactly(4))
+        $this->target->expects($this->exactly(4))
         ->method('doHttpCall')
         ->withConsecutive(
             [$this->equalTo($buttonUrl), $this->equalTo($singleUrl), $this->equalTo('POST')],
@@ -428,28 +337,18 @@ class mystromServiceTest extends TestCase
         )
         ->willReturnOnConsecutiveCalls('','','','');
 
-        $target->SaveUrlsForWifiButton($button, $singleId, $doubleId, $longId, $touchId);
+        $this->target->SaveUrlsForWifiButton($button, $singleId, $doubleId, $longId, $touchId);
     }
 
     public function testSaveUrlsForLocalWifiButtonSimpleWhenSaved_ShouldCallTheCorrectUrls()
     {
-        $target = $this->getMockBuilder(MyStromService::class)
-        ->setMethods([
-        'logDebug',
-        'logWarning',
-        'logInfo',
-        'getMyStromConfiguration',
-        'saveMystromConfiguration',
-        'doHttpCall'])
-        ->getMock();
-
-        $target->method('logWarning')
+        $this->jeedomHelper->method('logWarning')
         ->will($this->returnCallback(function($message){
             throw new Exception($message);
         }));
 
         $jeedomIp = '192.168.1.10';
-        $target->method('getMyStromConfiguration')
+        $this->jeedomHelper->method('loadPluginConfiguration')
         ->with(
             $this->equalTo('internalAddr'),
             $this->equalTo(true)
@@ -474,7 +373,7 @@ class mystromServiceTest extends TestCase
         $longUrl = 'long=get://' . $jeedomIp . '/core/api/jeeApi.php?apikey%3D' 
             . jeedom::getApiKey() . '%26type%3Dcmd%26id%3D' . $longId;
        
-        $target->expects($this->exactly(3))
+        $this->target->expects($this->exactly(3))
         ->method('doHttpCall')
         ->withConsecutive(
             [$this->equalTo($buttonUrl), $this->equalTo($singleUrl), $this->equalTo('POST')],
@@ -483,23 +382,13 @@ class mystromServiceTest extends TestCase
         )
         ->willReturnOnConsecutiveCalls('','','');
 
-        $target->SaveUrlsForWifiButton($button, $singleId, $doubleId, $longId);
+        $this->target->SaveUrlsForWifiButton($button, $singleId, $doubleId, $longId);
     }
 
     public function testSaveUrlsForLocalWifiButtonWhenButtonNotReachable_ShouldReturnFalse()
     {
-        $target = $this->getMockBuilder(MyStromService::class)
-        ->setMethods([
-        'logDebug',
-        'logWarning',
-        'logInfo',
-        'getMyStromConfiguration',
-        'saveMystromConfiguration',
-        'doHttpCall'])
-        ->getMock();
-
         $jeedomIp = '192.168.1.10';
-        $target->method('getMyStromConfiguration')
+        $this->jeedomHelper->method('loadPluginConfiguration')
         ->with(
             $this->equalTo('internalAddr'),
             $this->equalTo(true)
@@ -516,7 +405,7 @@ class mystromServiceTest extends TestCase
         $longId = '3';
         $touchId = '4';
 
-        $target->expects($this->once())
+        $this->target->expects($this->once())
         ->method('doHttpCall')
         ->with(
             $this->equalTo('http://' . $button->ipAddress . '/api/v1/device/' . $button->macAddress),
@@ -525,31 +414,21 @@ class mystromServiceTest extends TestCase
             'POST')
         ->will($this->throwException(new Exception));
 
-        $result = $target->SaveUrlsForWifiButton($button, $singleId, $doubleId, $longId, $touchId);
+        $result = $this->target->SaveUrlsForWifiButton($button, $singleId, $doubleId, $longId, $touchId);
 
         $this->assertFalse(false);
     }
 
     public function testSaveUrlsForServerWifiButtonSimpleWhenSaved_ShouldCallTheCorrectUrls()
     {
-        $target = $this->getMockBuilder(MyStromService::class)
-        ->setMethods([
-        'logDebug',
-        'logWarning',
-        'logInfo',
-        'getMyStromConfiguration',
-        'saveMystromConfiguration',
-        'doHttpCall'])
-        ->getMock();
-
-        $target->method('logWarning')
+        $this->jeedomHelper->method('logWarning')
         ->will($this->returnCallback(function($message){
             throw new Exception($message);
         }));
 
         $jeedomIp = '192.168.1.10';
         $authToken = 'xyz';
-        $target->method('getMyStromConfiguration')
+        $this->jeedomHelper->method('loadPluginConfiguration')
         ->withConsecutive(
             [$this->equalTo('internalAddr'), $this->equalTo(true)],
             [$this->equalTo('authToken')]
@@ -581,35 +460,25 @@ class mystromServiceTest extends TestCase
         $resultHttp = new MyStromApiResult();
         $resultHttp->status = 'ok';
 
-        $target->expects($this->once())
+        $this->target->expects($this->once())
         ->method('doHttpCall')
         ->with($this->equalTo($urlToBeCalled), null, $this->equalTo('GET'))
         ->willReturn(json_encode($resultHttp));
 
-        $result = $target->SaveUrlsForWifiButton($button, $singleId, $doubleId, $longId);
+        $result = $this->target->SaveUrlsForWifiButton($button, $singleId, $doubleId, $longId);
         $this->assertTrue($result);
     }
 
     public function testSaveUrlsForServerWifiButtonPlusWhenSaved_ShouldCallTheCorrectUrls()
     {
-        $target = $this->getMockBuilder(MyStromService::class)
-        ->setMethods([
-        'logDebug',
-        'logWarning',
-        'logInfo',
-        'getMyStromConfiguration',
-        'saveMystromConfiguration',
-        'doHttpCall'])
-        ->getMock();
-
-        $target->method('logWarning')
+        $this->jeedomHelper->method('logWarning')
         ->will($this->returnCallback(function($message){
             throw new Exception($message);
         }));
 
         $jeedomIp = '192.168.1.10';
         $authToken = 'xyz';
-        $target->method('getMyStromConfiguration')
+        $this->jeedomHelper->method('loadPluginConfiguration')
         ->withConsecutive(
             [$this->equalTo('internalAddr'), $this->equalTo(true)],
             [$this->equalTo('authToken')]
@@ -644,30 +513,20 @@ class mystromServiceTest extends TestCase
         $resultHttp = new MyStromApiResult();
         $resultHttp->status = 'ok';
 
-        $target->expects($this->once())
+        $this->target->expects($this->once())
         ->method('doHttpCall')
         ->with($this->equalTo($urlToBeCalled), null, $this->equalTo('GET'))
         ->willReturn(json_encode($resultHttp));
 
-        $result = $target->SaveUrlsForWifiButton($button, $singleId, $doubleId, $longId, $touchId);
+        $result = $this->target->SaveUrlsForWifiButton($button, $singleId, $doubleId, $longId, $touchId);
         $this->assertTrue($result);
     }
 
     public function testSaveUrlsForServerWifiButtonWhenErrorFromServer_ShouldReturnFalse()
     {
-        $target = $this->getMockBuilder(MyStromService::class)
-        ->setMethods([
-        'logDebug',
-        'logWarning',
-        'logInfo',
-        'getMyStromConfiguration',
-        'saveMystromConfiguration',
-        'doHttpCall'])
-        ->getMock();
-
         $jeedomIp = '192.168.1.10';
         $authToken = 'xyz';
-        $target->method('getMyStromConfiguration')
+        $this->jeedomHelper->method('loadPluginConfiguration')
         ->withConsecutive(
             [$this->equalTo('internalAddr'), $this->equalTo(true)],
             [$this->equalTo('authToken')]
@@ -703,12 +562,12 @@ class mystromServiceTest extends TestCase
         $resultHttp->status = 'ko';
         $resultHttp->error = 'settings.update.failed';
 
-        $target->expects($this->once())
+        $this->target->expects($this->once())
         ->method('doHttpCall')
         ->with($this->equalTo($urlToBeCalled), null, $this->equalTo('GET'))
         ->willReturn(json_encode($resultHttp));
 
-        $result = $target->SaveUrlsForWifiButton($button, $singleId, $doubleId, $longId, $touchId);
+        $result = $this->target->SaveUrlsForWifiButton($button, $singleId, $doubleId, $longId, $touchId);
         $this->assertFalse($result);
     }
 }
