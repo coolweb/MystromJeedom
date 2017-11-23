@@ -310,7 +310,7 @@ class MyStromService
                     }
 
                     return true;
-                } catch (Exception $e) {
+                } catch (\Exception $e) {
                     $this->jeedomHelper->logWarning("SaveUrlsForWifiButton - " . $e);
                     return false;
                 }

@@ -420,7 +420,7 @@ class mystromServiceTest extends TestCase
             $this->equalTo('single=get://' . $jeedomIp . '/core/api/jeeApi.php?apikey%3D' 
             . 'FFFFFF' . '%26type%3Dcmd%26id%3D' . $singleId),
             'POST')
-        ->will($this->throwException(new Exception));
+        ->will($this->throwException(new \Exception));
 
         $result = $this->target->SaveUrlsForWifiButton($button, $singleId, $doubleId, $longId, $touchId);
 
@@ -431,7 +431,7 @@ class mystromServiceTest extends TestCase
     {
         $this->jeedomHelper->method('logWarning')
         ->will($this->returnCallback(function($message){
-            throw new Exception($message);
+            throw new \Exception($message);
         }));
 
         $jeedomIp = '192.168.1.10';
