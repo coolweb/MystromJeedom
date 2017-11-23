@@ -1,7 +1,4 @@
 <?php
-use PHPUnit\Framework\TestCase;
-use coolweb\mystrom\jeedomHelper;
-
 include_once('eqLogic.php');
 include_once('cmd.php');
 include_once('./test/jeedom.php');
@@ -11,6 +8,13 @@ include_once('./core/class/myStromApiResult.class.php');
 include_once('./core/class/getAllDevicesResult.class.php');
 include_once('./core/class/mystromButtonDevice.class.php');
 include_once('./core/class/mystromService.class.php');
+
+use PHPUnit\Framework\TestCase;
+use coolweb\mystrom\jeedomHelper;
+use coolweb\mystrom\MyStromService;
+use coolweb\mystrom\MyStromDevice;
+use coolweb\mystrom\MystromButtonDevice;
+use coolweb\mystrom\MystromApiResult;
 
 /**
 * Test class for mystrom service class
@@ -35,7 +39,8 @@ class mystromServiceTest extends TestCase
         'savePluginConfiguration',
         'getEqLogicByLogicalId',
         'createAndSaveEqLogic',
-        'createCmd'])
+        'createCmd',
+        'getJeedomApiKey'])        
         ->getMock();
 
         $this->target = $this->getMockBuilder(MyStromService::class)
@@ -43,11 +48,14 @@ class mystromServiceTest extends TestCase
         ->setConstructorArgs([$this->jeedomHelper])
         ->setMethods(["doJsonCall", "doHttpCall"])
         ->getMock();
+
+        $this->jeedomHelper->method('getJeedomApiKey')
+        ->willReturn('FFFFFF');
     }
 
     public function testDoAuthentificationWhenErrorShouldReturnFalse()
     {
-        $jsonObject = new stdClass();
+        $jsonObject = new \stdClass();
         @$jsonObject->status = 'ko';
         @$jsonObject->error = 'error';
         
@@ -61,7 +69,7 @@ class mystromServiceTest extends TestCase
     
     public function testDoAuthentificationWhenOkShouldSaveTheToken()
     {
-        $jsonObject = new stdClass();
+        $jsonObject = new \stdClass();
         @$jsonObject->status = 'ok';
         @$jsonObject->authToken = '1234';
         
@@ -79,7 +87,7 @@ class mystromServiceTest extends TestCase
     
     public function testLoadAllDevicesWhenErrorShouldReturnTheError()
     {
-        $jsonObject = new stdClass();
+        $jsonObject = new \stdClass();
         @$jsonObject->status = 'ko';
         @$jsonObject->error = 'error';
         
@@ -93,11 +101,11 @@ class mystromServiceTest extends TestCase
     
     public function testLoadAllDevicesWhenOkShouldReturnTheDevices()
     {
-        $jsonObject = new stdClass();
+        $jsonObject = new \stdClass();
         @$jsonObject->status = 'ok';
         @$jsonObject->devices = array();
         
-        $device1 = new stdClass();
+        $device1 = new \stdClass();
         @$device1->id = '1234';
         @$device1->type = 'eth';
         @$device1->name = 'device1';
@@ -105,7 +113,7 @@ class mystromServiceTest extends TestCase
         @$device1->power = '1';
         array_push($jsonObject->devices, $device1);
         
-        $device2 = new stdClass();
+        $device2 = new \stdClass();
         @$device2->id = '4321';
         @$device2->type = 'mst';
         @$device2->name = 'device2';
@@ -137,11 +145,11 @@ class mystromServiceTest extends TestCase
 
     public function testLoadAllDevicesWhenButtonShouldReturnTheButtonClass()
     {
-        $jsonObject = new stdClass();
+        $jsonObject = new \stdClass();
         @$jsonObject->status = 'ok';
         @$jsonObject->devices = array();
         
-        $device1 = new stdClass();
+        $device1 = new \stdClass();
         @$device1->id = '1234';
         @$device1->type = 'wbp';
         @$device1->name = 'device1';
@@ -168,11 +176,11 @@ class mystromServiceTest extends TestCase
 
     public function testLoadAllDevicesWhenLoadReportDataShouldReturnTheConsumptions()
     {
-        $jsonObject = new stdClass();
+        $jsonObject = new \stdClass();
         @$jsonObject->status = 'ok';
         @$jsonObject->devices = array();
         
-        $device1 = new stdClass();
+        $device1 = new \stdClass();
         @$device1->id = '1234';
         @$device1->type = 'eth';
         @$device1->name = 'device1';
@@ -182,7 +190,7 @@ class mystromServiceTest extends TestCase
         @$device1->energyReport->monthlyConsumption = 100;
         array_push($jsonObject->devices, $device1);
         
-        $device2 = new stdClass();
+        $device2 = new \stdClass();
         @$device2->id = '4321';
         @$device2->type = 'mst';
         @$device2->name = 'device2';
@@ -217,7 +225,7 @@ class mystromServiceTest extends TestCase
     
     public function testSetStateWhenErrorShouldReturnTheError()
     {
-        $jsonObject = new stdClass();
+        $jsonObject = new \stdClass();
         @$jsonObject->status = 'ko';
         @$jsonObject->error = 'error';
         
@@ -232,7 +240,7 @@ class mystromServiceTest extends TestCase
     
     public function testSetStateWhenStateIsOnShouldCallTheCorrectUrl()
     {
-        $jsonObject = new stdClass();
+        $jsonObject = new \stdClass();
         @$jsonObject->status = 'ok';
         
         $this->target->method('doJsonCall')
@@ -249,7 +257,7 @@ class mystromServiceTest extends TestCase
     
     public function testSetStateWhenStateIsOffShouldCallTheCorrectUrl()
     {
-        $jsonObject = new stdClass();
+        $jsonObject = new \stdClass();
         @$jsonObject->status = 'ok';
         
         $this->target->method('doJsonCall')
@@ -266,7 +274,7 @@ class mystromServiceTest extends TestCase
     
     public function testSetStateWhenDeviceIsMasterShouldDoAReset()
     {
-        $jsonObject = new stdClass();
+        $jsonObject = new \stdClass();
         @$jsonObject->status = 'ok';
         
         $this->target->method('doJsonCall')
@@ -319,13 +327,13 @@ class mystromServiceTest extends TestCase
 
         $buttonUrl = 'http://' . $button->ipAddress . '/api/v1/device/' . $button->macAddress;
         $singleUrl = 'single=get://' . $jeedomIp . '/core/api/jeeApi.php?apikey%3D' 
-            . jeedom::getApiKey() . '%26type%3Dcmd%26id%3D' . $singleId;
+            . 'FFFFFF' . '%26type%3Dcmd%26id%3D' . $singleId;
         $doubleUrl = 'double=get://' . $jeedomIp . '/core/api/jeeApi.php?apikey%3D' 
-            . jeedom::getApiKey() . '%26type%3Dcmd%26id%3D' . $doubleId;
+            . 'FFFFFF' . '%26type%3Dcmd%26id%3D' . $doubleId;
         $longUrl = 'long=get://' . $jeedomIp . '/core/api/jeeApi.php?apikey%3D' 
-            . jeedom::getApiKey() . '%26type%3Dcmd%26id%3D' . $longId;
+            . 'FFFFFF' . '%26type%3Dcmd%26id%3D' . $longId;
         $touchUrl = 'touch=get://' . $jeedomIp . '/core/api/jeeApi.php?apikey%3D' 
-            . jeedom::getApiKey() . '%26type%3Dcmd%26id%3D' . $touchId;
+            . 'FFFFFF' . '%26type%3Dcmd%26id%3D' . $touchId;
 
         $this->target->expects($this->exactly(4))
         ->method('doHttpCall')
@@ -367,11 +375,11 @@ class mystromServiceTest extends TestCase
 
         $buttonUrl = 'http://' . $button->ipAddress . '/api/v1/device/' . $button->macAddress;
         $singleUrl = 'single=get://' . $jeedomIp . '/core/api/jeeApi.php?apikey%3D' 
-            . jeedom::getApiKey() . '%26type%3Dcmd%26id%3D' . $singleId;
+            . 'FFFFFF' . '%26type%3Dcmd%26id%3D' . $singleId;
         $doubleUrl = 'double=get://' . $jeedomIp . '/core/api/jeeApi.php?apikey%3D' 
-            . jeedom::getApiKey() . '%26type%3Dcmd%26id%3D' . $doubleId;
+            . 'FFFFFF' . '%26type%3Dcmd%26id%3D' . $doubleId;
         $longUrl = 'long=get://' . $jeedomIp . '/core/api/jeeApi.php?apikey%3D' 
-            . jeedom::getApiKey() . '%26type%3Dcmd%26id%3D' . $longId;
+            . 'FFFFFF' . '%26type%3Dcmd%26id%3D' . $longId;
        
         $this->target->expects($this->exactly(3))
         ->method('doHttpCall')
@@ -410,7 +418,7 @@ class mystromServiceTest extends TestCase
         ->with(
             $this->equalTo('http://' . $button->ipAddress . '/api/v1/device/' . $button->macAddress),
             $this->equalTo('single=get://' . $jeedomIp . '/core/api/jeeApi.php?apikey%3D' 
-            . jeedom::getApiKey() . '%26type%3Dcmd%26id%3D' . $singleId),
+            . 'FFFFFF' . '%26type%3Dcmd%26id%3D' . $singleId),
             'POST')
         ->will($this->throwException(new Exception));
 
@@ -447,11 +455,11 @@ class mystromServiceTest extends TestCase
         $serverUrl = 'https://www.mystrom.ch/mobile/device/setSettings?authToken=' . $authToken .
         '&id=' . $button->id;
         $singleUrl = 'get://' . $jeedomIp . '/core/api/jeeApi.php?apikey%3D' 
-            . jeedom::getApiKey() . '%26type%3Dcmd%26id%3D' . $singleId;
+            . 'FFFFFF' . '%26type%3Dcmd%26id%3D' . $singleId;
         $doubleUrl = 'get://' . $jeedomIp . '/core/api/jeeApi.php?apikey%3D' 
-            . jeedom::getApiKey() . '%26type%3Dcmd%26id%3D' . $doubleId;
+            . 'FFFFFF' . '%26type%3Dcmd%26id%3D' . $doubleId;
         $longUrl = 'get://' . $jeedomIp . '/core/api/jeeApi.php?apikey%3D' 
-            . jeedom::getApiKey() . '%26type%3Dcmd%26id%3D' . $longId;
+            . 'FFFFFF' . '%26type%3Dcmd%26id%3D' . $longId;
         $urlToBeCalled = $serverUrl .
                         '&localSingleUrl=' . $singleUrl .
                         '&localDoubleUrl=' . $doubleUrl .
@@ -497,13 +505,13 @@ class mystromServiceTest extends TestCase
         $serverUrl = 'https://www.mystrom.ch/mobile/device/setSettings?authToken=' . $authToken .
         '&id=' . $button->id;
         $singleUrl = 'get://' . $jeedomIp . '/core/api/jeeApi.php?apikey%3D' 
-            . jeedom::getApiKey() . '%26type%3Dcmd%26id%3D' . $singleId;
+            . 'FFFFFF' . '%26type%3Dcmd%26id%3D' . $singleId;
         $doubleUrl = 'get://' . $jeedomIp . '/core/api/jeeApi.php?apikey%3D' 
-            . jeedom::getApiKey() . '%26type%3Dcmd%26id%3D' . $doubleId;
+            . 'FFFFFF' . '%26type%3Dcmd%26id%3D' . $doubleId;
         $longUrl = 'get://' . $jeedomIp . '/core/api/jeeApi.php?apikey%3D' 
-            . jeedom::getApiKey() . '%26type%3Dcmd%26id%3D' . $longId;
+            . 'FFFFFF' . '%26type%3Dcmd%26id%3D' . $longId;
         $touchUrl = 'get://' . $jeedomIp . '/core/api/jeeApi.php?apikey%3D' 
-            . jeedom::getApiKey() . '%26type%3Dcmd%26id%3D' . $touchId;
+            . 'FFFFFF' . '%26type%3Dcmd%26id%3D' . $touchId;
         $urlToBeCalled = $serverUrl .
                         '&localSingleUrl=' . $singleUrl .
                         '&localDoubleUrl=' . $doubleUrl .
@@ -545,13 +553,13 @@ class mystromServiceTest extends TestCase
         $serverUrl = 'https://www.mystrom.ch/mobile/device/setSettings?authToken=' . $authToken .
         '&id=' . $button->id;
         $singleUrl = 'get://' . $jeedomIp . '/core/api/jeeApi.php?apikey%3D' 
-            . jeedom::getApiKey() . '%26type%3Dcmd%26id%3D' . $singleId;
+            . 'FFFFFF' . '%26type%3Dcmd%26id%3D' . $singleId;
         $doubleUrl = 'get://' . $jeedomIp . '/core/api/jeeApi.php?apikey%3D' 
-            . jeedom::getApiKey() . '%26type%3Dcmd%26id%3D' . $doubleId;
+            . 'FFFFFF' . '%26type%3Dcmd%26id%3D' . $doubleId;
         $longUrl = 'get://' . $jeedomIp . '/core/api/jeeApi.php?apikey%3D' 
-            . jeedom::getApiKey() . '%26type%3Dcmd%26id%3D' . $longId;
+            . 'FFFFFF' . '%26type%3Dcmd%26id%3D' . $longId;
         $touchUrl = 'get://' . $jeedomIp . '/core/api/jeeApi.php?apikey%3D' 
-            . jeedom::getApiKey() . '%26type%3Dcmd%26id%3D' . $touchId;
+            . 'FFFFFF' . '%26type%3Dcmd%26id%3D' . $touchId;
         $urlToBeCalled = $serverUrl .
                         '&localSingleUrl=' . $singleUrl .
                         '&localDoubleUrl=' . $doubleUrl .

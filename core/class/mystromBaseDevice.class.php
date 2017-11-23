@@ -1,4 +1,5 @@
 <?php
+namespace coolweb\mystrom;
 
 /* This file is part of Jeedom.
  *

@@ -1,4 +1,5 @@
 <?php
+namespace coolweb\mystrom;
 
 /**
  * Represents a mystrom device

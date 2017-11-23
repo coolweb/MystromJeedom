@@ -1,5 +1,8 @@
 <?php
 use PHPUnit\Framework\TestCase;
+use coolweb\mystrom\MyStromService;
+use coolweb\mystrom\MyStromDevice;
+use coolweb\mystrom\GetAllDevicesResult;
 
 include_once('eqLogic.php');
 include_once('cmd.php');

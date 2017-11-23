@@ -7,6 +7,11 @@ class JeedomHelper
     {
         return \config::byKey($key, $isCoreConfig == true ? "core" : "mystrom");
     }
+
+    public function getJeedomApiKey()
+    {
+        return \jeedom::getApiKey();
+    }
     
     /**
     * Save a configuration value for the plugin

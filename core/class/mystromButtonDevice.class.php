@@ -1,4 +1,5 @@
 <?php
+namespace coolweb\mystrom;
 
 /**
  * Entity class for mystrom wifi button.

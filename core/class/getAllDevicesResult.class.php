@@ -1,4 +1,5 @@
 <?php
+namespace coolweb\mystrom;
 
 /**
  * Result from get all devices

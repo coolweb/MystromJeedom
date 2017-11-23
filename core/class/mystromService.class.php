@@ -1,4 +1,5 @@
 <?php
+namespace coolweb\mystrom;
 
 /**
 * Mystrom service class
@@ -264,7 +265,7 @@ class MyStromService
         public function SaveUrlsForWifiButton($wifiButton, $cmdIdSingle, $cmdIdDouble, $cmdIdLong, $cmdIdTouched = -1)
         {
             $jeedomIp = $this->jeedomHelper->loadPluginConfiguration("internalAddr", true);
-            $apiKey = jeedom::getApiKey();
+            $apiKey = $this->jeedomHelper->getJeedomApiKey();
             $url = "get://" . $jeedomIp . "/core/api/jeeApi.php?apikey%3D" . $apiKey .
             "%26type%3Dcmd%26id%3D";
             

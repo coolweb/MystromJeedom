@@ -1,4 +1,5 @@
 <?php
+namespace coolweb\mystrom;
 
 /**
  * A result from an http call to the mystrom api
