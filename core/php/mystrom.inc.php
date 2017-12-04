@@ -16,6 +16,8 @@
 * along with Jeedom. If not, see <http://www.gnu.org/licenses/>.
 */
 
+require_once dirname(__FILE__) . '/../../3rparty/autoload.php';
+
 require_once dirname(__FILE__) . '/../class/jeedomHelper.class.php';
 require_once dirname(__FILE__) . '/../class/mystromApiResult.class.php';
 require_once dirname(__FILE__) . '/../class/getAllDevicesResult.class.php';

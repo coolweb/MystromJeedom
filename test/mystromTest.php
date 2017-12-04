@@ -3,6 +3,7 @@ use PHPUnit\Framework\TestCase;
 use coolweb\mystrom\MyStromService;
 use coolweb\mystrom\MyStromDevice;
 use coolweb\mystrom\GetAllDevicesResult;
+use coolweb\mystrom\jeedomHelper;
 
 include_once('eqLogic.php');
 include_once('cmd.php');
@@ -12,6 +13,7 @@ include_once('./core/class/mystromApiResult.class.php');
 include_once('./core/class/getAllDevicesResult.class.php');
 include_once('./core/class/MyStromService.class.php');
 include_once('./core/class/myStrom.class.php');
+include_once('./core/class/jeedomHelper.class.php');
 
 /**
 * Test class for mystrom service class
@@ -20,7 +22,8 @@ class mystromTest extends TestCase
 {
     private $mystromService;
     private $target;
-
+    private $jeedomHelper;
+    
     private function setJeedomDevices($target, $eqLogics)
     {
         $this->target->method('loadEqLogic')
@@ -87,7 +90,11 @@ class mystromTest extends TestCase
         ->setMethods(['loadAllDevicesFromServer'])
         ->getMock();
 
+        $this->jeedomHelper = $this->getMockBuilder(JeedomHelper::class)
+        ->getMock();
+
         $this->target = $this->getMockBuilder(mystrom::class)
+        ->setConstructorArgs([$this->jeedomHelper])
         ->setMethods(['logError', 'loadEqLogic', 'logDebug', 'getLogicalId', 'setConfiguration', 'getConfiguration'])
         ->getMock();
     }
@@ -136,7 +143,7 @@ class mystromTest extends TestCase
         $this->setJeedomDevices($this->target, $eqLogics);
         $this->setMystromDevices($this->mystromService, $devices);
 
-        $this->target->expects($this->once())
+        $this->jeedomHelper->expects($this->once())
         ->method('logError');
 
         $this->target->pull($this->mystromService);
@@ -145,7 +152,7 @@ class mystromTest extends TestCase
     public function testPullWhenErrorLoadingDevices_ItShouldLogAnError()
     {
         $this->setMystromDevices($this->mystromService, null, true);
-        $this->target->expects($this->once())
+        $this->jeedomHelper->expects($this->once())
         ->method('logError');
 
         $this->target->pull($this->mystromService);

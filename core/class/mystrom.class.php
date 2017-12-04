@@ -1,4 +1,5 @@
 <?php
+use coolweb\mystrom\JeedomHelper;
 
 /* This file is part of Jeedom.
 *
@@ -26,35 +27,21 @@ if (file_exists(dirname(__FILE__) . '/../../../../core/php/core.inc.php')) {
 */
 class mystrom extends eqLogic
 {
+    /** @var \coolweb\mystrom\JeedomHelper */
+    private $_jeedomHelper;
+
     private static $_eqLogics = null;
     
-    /**
-    * Logs an error message
-    * @param $message string The message to log
-    */
-    public function logError($message)
+    public function __construct($jeedomHelper)
     {
-        log::add('mystrom', 'error', $message);
+        if ($jeedomHelper == null) {
+            $container = DI\ContainerBuilder::buildDevContainer();
+            $this->_jeedomHelper = $container->get("\coolweb\mystrom\JeedomHelper");
+        } else {
+            $this->_jeedomHelper = $jeedomHelper;
+        }
     }
-    
-    /**
-    * Logs a debug message
-    * @param $message string The message to log
-    */
-    public function logDebug($message)
-    {
-        log::add('mystrom', 'debug', $message);
-    }
-    
-    /**
-    * Logs an info message
-    * @param $message string The message to log
-    */
-    public function logInfo($message)
-    {
-        log::add('mystrom', 'info', $message);
-    }
-    
+
     public function loadEqLogic()
     {
         return mystrom::byType('mystrom');
@@ -65,7 +52,7 @@ class mystrom extends eqLogic
     */
     public static function cron()
     {
-        log::add('mystrom', 'debug', 'pull started');
+        $this->_jeedomHelper->logDebug("pull started");
         $mystromPlugin = new mystrom();
         $mystromPlugin->pull();
     }
@@ -103,7 +90,7 @@ class mystrom extends eqLogic
     */
     public function postSave()
     {
-        log::add('mystrom', 'debug', "Ajout des commandes sur l'équipement");
+        $this->_jeedomHelper->logDebug("Ajout des commandes sur l'équipement");
         $deviceType = $this->getConfiguration('mystromType');
         
         if ($deviceType == 'mst' || $deviceType == 'eth' || $deviceType == 'sw' || $deviceType == 'wsw') {
@@ -229,7 +216,7 @@ class mystrom extends eqLogic
             $isTouchedCmd = $this->getCmd(null, 'isTouched');
             $isTouchedActionCmd = $this->getCmd(null, 'isTouchedAction');
             
-            if ($deviceType == 'wbs'){
+            if ($deviceType == 'wbs') {
                 if (is_object($isTouchedCmd)) {
                     $isTouchedCmd->remove();
                 }
@@ -239,7 +226,7 @@ class mystrom extends eqLogic
                 }
             }
             
-            if ($deviceType == 'wbp'){
+            if ($deviceType == 'wbp') {
                 $isTouchedCmd = $this->getCmd(null, 'isTouched');
                 if (!is_object($isTouchedCmd)) {
                     $isTouchedCmd = new mystromCmd();
@@ -265,7 +252,7 @@ class mystrom extends eqLogic
                 }
             }
             
-            if ($deviceType == 'wbp' || $deviceType == 'wbs'){
+            if ($deviceType == 'wbp' || $deviceType == 'wbs') {
                 $isSingleCmd = $this->getCmd(null, 'isSingle');
                 if (!is_object($isSingleCmd)) {
                     $isSingleCmd = new mystromCmd();
@@ -360,7 +347,8 @@ class mystrom extends eqLogic
                         $isSingleActionCmd->getId(),
                         $isDoubleActionCmd->getId(),
                         $isLongPressedActionCmd->getId(),
-                        $isTouchedActionCmd->getId());
+                        $isTouchedActionCmd->getId()
+                        );
                     }
                 } else {
                     $this->setConfiguration('ipAddress', null);
@@ -376,7 +364,8 @@ class mystrom extends eqLogic
                     $isSingleActionCmd->getId(),
                     $isDoubleActionCmd->getId(),
                     $isLongPressedActionCmd->getId(),
-                    $isTouchedActionCmd->getId());
+                    $isTouchedActionCmd->getId()
+                    );
                 }
             }
         }
@@ -418,12 +407,11 @@ class mystrom extends eqLogic
     */
     public static function getAllDevices()
     {
-        $logger = log::getLogger('mystrom');
-        log::add('mystrom', 'debug', 'getAllDevices');
+        $this->_jeedomHelper->logDebug("getAllDevices");
         
         $devices = array();
         $jeedomDevices = eqLogic::byType('mystrom');
-        log::add('mystrom', 'debug', 'jeedom devices retrieved');
+        $this->_jeedomHelper->logDebug("jeedom devices retrieved");
         
         foreach ($jeedomDevices as $eqLogic) {
             $device = new stdClass();
@@ -444,11 +432,11 @@ class mystrom extends eqLogic
     */
     public function syncMyStrom()
     {
-        $this->logDebug('syncMyStrom');
+        $this->_jeedomHelper->logDebug("syncMyStrom");
         $mystromService = new MyStromService();
         
         if ($mystromService->doAuthentification()) {
-            $this->logInfo('Recherche des équipements mystrom');
+            $this->_jeedomHelper->logInfo("Recherche des équipements mystrom");
             $resultDevices = $mystromService->loadAllDevicesFromServer();
             
             if (strcmp($resultDevices->status, 'ok') == 0) {
@@ -468,11 +456,11 @@ class mystrom extends eqLogic
                     $eqLogic->save();
                 }
                 
-                $this->logDebug('Ajout des équipements dans la base de données');
+                $this->_jeedomHelper->logDebug("Ajout des équipements dans la base de données");
                 
                 return '';
             } else {
-                $this->logError('Erreur de recherche des équipements: ' . $resultDevices->error);
+                $this->_jeedomHelper->logError("Erreur de recherche des équipements: ' . $resultDevices->error");
                 return 'Erreur de recherche des équipements voir les logs';
             }
         } else {
@@ -495,7 +483,7 @@ class mystrom extends eqLogic
         $foundMystromDevice = null;
         
         if (strcmp($resultDevices->status, 'ok') == -1) {
-            $this->logError('Error retrieving devices status: ' . $resultDevices->error);
+            $this->_jeedomHelper->logError("Error retrieving devices status: ' . $resultDevices->error");
             return;
         }
         
@@ -504,19 +492,18 @@ class mystrom extends eqLogic
             $changed = false;
             $isLocal = $this->getConfiguration('isLocal');
             
-            if($isLocal != true)
-            {
+            if ($isLocal != true) {
                 foreach ($resultDevices->devices as $device) {
                     if ($device->id == $eqLogic->getLogicalId()) {
-                        $this->logDebug('Equipement trouvé avec id ' . $device->id . ' (' . $device->name . ')');
+                        $this->_jeedomHelper->logDebug("Equipement trouvé avec id ' . $device->id . ' (' . $device->name . ')");
                         
                         $foundMystromDevice = $device;
                     }
                 }
                 
                 if ($foundMystromDevice == null) {
-                    $this->logError('Impossible de trouver l\'équipement mystrom id '
-                    . $eqLogic->getLogicalId() . ' (' . $eqLogic->getName() . ')');
+                    $this->_jeedomHelper->logError("Impossible de trouver l\'équipement mystrom id "
+                        . $eqLogic->getLogicalId() . " (" . $eqLogic->getName() . ")");
                     continue;
                 }
                 
@@ -541,15 +528,19 @@ class mystrom extends eqLogic
 */
 class mystromCmd extends cmd
 {
-    /**
-    * Logs a debug message
-    * @param $message string The message to log
-    */
-    public function logDebug($message)
+    /** @var \coolweb\mystrom\JeedomHelper */
+    private $_jeedomHelper;
+
+    public function __construct($jeedomHelper)
     {
-        log::add('mystrom', 'debug', $message);
+        if ($jeedomHelper == null) {
+            $container = DI\ContainerBuilder::buildDevContainer();
+            $this->_jeedomHelper = $container->get("\coolweb\mystrom\JeedomHelper");
+        } else {
+            $this->_jeedomHelper = $jeedomHelper;
+        }
     }
-    
+
     public function getEqLogicLogicalId()
     {
         $eqLogic = $this->getEqLogic();
@@ -602,7 +593,7 @@ class mystromCmd extends cmd
         $state = '';
         $cmdLogicalId = $this->getLogicalId();
         
-        $this->logDebug('Execute cmd ' . $cmdLogicalId);
+        $this->_jeedomHelper->logDebug('Execute cmd ' . $cmdLogicalId);
         
         if ($cmdLogicalId == 'on') {
             $commandOk = true;
@@ -658,7 +649,7 @@ class mystromCmd extends cmd
         }
         
         if ($commandOk == false) {
-            log::add('mystrom', 'error', "Commande non reconnue " . $this->getLogicalId());
+            $this->_jeedomHelper->logError("Commande non reconnue " . $this->getLogicalId());
         } else {
             if ($commandWifiButton == false) {
                 $changed = $this->checkAndUpdateCmd('state', $state) || $changed;

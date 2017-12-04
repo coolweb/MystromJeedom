@@ -9,6 +9,10 @@ include_once('./core/class/mystromApiResult.class.php');
 include_once('./core/class/getAllDevicesResult.class.php');
 include_once('./core/class/MyStromService.class.php');
 include_once('./core/class/myStrom.class.php');
+include_once('./core/class/jeedomHelper.class.php');
+
+use coolweb\mystrom\MyStromService;
+use coolweb\mystrom\jeedomHelper;
 
 /**
 * Test class for mystrom cmd class
@@ -17,6 +21,7 @@ class mystromCmdTest extends TestCase
 {
     private $mystromService;
     private $target;
+    private $jeedomHelper;
 
     private function setCmdId($id)
     {
@@ -49,7 +54,11 @@ class mystromCmdTest extends TestCase
         ->setMethods([])
         ->getMock();
 
+        $this->jeedomHelper = $this->getMockBuilder(JeedomHelper::class)
+        ->getMock();
+        
         $this->target = $this->getMockBuilder(mystromCmd::class)
+        ->setConstructorArgs([$this->jeedomHelper])
         ->setMethods(['getEqLogicLogicalId', 'getEqLogicConfiguration', 'getLogicalId', 'getType', 'checkAndUpdateCmd', 'logDebug'])
         ->getMock();
     }
