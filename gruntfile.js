@@ -30,6 +30,14 @@ module.exports = function (grunt) {
                     colors: true,
                     configuration: 'test/phpunit.xml'
                 }
+            },
+            composer : {
+                production: {
+                    options : {
+                        flags: ['no-dev'],
+                        cwd: 'dist'
+                    }
+                }
             }
         });
     
@@ -38,16 +46,17 @@ module.exports = function (grunt) {
         grunt.loadNpmTasks('grunt-phpunit');
         //grunt.loadNpmTasks('grunt-phplint');
         //grunt.loadNpmTasks('grunt-phpcs');
-        //grunt.loadNpmTasks('grunt-composer');
+        grunt.loadNpmTasks('grunt-composer');
     
         grunt.registerTask('default', ['']);
-        //grunt.registerTask('update', 
-        //['phplint', 
-        //'phpcs', 
-        //'copy:main',
-        //'clean:vendor']);
+        grunt.registerTask('update', 
+        ['copy:main',
+        'clean:vendor']);
         grunt.registerTask('make', 
         ['clean:build', 
         'phpunit',
-        'copy:main']);
+        'copy:main',
+        'composer:production:install',
+        'copy:vendor',
+        'clean:vendor']);
     };
