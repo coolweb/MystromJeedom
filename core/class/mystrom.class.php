@@ -250,9 +250,11 @@ class mystrom extends eqLogic
                     $isTouchedCmd->setSubType('binary');
                     $isTouchedCmd->setTemplate('dashboard', 'line');
                     $isTouchedCmd->setEqLogic_id($this->getId());
-                    $isTouchedCmd->setDisplay('showNameOndashboard', '1');
-                    $isTouchedCmd->save();
+                    $isTouchedCmd->setDisplay('showNameOndashboard', '1');                    
                 }
+
+                $isTouchedCmd->setConfiguration("repeatEventManagement", "always");
+                $isTouchedCmd->save();
                 
                 if (!is_object($isTouchedActionCmd)) {
                     $isTouchedActionCmd = new mystromCmd();
@@ -276,9 +278,11 @@ class mystrom extends eqLogic
                     $isSingleCmd->setSubType('binary');
                     $isSingleCmd->setTemplate('dashboard', 'line');
                     $isSingleCmd->setEqLogic_id($this->getId());
-                    $isSingleCmd->setDisplay('showNameOndashboard', '1');
-                    $isSingleCmd->save();
+                    $isSingleCmd->setDisplay('showNameOndashboard', '1');                    
                 }
+
+                $isSingleCmd->setConfiguration("repeatEventManagement", "always");
+                $isSingleCmd->save();
                 
                 $isSingleActionCmd = $this->getCmd(null, 'isSingleAction');
                 if (!is_object($isSingleActionCmd)) {
@@ -301,9 +305,11 @@ class mystrom extends eqLogic
                     $isDoubleCmd->setSubType('binary');
                     $isDoubleCmd->setTemplate('dashboard', 'line');
                     $isDoubleCmd->setEqLogic_id($this->getId());
-                    $isDoubleCmd->setDisplay('showNameOndashboard', '1');
-                    $isDoubleCmd->save();
+                    $isDoubleCmd->setDisplay('showNameOndashboard', '1');                    
                 }
+
+                $isDoubleCmd->setConfiguration("repeatEventManagement", "always");
+                $isDoubleCmd->save();
                 
                 $isDoubleActionCmd = $this->getCmd(null, 'isDoubleAction');
                 if (!is_object($isDoubleActionCmd)) {
@@ -326,9 +332,11 @@ class mystrom extends eqLogic
                     $isLongPressedCmd->setSubType('binary');
                     $isLongPressedCmd->setTemplate('dashboard', 'line');
                     $isLongPressedCmd->setEqLogic_id($this->getId());
-                    $isLongPressedCmd->setDisplay('showNameOndashboard', '1');
-                    $isLongPressedCmd->save();
+                    $isLongPressedCmd->setDisplay('showNameOndashboard', '1');                    
                 }
+
+                $isLongPressedCmd->setConfiguration("repeatEventManagement", "always");
+                $isLongPressedCmd->save();
                 
                 $isLongPressedActionCmd = $this->getCmd(null, 'isLongPressedAction');
                 if (!is_object($isLongPressedActionCmd)) {
@@ -636,7 +644,6 @@ class mystromCmd extends cmd
             $commandWifiButton = true;
             
             $changed = $this->checkAndUpdateCmd('isTouched', 1) || $changed;
-            $changed = $this->checkAndUpdateCmd('isTouched', 0) || $changed;
         }
         
         if ($cmdLogicalId == 'isSingleAction') {
@@ -644,7 +651,6 @@ class mystromCmd extends cmd
             $commandWifiButton = true;
             
             $changed = $this->checkAndUpdateCmd('isSingle', 1) || $changed;
-            $changed = $this->checkAndUpdateCmd('isSingle', 0) || $changed;
         }
         
         if ($cmdLogicalId == 'isDoubleAction') {
@@ -652,7 +658,6 @@ class mystromCmd extends cmd
             $commandWifiButton = true;
             
             $changed = $this->checkAndUpdateCmd('isDouble', 1) || $changed;
-            $changed = $this->checkAndUpdateCmd('isDouble', 0) || $changed;
         }
         
         if ($cmdLogicalId == 'isLongPressedAction') {
@@ -660,7 +665,6 @@ class mystromCmd extends cmd
             $commandWifiButton = true;
             
             $changed = $this->checkAndUpdateCmd('isLongPressed', 1) || $changed;
-            $changed = $this->checkAndUpdateCmd('isLongPressed', 0) || $changed;
         }
         
         if ($commandOk == false) {
