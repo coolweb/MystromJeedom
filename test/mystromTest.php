@@ -94,7 +94,7 @@ class mystromTest extends TestCase
         ->getMock();
 
         $this->target = $this->getMockBuilder(mystrom::class)
-        ->setConstructorArgs([$this->jeedomHelper])
+        ->setConstructorArgs([$this->jeedomHelper, $this->mystromService])
         ->setMethods(['logError', 'loadEqLogic', 'logDebug', 'getLogicalId', 'setConfiguration', 'getConfiguration'])
         ->getMock();
     }
@@ -120,7 +120,7 @@ class mystromTest extends TestCase
         $this->setJeedomDevices($this->target, $eqLogics);
         $this->setMystromDevices($this->mystromService, $devices);
 
-        $this->target->pull($this->mystromService);
+        $this->target->pull();
     }
 
     public function testPullWhen1DeviceNotExistAtMystromServer_ItShouldLogError()
@@ -146,7 +146,7 @@ class mystromTest extends TestCase
         $this->jeedomHelper->expects($this->once())
         ->method('logError');
 
-        $this->target->pull($this->mystromService);
+        $this->target->pull();
     }
 
     public function testPullWhenErrorLoadingDevices_ItShouldLogAnError()
@@ -155,7 +155,7 @@ class mystromTest extends TestCase
         $this->jeedomHelper->expects($this->once())
         ->method('logError');
 
-        $this->target->pull($this->mystromService);
+        $this->target->pull();
     }
 
     public function testPreInsertWhenUserCreated_ItShouldSetIsLocal()

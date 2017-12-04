@@ -30,15 +30,24 @@ class mystrom extends eqLogic
     /** @var \coolweb\mystrom\JeedomHelper */
     private $_jeedomHelper;
 
+    /** @var \coolweb\mystrom\MystromService */
+    private $_mystromService;
+
     private static $_eqLogics = null;
     
-    public function __construct($jeedomHelper)
+    public function __construct($jeedomHelper, $mystromService)
     {
         if ($jeedomHelper == null) {
             $container = DI\ContainerBuilder::buildDevContainer();
             $this->_jeedomHelper = $container->get("\coolweb\mystrom\JeedomHelper");
         } else {
             $this->_jeedomHelper = $jeedomHelper;
+        }
+
+        if ($mystromService == null) {
+            $this->_mystromService = $container->get("\coolweb\mystrom\MystromService");
+        } else {
+            $this->_mystromService = $mystromService;
         }
     }
 
@@ -53,8 +62,7 @@ class mystrom extends eqLogic
     public static function cron()
     {
         $this->_jeedomHelper->logDebug("pull started");
-        $mystromPlugin = new mystrom();
-        $mystromPlugin->pull();
+        $this->pull();        
     }
     
     public function preInsert()
@@ -333,8 +341,7 @@ class mystrom extends eqLogic
                     $buttonIp = $this->getConfiguration('ipAddress');
                     
                     if (is_null($buttonIp) === false && $buttonIp != '') {
-                        $mystromService = new MyStromService();
-                        $button = $mystromService->RetrieveLocalButtonInfo($buttonIp);
+                        $button = $this->_mystromService->RetrieveLocalButtonInfo($buttonIp);
                         
                         if ($button === null) {
                             throw new Exception('Le bouton ne semble pas accessible, vérifiez l\'ip ou enlever les piles, remettez les et réessayez', 1);
@@ -342,7 +349,7 @@ class mystrom extends eqLogic
                         
                         $button->type = $deviceType;
                         $button->isLocal = true;
-                        $mystromService->SaveUrlsForWifiButton(
+                        $this->_mystromService->SaveUrlsForWifiButton(
                         $button,
                         $isSingleActionCmd->getId(),
                         $isDoubleActionCmd->getId(),
@@ -356,10 +363,9 @@ class mystrom extends eqLogic
                     $button = new MystromButtonDevice();
                     $button->id = $this->getLogicalId();
                     $button->isLocal = false;
-                    
-                    $mystromService = new MyStromService();
+                                        
                     $button->type = $deviceType;
-                    $mystromService->SaveUrlsForWifiButton(
+                    $this->_mystromService->SaveUrlsForWifiButton(
                     $button,
                     $isSingleActionCmd->getId(),
                     $isDoubleActionCmd->getId(),
@@ -432,12 +438,11 @@ class mystrom extends eqLogic
     */
     public function syncMyStrom()
     {
-        $this->_jeedomHelper->logDebug("syncMyStrom");
-        $mystromService = new MyStromService();
+        $this->_jeedomHelper->logDebug("syncMyStrom");        
         
-        if ($mystromService->doAuthentification()) {
+        if ($this->_mystromService->doAuthentification()) {
             $this->_jeedomHelper->logInfo("Recherche des équipements mystrom");
-            $resultDevices = $mystromService->loadAllDevicesFromServer();
+            $resultDevices = $this->_mystromService->loadAllDevicesFromServer();
             
             if (strcmp($resultDevices->status, 'ok') == 0) {
                 foreach ($resultDevices->devices as $device) {
@@ -471,15 +476,11 @@ class mystrom extends eqLogic
     /**
     * Refresh data as state, consommation, ... for all devices.
     */
-    public function pull($mystromService = null)
-    {
-        if ($mystromService == null) {
-            $mystromService = new MyStromService();
-        }
-        
+    public function pull()
+    {                
         mystrom::$_eqLogics = $this->loadEqLogic();
         
-        $resultDevices = $mystromService->loadAllDevicesFromServer(true);
+        $resultDevices = $this->_mystromService->loadAllDevicesFromServer(true);
         $foundMystromDevice = null;
         
         if (strcmp($resultDevices->status, 'ok') == -1) {
@@ -574,16 +575,12 @@ class mystromCmd extends cmd
     /**
     * Method called by jeedom when a command is executed on a device.
     */
-    public function execute($_options = array(), $mystromService = null)
+    public function execute($_options = array())
     {
         if ($this->getType() == 'info') {
             return;
         }
-        
-        if ($mystromService == null) {
-            $mystromService = new MyStromService();
-        }
-        
+                        
         $commandOk = false;
         $commandWifiButton = false;
         $changed = false;
@@ -599,21 +596,21 @@ class mystromCmd extends cmd
             $commandOk = true;
             $state = 'on';
             $stateBinary = '1';
-            $mystromService->setState($mystromId, $deviceType, true);
+            $this->_mystromService->setState($mystromId, $deviceType, true);
         }
         
         if ($cmdLogicalId == 'off') {
             $commandOk = true;
             $state = 'off';
             $stateBinary = '0';
-            $mystromService->setState($mystromId, $deviceType, false);
+            $this->_mystromService->setState($mystromId, $deviceType, false);
         }
         
         if ($cmdLogicalId == 'restart') {
             $commandOk = true;
             $state = 'off';
             $stateBinary = '0';
-            $mystromService->setState($mystromId, $deviceType, false);
+            $this->_mystromService->setState($mystromId, $deviceType, false);
         }
         
         if ($cmdLogicalId == 'isTouchedAction') {
