@@ -353,6 +353,12 @@ class mystrom extends eqLogic
                             throw new Exception('Le bouton ne semble pas accessible, vérifiez l\'ip ou enlever les piles, remettez les et réessayez', 1);
                         }
                         
+                        if($deviceType === "wbp"){
+                            $touchActionId = $isTouchedActionCmd->getId();
+                        } else {
+                            $touchActionId = -1;
+                        }
+
                         $button->type = $deviceType;
                         $button->isLocal = true;
                         $this->_mystromService->SaveUrlsForWifiButton(
@@ -360,7 +366,7 @@ class mystrom extends eqLogic
                         $isSingleActionCmd->getId(),
                         $isDoubleActionCmd->getId(),
                         $isLongPressedActionCmd->getId(),
-                        $isTouchedActionCmd->getId()
+                        $touchActionId
                         );
                     }
                 } else {
@@ -370,13 +376,19 @@ class mystrom extends eqLogic
                     $button->id = $this->getLogicalId();
                     $button->isLocal = false;
                                         
+                    if($deviceType === "wbp"){
+                        $touchActionId = $isTouchedActionCmd->getId();
+                    } else {
+                        $touchActionId = -1;
+                    }
+
                     $button->type = $deviceType;
                     $this->_mystromService->SaveUrlsForWifiButton(
                     $button,
                     $isSingleActionCmd->getId(),
                     $isDoubleActionCmd->getId(),
                     $isLongPressedActionCmd->getId(),
-                    $isTouchedActionCmd->getId()
+                    $touchActionId
                     );
                 }
             }

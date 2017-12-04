@@ -143,7 +143,7 @@ class mystromServiceTest extends TestCase
         $this->assertEquals($result->devices[1]->power, $device2->power);
     }
 
-    public function testLoadAllDevicesWhenButtonShouldReturnTheButtonClass()
+    public function testLoadAllDevicesWhenButtonPlusShouldReturnTheButtonClass()
     {
         $jsonObject = new \stdClass();
         @$jsonObject->status = 'ok';
@@ -152,6 +152,37 @@ class mystromServiceTest extends TestCase
         $device1 = new \stdClass();
         @$device1->id = '1234';
         @$device1->type = 'wbp';
+        @$device1->name = 'device1';
+        @$device1->state = 'offline';
+        @$device1->power = '0';
+        array_push($jsonObject->devices, $device1);
+        
+        $this->target->method('doJsonCall')
+        ->willReturn($jsonObject);
+
+        $this->target->expects($this->once())
+        ->method('doJsonCall')
+        ->with($this->equalTo('https://www.mystrom.ch/mobile/devices?authToken='));
+        
+        $result = $this->target->loadAllDevicesFromServer();
+        
+        $this->assertEquals(count($result->devices), 1);
+        $this->assertEquals($result->devices[0]->id, $device1->id);
+        $this->assertEquals($result->devices[0]->type, $device1->type);
+        $this->assertEquals($result->devices[0]->name, $device1->name);
+        $this->assertEquals($result->devices[0]->state, $device1->state);
+        $this->assertTrue($result->devices[0] instanceof MystromButtonDevice);
+    }
+
+    public function testLoadAllDevicesWhenButtonSimpleShouldReturnTheButtonClass()
+    {
+        $jsonObject = new \stdClass();
+        @$jsonObject->status = 'ok';
+        @$jsonObject->devices = array();
+        
+        $device1 = new \stdClass();
+        @$device1->id = '1234';
+        @$device1->type = 'wbs';
         @$device1->name = 'device1';
         @$device1->state = 'offline';
         @$device1->power = '0';

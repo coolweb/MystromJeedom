@@ -160,6 +160,7 @@ class MyStromService
                                 break;
                             
                             case "wbp":
+                            case "wbs":
                                 $mystromDevice = new MystromButtonDevice();
                                 break;
                             
