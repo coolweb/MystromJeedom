@@ -1,5 +1,11 @@
 <?php
 use coolweb\mystrom\JeedomHelper;
+use coolweb\mystrom\GetAllDevicesResult;
+use coolweb\mystrom\MyStromApiResult;
+use coolweb\mystrom\MystromBaseDevice;
+use coolweb\mystrom\MystromButtonDevice;
+use coolweb\mystrom\MyStromDevice;
+use coolweb\mystrom\MyStromService;
 
 /* This file is part of Jeedom.
 *
