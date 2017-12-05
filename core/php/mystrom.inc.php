@@ -25,6 +25,7 @@ require_once dirname(__FILE__) . '/../class/mystromBaseDevice.class.php';
 require_once dirname(__FILE__) . '/../class/mystromButtonDevice.class.php';
 require_once dirname(__FILE__) . '/../class/mystromDevice.class.php';
 require_once dirname(__FILE__) . '/../class/mystromWifiSwitchEurope.class.php';
+require_once dirname(__FILE__) . '/../class/mystromWifiBulb.class.php';
 require_once dirname(__FILE__) . '/../class/mystromService.class.php';
 
 require_once dirname(__FILE__) . '/../../../../core/php/core.inc.php';

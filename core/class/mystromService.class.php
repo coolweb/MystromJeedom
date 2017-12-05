@@ -163,7 +163,7 @@ class MyStromService
                         $mystromDevice = new MystromWifiSwitchEurope();
                         $mystromDevice->power = $device->power;
                         $mystromDevice->temperature = $device->wifiSwitchTemp;
-                        
+
                         if ($withReportData) {
                             $mystromDevice->daylyConsumption = $device->energyReport->daylyConsumption;
                             $mystromDevice->monthlyConsumption = $device->energyReport->monthlyConsumption;
@@ -175,6 +175,16 @@ class MyStromService
                         $mystromDevice = new MystromButtonDevice();
                         break;
                             
+                    case "wrb":
+                        $mystromDevice = new MystromWifiBulb();
+                        $mystromDevice->power = $device->power;
+                        
+                        if ($withReportData) {
+                            $mystromDevice->daylyConsumption = $device->energyReport->daylyConsumption;
+                            $mystromDevice->monthlyConsumption = $device->energyReport->monthlyConsumption;
+                        }
+                        break;
+
                     default:
                         $this->jeedomHelper->logWarning("Unsupported device type: " . $device->type);
                         break;
