@@ -1,19 +1,22 @@
 <?php
-use PHPUnit\Framework\TestCase;
-use coolweb\mystrom\MyStromService;
-use coolweb\mystrom\MyStromDevice;
-use coolweb\mystrom\GetAllDevicesResult;
-use coolweb\mystrom\jeedomHelper;
 
 include_once('eqLogic.php');
 include_once('cmd.php');
 include_once('./core/class/mystromBaseDevice.class.php');
 include_once('./core/class/myStromDevice.class.php');
+include_once('./core/class/myStromWifiSwitchEurope.class.php');
 include_once('./core/class/mystromApiResult.class.php');
 include_once('./core/class/getAllDevicesResult.class.php');
 include_once('./core/class/MyStromService.class.php');
 include_once('./core/class/myStrom.class.php');
 include_once('./core/class/jeedomHelper.class.php');
+
+use PHPUnit\Framework\TestCase;
+use coolweb\mystrom\MyStromService;
+use coolweb\mystrom\MyStromDevice;
+use coolweb\mystrom\MyStromWifiSwitchEurope;
+use coolweb\mystrom\GetAllDevicesResult;
+use coolweb\mystrom\jeedomHelper;
 
 /**
 * Test class for mystrom service class
@@ -119,6 +122,45 @@ class mystromTest extends TestCase
 
         $this->setJeedomDevices($this->target, $eqLogics);
         $this->setMystromDevices($this->mystromService, $devices);
+
+        $this->target->pull();
+    }
+
+    public function testPullWhenWifiSwitchEurope_ItShouldUpdateTemperature()
+    {
+        $eqLogic = $this->getMockBuilder(eqLogic::class)
+        ->setMethods(['checkAndUpdateCmd', 'refreshWidget'])
+        ->getMock();
+
+        $eqLogic->logicalId = '1234';
+        $this->setCmdStateDeprecated($eqLogic);
+
+        $eqLogics = array();
+        array_push($eqLogics, $eqLogic);
+
+        $device = new MystromWifiSwitchEurope();
+        $device->id = '1234';
+        $device->temperature = 21;
+        $device->state = "on";
+        $device->power = 120;
+        $device->daylyConsumption = 1500;
+        $device->monthlyConsumption = 2000;
+
+        $devices = array();
+        array_push($devices, $device);
+
+        $this->setJeedomDevices($this->target, $eqLogics);
+        $this->setMystromDevices($this->mystromService, $devices);
+
+        $eqLogic->expects($this->exactly(6))
+        ->method('checkAndUpdateCmd')
+        ->withConsecutive(
+            ["state", $device->state],
+            ["stateBinary", "1"],
+            ["conso", $device->power],
+            ["dailyConso", $device->daylyConsumption],
+            ["monthlyConso", $device->monthlyConsumption],
+            ["temperature", $device->temperature]);
 
         $this->target->pull();
     }

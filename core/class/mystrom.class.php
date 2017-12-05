@@ -5,6 +5,7 @@ use coolweb\mystrom\MyStromApiResult;
 use coolweb\mystrom\MystromBaseDevice;
 use coolweb\mystrom\MystromButtonDevice;
 use coolweb\mystrom\MyStromDevice;
+use coolweb\mystrom\MystromWifiSwitchEurope;
 use coolweb\mystrom\MyStromService;
 
 /* This file is part of Jeedom.
@@ -68,7 +69,7 @@ class mystrom extends eqLogic
     public static function cron()
     {
         $this->_jeedomHelper->logDebug("pull started");
-        $this->pull();        
+        $this->pull();
     }
     
     public function preInsert()
@@ -107,9 +108,9 @@ class mystrom extends eqLogic
         $this->_jeedomHelper->logDebug("Ajout des commandes sur l'équipement " . $this->getName());
         $deviceType = $this->getConfiguration('mystromType');
         
-        if ($deviceType == 'mst' || 
-            $deviceType == 'eth' || 
-            $deviceType == 'sw' || 
+        if ($deviceType == 'mst' ||
+            $deviceType == 'eth' ||
+            $deviceType == 'sw' ||
             $deviceType == 'wsw' ||
             $deviceType == 'wse') {
             $state = $this->getCmd(null, 'state');
@@ -181,11 +182,11 @@ class mystrom extends eqLogic
                         $temperature->setLogicalId('temperature');
                         $temperature->setName(__('Température', __FILE__));
                         $temperature->setType('info');
-                        $temperature->setSubType('other');                        
+                        $temperature->setSubType('other');
                         $temperature->setDisplay('showNameOndashboard', '0');
                         $temperature->setEqLogic_id($this->getId());
                         $temperature->save();
-                    }    
+                    }
                 }
             } else {
                 $restart = $this->getCmd(null, 'restart');
@@ -268,7 +269,7 @@ class mystrom extends eqLogic
                     $isTouchedCmd->setSubType('binary');
                     $isTouchedCmd->setTemplate('dashboard', 'line');
                     $isTouchedCmd->setEqLogic_id($this->getId());
-                    $isTouchedCmd->setDisplay('showNameOndashboard', '1');                    
+                    $isTouchedCmd->setDisplay('showNameOndashboard', '1');
                 }
 
                 $isTouchedCmd->setConfiguration("repeatEventManagement", "always");
@@ -296,7 +297,7 @@ class mystrom extends eqLogic
                     $isSingleCmd->setSubType('binary');
                     $isSingleCmd->setTemplate('dashboard', 'line');
                     $isSingleCmd->setEqLogic_id($this->getId());
-                    $isSingleCmd->setDisplay('showNameOndashboard', '1');                    
+                    $isSingleCmd->setDisplay('showNameOndashboard', '1');
                 }
 
                 $isSingleCmd->setConfiguration("repeatEventManagement", "always");
@@ -323,7 +324,7 @@ class mystrom extends eqLogic
                     $isDoubleCmd->setSubType('binary');
                     $isDoubleCmd->setTemplate('dashboard', 'line');
                     $isDoubleCmd->setEqLogic_id($this->getId());
-                    $isDoubleCmd->setDisplay('showNameOndashboard', '1');                    
+                    $isDoubleCmd->setDisplay('showNameOndashboard', '1');
                 }
 
                 $isDoubleCmd->setConfiguration("repeatEventManagement", "always");
@@ -350,7 +351,7 @@ class mystrom extends eqLogic
                     $isLongPressedCmd->setSubType('binary');
                     $isLongPressedCmd->setTemplate('dashboard', 'line');
                     $isLongPressedCmd->setEqLogic_id($this->getId());
-                    $isLongPressedCmd->setDisplay('showNameOndashboard', '1');                    
+                    $isLongPressedCmd->setDisplay('showNameOndashboard', '1');
                 }
 
                 $isLongPressedCmd->setConfiguration("repeatEventManagement", "always");
@@ -379,7 +380,7 @@ class mystrom extends eqLogic
                             throw new Exception('Le bouton ne semble pas accessible, vérifiez l\'ip ou enlever les piles, remettez les et réessayez', 1);
                         }
                         
-                        if($deviceType === "wbp"){
+                        if ($deviceType === "wbp") {
                             $touchActionId = $isTouchedActionCmd->getId();
                         } else {
                             $touchActionId = -1;
@@ -402,7 +403,7 @@ class mystrom extends eqLogic
                     $button->id = $this->getLogicalId();
                     $button->isLocal = false;
                                         
-                    if($deviceType === "wbp"){
+                    if ($deviceType === "wbp") {
                         $touchActionId = $isTouchedActionCmd->getId();
                     } else {
                         $touchActionId = -1;
@@ -482,7 +483,7 @@ class mystrom extends eqLogic
     */
     public function syncMyStrom()
     {
-        $this->_jeedomHelper->logDebug("syncMyStrom");        
+        $this->_jeedomHelper->logDebug("syncMyStrom");
         
         if ($this->_mystromService->doAuthentification()) {
             $this->_jeedomHelper->logInfo("Recherche des équipements mystrom");
@@ -521,7 +522,7 @@ class mystrom extends eqLogic
     * Refresh data as state, consommation, ... for all devices.
     */
     public function pull()
-    {                
+    {
         mystrom::$_eqLogics = $this->loadEqLogic();
         
         $resultDevices = $this->_mystromService->loadAllDevicesFromServer(true);
@@ -557,7 +558,11 @@ class mystrom extends eqLogic
                 $changed = $eqLogic->checkAndUpdateCmd('conso', $foundMystromDevice->power) || $changed;
                 $changed = $eqLogic->checkAndUpdateCmd('dailyConso', $foundMystromDevice->daylyConsumption) || $changed;
                 $changed = $eqLogic->checkAndUpdateCmd('monthlyConso', $foundMystromDevice->monthlyConsumption) || $changed;
-                
+
+                if ($foundMystromDevice instanceof MystromWifiSwitchEurope) {
+                    $changed = $eqLogic->checkAndUpdateCmd('temperature', $foundMystromDevice->temperature) || $changed;
+                }
+
                 if ($changed) {
                     $eqLogic->refreshWidget();
                 }
