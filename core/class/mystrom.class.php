@@ -69,8 +69,8 @@ class mystrom extends eqLogic
     */
     public static function cron()
     {
-        $this->_jeedomHelper->logDebug("pull started");
-        $this->pull();
+        $plugin = new mystrom();        
+        $plugin->pull();
     }
     
     public function preInsert()
@@ -177,7 +177,7 @@ class mystrom extends eqLogic
                     $off->save();
                 }
 
-                if ($this->getConfiguration('mystromType') != 'wse') {
+                if ($this->getConfiguration('mystromType') === 'wse') {
                     $temperature = $this->getCmd(null, "temperature");
                     if (!is_object($temperature)) {
                         $temperature = new mystromCmd();
@@ -543,7 +543,7 @@ class mystrom extends eqLogic
             if ($isLocal != true) {
                 foreach ($resultDevices->devices as $device) {
                     if ($device->id == $eqLogic->getLogicalId()) {
-                        $this->_jeedomHelper->logDebug("Equipement trouvé avec id ' . $device->id . ' (' . $device->name . ')");
+                        $this->_jeedomHelper->logDebug("Equipement trouvé avec id " . $device->id . " (" . $device->name . ")");
                         
                         $foundMystromDevice = $device;
                     }
@@ -583,13 +583,22 @@ class mystromCmd extends cmd
     /** @var \coolweb\mystrom\JeedomHelper */
     private $_jeedomHelper;
 
-    public function __construct($jeedomHelper)
+    /** @var \coolweb\mystrom\MystromService */
+    private $_mystromService;
+
+    public function __construct($jeedomHelper, $mystromService)
     {
         if ($jeedomHelper == null) {
             $container = DI\ContainerBuilder::buildDevContainer();
             $this->_jeedomHelper = $container->get("\coolweb\mystrom\JeedomHelper");
         } else {
             $this->_jeedomHelper = $jeedomHelper;
+        }
+
+        if ($mystromService == null) {
+            $this->_mystromService = $container->get("\coolweb\mystrom\MystromService");
+        } else {
+            $this->_mystromService = $mystromService;
         }
     }
 
@@ -628,85 +637,92 @@ class mystromCmd extends cmd
     */
     public function execute($_options = array())
     {
-        if ($this->getType() == 'info') {
-            return;
-        }
-                        
-        $commandOk = false;
-        $commandWifiButton = false;
-        $changed = false;
-        
-        $mystromId = $this->getEqLogicLogicalId();
-        $deviceType = $this->getEqLogicConfiguration('mystromType');
-        $state = '';
-        $cmdLogicalId = $this->getLogicalId();
-        
-        $this->_jeedomHelper->logDebug('Execute cmd ' . $cmdLogicalId);
-        
-        if ($cmdLogicalId == 'on') {
-            $commandOk = true;
-            $state = 'on';
-            $stateBinary = '1';
-            $this->_mystromService->setState($mystromId, $deviceType, true);
-        }
-        
-        if ($cmdLogicalId == 'off') {
-            $commandOk = true;
-            $state = 'off';
-            $stateBinary = '0';
-            $this->_mystromService->setState($mystromId, $deviceType, false);
-        }
-        
-        if ($cmdLogicalId == 'restart') {
-            $commandOk = true;
-            $state = 'off';
-            $stateBinary = '0';
-            $this->_mystromService->setState($mystromId, $deviceType, false);
-        }
-        
-        if ($cmdLogicalId == 'isTouchedAction') {
-            $commandOk = true;
-            $commandWifiButton = true;
-            
-            $changed = $this->checkAndUpdateCmd('isTouched', 1) || $changed;
-        }
-        
-        if ($cmdLogicalId == 'isSingleAction') {
-            $commandOk = true;
-            $commandWifiButton = true;
-            
-            $changed = $this->checkAndUpdateCmd('isSingle', 1) || $changed;
-        }
-        
-        if ($cmdLogicalId == 'isDoubleAction') {
-            $commandOk = true;
-            $commandWifiButton = true;
-            
-            $changed = $this->checkAndUpdateCmd('isDouble', 1) || $changed;
-        }
-        
-        if ($cmdLogicalId == 'isLongPressedAction') {
-            $commandOk = true;
-            $commandWifiButton = true;
-            
-            $changed = $this->checkAndUpdateCmd('isLongPressed', 1) || $changed;
-        }
-        
-        if ($commandOk == false) {
-            $this->_jeedomHelper->logError("Commande non reconnue " . $this->getLogicalId());
-        } else {
-            if ($commandWifiButton == false) {
-                $changed = $this->checkAndUpdateCmd('state', $state) || $changed;
-                $changed = $this->checkAndUpdateCmd('stateBinary', $stateBinary) || $changed;
-                
-                $this->event($state);
-                
-                if ($changed) {
-                    $this->refreshWidget();
-                }
-                
-                return $state;
+        try {
+            if ($this->getType() == 'info') {
+                return;
             }
+            
+            $commandOk = false;
+            $commandWifiButton = false;
+            $changed = false;
+        
+            $mystromId = $this->getEqLogicLogicalId();
+            $deviceType = $this->getEqLogicConfiguration('mystromType');
+            $state = '';
+            $cmdLogicalId = $this->getLogicalId();
+        
+            $this->_jeedomHelper->logDebug(
+            'Execute cmd ' .
+            $cmdLogicalId .
+            ' (' . $this->getEqLogic()->getName() . ')');
+        
+            if ($cmdLogicalId == 'on') {
+                $commandOk = true;
+                $state = 'on';
+                $stateBinary = '1';
+                $this->_mystromService->setState($mystromId, $deviceType, true);
+            }
+        
+            if ($cmdLogicalId == 'off') {
+                $commandOk = true;
+                $state = 'off';
+                $stateBinary = '0';
+                $this->_mystromService->setState($mystromId, $deviceType, false);
+            }
+        
+            if ($cmdLogicalId == 'restart') {
+                $commandOk = true;
+                $state = 'off';
+                $stateBinary = '0';
+                $this->_mystromService->setState($mystromId, $deviceType, false);
+            }
+        
+            if ($cmdLogicalId == 'isTouchedAction') {
+                $commandOk = true;
+                $commandWifiButton = true;
+            
+                $changed = $this->checkAndUpdateCmd('isTouched', 1) || $changed;
+            }
+        
+            if ($cmdLogicalId == 'isSingleAction') {
+                $commandOk = true;
+                $commandWifiButton = true;
+            
+                $changed = $this->checkAndUpdateCmd('isSingle', 1) || $changed;
+            }
+        
+            if ($cmdLogicalId == 'isDoubleAction') {
+                $commandOk = true;
+                $commandWifiButton = true;
+            
+                $changed = $this->checkAndUpdateCmd('isDouble', 1) || $changed;
+            }
+        
+            if ($cmdLogicalId == 'isLongPressedAction') {
+                $commandOk = true;
+                $commandWifiButton = true;
+            
+                $changed = $this->checkAndUpdateCmd('isLongPressed', 1) || $changed;
+            }
+        
+            if ($commandOk == false) {
+                $this->_jeedomHelper->logError("Commande non reconnue " . $this->getLogicalId());
+            } else {
+                if ($commandWifiButton == false) {
+                    $changed = $this->checkAndUpdateCmd('state', $state) || $changed;
+                    $changed = $this->checkAndUpdateCmd('stateBinary', $stateBinary) || $changed;
+                
+                    $this->event($state);
+                
+                    if ($changed) {
+                        $this->refreshWidget();
+                    }
+                
+                    return $state;
+                }
+            }
+        } catch (Exception $e) {
+            $this->_jeedomHelper->logError("Execute command error: " . $e);
         }
     }
 }
