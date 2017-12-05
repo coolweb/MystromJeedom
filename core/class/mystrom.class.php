@@ -107,7 +107,11 @@ class mystrom extends eqLogic
         $this->_jeedomHelper->logDebug("Ajout des commandes sur l'équipement");
         $deviceType = $this->getConfiguration('mystromType');
         
-        if ($deviceType == 'mst' || $deviceType == 'eth' || $deviceType == 'sw' || $deviceType == 'wsw') {
+        if ($deviceType == 'mst' || 
+            $deviceType == 'eth' || 
+            $deviceType == 'sw' || 
+            $deviceType == 'wsw' ||
+            $deviceType == 'wse') {
             $state = $this->getCmd(null, 'state');
             if (!is_object($state)) {
                 $state = new mystromCmd();
@@ -168,6 +172,20 @@ class mystrom extends eqLogic
                     $off->setTemplate('mobile', 'prise');
                     $off->setValue($cmdid);
                     $off->save();
+                }
+
+                if ($this->getConfiguration('mystromType') != 'wse') {
+                    $temperature = $this->getCmd(null, "temperature");
+                    if (!is_object($temperature)) {
+                        $temperature = new mystromCmd();
+                        $temperature->setLogicalId('temperature');
+                        $temperature->setName(__('Température', __FILE__));
+                        $temperature->setType('info');
+                        $temperature->setSubType('other');                        
+                        $temperature->setDisplay('showNameOndashboard', '0');
+                        $temperature->setEqLogic_id($this->getId());
+                        $temperature->save();
+                    }    
                 }
             } else {
                 $restart = $this->getCmd(null, 'restart');
