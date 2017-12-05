@@ -6,6 +6,7 @@ use coolweb\mystrom\MystromBaseDevice;
 use coolweb\mystrom\MystromButtonDevice;
 use coolweb\mystrom\MyStromDevice;
 use coolweb\mystrom\MystromWifiSwitchEurope;
+use coolweb\mystrom\MystromWifiBulb;
 use coolweb\mystrom\MyStromService;
 
 /* This file is part of Jeedom.
@@ -112,7 +113,8 @@ class mystrom extends eqLogic
             $deviceType == 'eth' ||
             $deviceType == 'sw' ||
             $deviceType == 'wsw' ||
-            $deviceType == 'wse') {
+            $deviceType == 'wse' ||
+            $deviceType == 'wrb') {
             $state = $this->getCmd(null, 'state');
             if (!is_object($state)) {
                 $state = new mystromCmd();
