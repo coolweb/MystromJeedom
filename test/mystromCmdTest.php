@@ -63,17 +63,16 @@ class mystromCmdTest extends TestCase
         ->getMock();
     }
 
-    public function testWhenButtonTouched_ItShouldSetTheTouchedInfoOnThenOff()
+    public function testWhenButtonTouched_ItShouldSetTheTouchedInfoOn()
     {
         $this->setCmdId('isTouchedAction');
         $this->setMystromType(null);
         $this->setCmdType('action');
 
-        $this->target->expects($this->exactly(2))
+        $this->target->expects($this->exactly(1))
         ->method('checkAndUpdateCmd')
         ->withConsecutive(
-            [$this->equalTo('isTouched'), $this->equalTo(1)],
-            [$this->equalTo('isTouched'), $this->equalTo(0)]);
+            [$this->equalTo('isTouched'), $this->equalTo(1)]);
 
         $this->target->execute(null, $this->mystromService);
     }
