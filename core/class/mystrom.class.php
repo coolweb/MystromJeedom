@@ -144,7 +144,7 @@ class mystrom extends eqLogic
             
             $cmdid = $stateBinary->getId();
             
-            if ($this->getConfiguration('mystromType') != 'mst') {
+            if ($deviceType != 'mst') {
                 $on = $this->getCmd(null, 'on');
                 if (!is_object($on)) {
                     $on = new mystromCmd();
@@ -177,7 +177,7 @@ class mystrom extends eqLogic
                     $off->save();
                 }
 
-                if ($this->getConfiguration('mystromType') === 'wse') {
+                if ($deviceType == 'wse') {
                     $temperature = $this->getCmd(null, "temperature");
                     if (!is_object($temperature)) {
                         $temperature = new mystromCmd();
@@ -188,6 +188,20 @@ class mystrom extends eqLogic
                         $temperature->setDisplay('showNameOndashboard', '0');
                         $temperature->setEqLogic_id($this->getId());
                         $temperature->save();
+                    }
+                }
+
+                if($deviceType == "wrb"){
+                    $color = $this->getCmd(null, 'color');
+                    if (!is_object($color)) {
+                        $color = new mystromCmd();
+                        $color->setLogicalId('color');
+                        $color->setName(__('Couleur', __FILE__));
+                        $color->setType('action');
+                        $color->setSubType('color');
+                        $color->setDisplay('showNameOndashboard', '0');
+                        $color->setEqLogic_id($this->getId());
+                        $color->save();
                     }
                 }
             } else {

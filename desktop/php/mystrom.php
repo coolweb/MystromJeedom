@@ -80,9 +80,11 @@ foreach ($eqLogics as $eqLogic) {
                         <option value="mst">{{CPL master (rouge)}}</option>
                         <option value="sw">{{CPL escalve (blanc)}}</option>
                         <option value="eth">{{CPL avec internet (bleu)}}</option>
-                        <option value="wsw">{{Interrupteur wifi}}</option>
+                        <option value="wsw">{{Interrupteur wifi swiss}}</option>
+                        <option value="wse">{{Interrupteur wifi europe}}</option>
                         <option value="wbp">{{Wifi bouton plus}}</option>
                         <option value="wbs">{{Wifi bouton simple}}</option>
+                        <option value="wrb">{{Ampoule}}</option>
                    </select>
                </div>
            </div>
