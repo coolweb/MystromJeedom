@@ -8,6 +8,7 @@ include_once('./core/class/myStromApiResult.class.php');
 include_once('./core/class/getAllDevicesResult.class.php');
 include_once('./core/class/mystromButtonDevice.class.php');
 include_once('./core/class/mystromService.class.php');
+include_once('./core/class/mystromWifiSwitchEurope.class.php');
 
 use PHPUnit\Framework\TestCase;
 use coolweb\mystrom\jeedomHelper;
@@ -15,6 +16,7 @@ use coolweb\mystrom\MyStromService;
 use coolweb\mystrom\MyStromDevice;
 use coolweb\mystrom\MystromButtonDevice;
 use coolweb\mystrom\MystromApiResult;
+use coolweb\mystrom\mystromWifiSwitchEurope;
 
 /**
 * Test class for mystrom service class
@@ -203,6 +205,39 @@ class mystromServiceTest extends TestCase
         $this->assertEquals($result->devices[0]->name, $device1->name);
         $this->assertEquals($result->devices[0]->state, $device1->state);
         $this->assertTrue($result->devices[0] instanceof MystromButtonDevice);
+    }
+
+    public function testLoadAllDevicesWhenWifiSwitchEuropeShouldReturnTheWifiSwithEuropeClass()
+    {
+        $jsonObject = new \stdClass();
+        @$jsonObject->status = 'ok';
+        @$jsonObject->devices = array();
+        
+        $device1 = new \stdClass();
+        @$device1->id = '1234';
+        @$device1->type = 'wse';
+        @$device1->name = 'device1';
+        @$device1->state = 'offline';
+        @$device1->power = '0';
+        @$device1->wifiSwitchTemp = '21';
+        array_push($jsonObject->devices, $device1);
+        
+        $this->target->method('doJsonCall')
+        ->willReturn($jsonObject);
+
+        $this->target->expects($this->once())
+        ->method('doJsonCall')
+        ->with($this->equalTo('https://www.mystrom.ch/mobile/devices?authToken='));
+        
+        $result = $this->target->loadAllDevicesFromServer();
+        
+        $this->assertEquals(count($result->devices), 1);
+        $this->assertEquals($result->devices[0]->id, $device1->id);
+        $this->assertEquals($result->devices[0]->type, $device1->type);
+        $this->assertEquals($result->devices[0]->name, $device1->name);
+        $this->assertEquals($result->devices[0]->state, $device1->state);
+        $this->assertEquals($result->devices[0]->temperature, $device1->wifiSwitchTemp);
+        $this->assertTrue($result->devices[0] instanceof \coolweb\mystrom\MystromWifiSwitchEurope);
     }
 
     public function testLoadAllDevicesWhenLoadReportDataShouldReturnTheConsumptions()

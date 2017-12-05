@@ -147,203 +147,205 @@ class MyStromService
                 
                 switch ($device->type) {
                     case "sw":
-                        case "eth":
-                            case "mst":
-                                case "wsw":
-                                    $mystromDevice = new MyStromDevice();
-                                    $mystromDevice->power = $device->power;
-                                    
-                                    if ($withReportData) {
-                                        $mystromDevice->daylyConsumption = $device->energyReport->daylyConsumption;
-                                        $mystromDevice->monthlyConsumption = $device->energyReport->monthlyConsumption;
-                                }
-                                break;
+                    case "eth":
+                    case "mst":
+                    case "wsw":
+                        $mystromDevice = new MyStromDevice();
+                        $mystromDevice->power = $device->power;
+                        
+                        if ($withReportData) {
+                            $mystromDevice->daylyConsumption = $device->energyReport->daylyConsumption;
+                            $mystromDevice->monthlyConsumption = $device->energyReport->monthlyConsumption;
+                        }
+                        break;
+
+                    case "wse":
+                        $mystromDevice = new MystromWifiSwitchEurope();
+                        $mystromDevice->power = $device->power;
+                        $mystromDevice->temperature = $device->wifiSwitchTemp;
+                        
+                        if ($withReportData) {
+                            $mystromDevice->daylyConsumption = $device->energyReport->daylyConsumption;
+                            $mystromDevice->monthlyConsumption = $device->energyReport->monthlyConsumption;
+                        }
+                        break;
                             
-                            case "wbp":
-                            case "wbs":
-                                $mystromDevice = new MystromButtonDevice();
-                                break;
+                    case "wbp":
+                    case "wbs":
+                        $mystromDevice = new MystromButtonDevice();
+                        break;
                             
-                            default:
-                                $this->jeedomHelper->logWarning("Unsupported device type: " . $device->type);
-                                break;
+                    default:
+                        $this->jeedomHelper->logWarning("Unsupported device type: " . $device->type);
+                        break;
                     }
                     
-                    if($mystromDevice != null)
-                    {
-                        $mystromDevice->id = $device->id;
-                        $mystromDevice->type = $device->type;
-                        $mystromDevice->name = $device->name;
-                        $mystromDevice->state = $device->state;
+                if ($mystromDevice != null) {
+                    $mystromDevice->id = $device->id;
+                    $mystromDevice->type = $device->type;
+                    $mystromDevice->name = $device->name;
+                    $mystromDevice->state = $device->state;
                         
-                        array_push($result->devices, $mystromDevice);
-                    }
+                    array_push($result->devices, $mystromDevice);
                 }
-            } else {
-                $result->error = $jsonObj->error;
             }
-            
-            return $result;
+        } else {
+            $result->error = $jsonObj->error;
         }
+            
+        return $result;
+    }
         
-        /**
-        * Set the state on or off of a device, if the device type is the master, reset it.
-        * @param $deviceId string The id of the device to change the state
-        * @param $deviceType string The type of the device
-        * @param $isOn boolean Indicating if the state should be on or off
-        * @return MyStromApiResult The result of the call
-        */
-        public function setState($deviceId, $deviceType, $isOn)
-        {
-            $authToken = $this->jeedomHelper->loadPluginConfiguration("authToken");
-            $stateUrl = $this->myStromApiUrl . "/device/switch?authToken=" . $authToken
+    /**
+    * Set the state on or off of a device, if the device type is the master, reset it.
+    * @param $deviceId string The id of the device to change the state
+    * @param $deviceType string The type of the device
+    * @param $isOn boolean Indicating if the state should be on or off
+    * @return MyStromApiResult The result of the call
+    */
+    public function setState($deviceId, $deviceType, $isOn)
+    {
+        $authToken = $this->jeedomHelper->loadPluginConfiguration("authToken");
+        $stateUrl = $this->myStromApiUrl . "/device/switch?authToken=" . $authToken
             . "&id=" . $deviceId . "&on=" . (($isOn) ? "true" : "false");
-            $restartUrl = $this->myStromApiUrl . "/device/restart?authToken=" . $authToken
+        $restartUrl = $this->myStromApiUrl . "/device/restart?authToken=" . $authToken
             . "&id=" . $deviceId;
             
-            $url = "";
+        $url = "";
             
-            if ($deviceType == "mst") {
-                $url = $restartUrl;
-            } else {
-                $url = $stateUrl;
-            }
-            
-            $jsonObj = $this->doJsonCall($url);
-            
-            $result = new MyStromApiResult();
-            $result->status = $jsonObj->status;
-            
-            if ($jsonObj->status !== "ok") {
-                $result->error = $jsonObj->error;
-            }
-            
-            return $result;
+        if ($deviceType == "mst") {
+            $url = $restartUrl;
+        } else {
+            $url = $stateUrl;
         }
+            
+        $jsonObj = $this->doJsonCall($url);
+            
+        $result = new MyStromApiResult();
+        $result->status = $jsonObj->status;
+            
+        if ($jsonObj->status !== "ok") {
+            $result->error = $jsonObj->error;
+        }
+            
+        return $result;
+    }
         
-        /**
-        * Retrieve the information for a local wifi button.
-        * @param ipAddress The ip address of the button.
-        * @return {MystromButtonDevice} The button class if found otherwise null.
-        */
-        public function RetrieveLocalButtonInfo($ipAddress)
-        {
-            try {
-                $this->jeedomHelper->logDebug("Retrieve info of wifi button " . $ipAddress);
-                $url = "http://" . $ipAddress . "/api/v1/device";
-                $result = $this->doHttpCall($url, null, "GET");
-                if ($result === false) {
-                    return null;
-                }
-                
-                $jsonObj = json_decode($result);
-                $macAddress = key($properties = get_object_vars($jsonObj));
-                
-                
-                $mystromButton = new MystromButtonDevice();
-                $mystromButton->macAddress = $macAddress;
-                $mystromButton->ipAddress = $ipAddress;
-                $mystromButton->doubleUrl = $jsonObj->$macAddress->double;
-                $mystromButton->singleUrl = $jsonObj->$macAddress->single;
-                $mystromButton->longUrl = $jsonObj->$macAddress->long;
-                $mystromButton->touchedUrl = $jsonObj->$macAddress->touch;
-                
-                return $mystromButton;
-            } catch (Exception $e) {
-                $this->jeedomHelper->logWarning("RetrieveLocalButtonInfo - " . $e);
+    /**
+    * Retrieve the information for a local wifi button.
+    * @param ipAddress The ip address of the button.
+    * @return {MystromButtonDevice} The button class if found otherwise null.
+    */
+    public function RetrieveLocalButtonInfo($ipAddress)
+    {
+        try {
+            $this->jeedomHelper->logDebug("Retrieve info of wifi button " . $ipAddress);
+            $url = "http://" . $ipAddress . "/api/v1/device";
+            $result = $this->doHttpCall($url, null, "GET");
+            if ($result === false) {
                 return null;
             }
+                
+            $jsonObj = json_decode($result);
+            $macAddress = key($properties = get_object_vars($jsonObj));
+                
+                
+            $mystromButton = new MystromButtonDevice();
+            $mystromButton->macAddress = $macAddress;
+            $mystromButton->ipAddress = $ipAddress;
+            $mystromButton->doubleUrl = $jsonObj->$macAddress->double;
+            $mystromButton->singleUrl = $jsonObj->$macAddress->single;
+            $mystromButton->longUrl = $jsonObj->$macAddress->long;
+            $mystromButton->touchedUrl = $jsonObj->$macAddress->touch;
+                
+            return $mystromButton;
+        } catch (Exception $e) {
+            $this->jeedomHelper->logWarning("RetrieveLocalButtonInfo - " . $e);
+            return null;
         }
+    }
         
-        /**
-        *  Save urls of jeedom cmd action into the wifibutton
-        *  @param $wifiButton {MystromButtonDevice} The button into which tosavethe urls
-        *  @param $cmdIdSingle {string} The id of the action command
-        *  @param $cmdIdDouble {string} The id of the action command
-        *  @param $cmdIdLong {string} The id of the action command
-        *  @param $cmdIdTouched {string} The id of the action command
-        */
-        public function SaveUrlsForWifiButton($wifiButton, $cmdIdSingle, $cmdIdDouble, $cmdIdLong, $cmdIdTouched = -1)
-        {
-            $jeedomIp = $this->jeedomHelper->loadPluginConfiguration("internalAddr", true);
-            $apiKey = $this->jeedomHelper->getJeedomApiKey();
-            $url = "get://" . $jeedomIp . "/core/api/jeeApi.php?apikey%3D" . $apiKey .
+    /**
+    *  Save urls of jeedom cmd action into the wifibutton
+    *  @param $wifiButton {MystromButtonDevice} The button into which tosavethe urls
+    *  @param $cmdIdSingle {string} The id of the action command
+    *  @param $cmdIdDouble {string} The id of the action command
+    *  @param $cmdIdLong {string} The id of the action command
+    *  @param $cmdIdTouched {string} The id of the action command
+    */
+    public function SaveUrlsForWifiButton($wifiButton, $cmdIdSingle, $cmdIdDouble, $cmdIdLong, $cmdIdTouched = -1)
+    {
+        $jeedomIp = $this->jeedomHelper->loadPluginConfiguration("internalAddr", true);
+        $apiKey = $this->jeedomHelper->getJeedomApiKey();
+        $url = "get://" . $jeedomIp . "/core/api/jeeApi.php?apikey%3D" . $apiKey .
             "%26type%3Dcmd%26id%3D";
             
-            $singleUrl = $url . $cmdIdSingle;
-            $doubleUrl = $url . $cmdIdDouble;
-            $longUrl = $url . $cmdIdLong;
-            $touchedUrl = $url . $cmdIdTouched;
+        $singleUrl = $url . $cmdIdSingle;
+        $doubleUrl = $url . $cmdIdDouble;
+        $longUrl = $url . $cmdIdLong;
+        $touchedUrl = $url . $cmdIdTouched;
             
-            if($wifiButton->isLocal == true)
-            {
-                $this->jeedomHelper->logDebug("SaveUrlsForWifiButton - " . $wifiButton->ipAddress);
+        if ($wifiButton->isLocal == true) {
+            $this->jeedomHelper->logDebug("SaveUrlsForWifiButton - " . $wifiButton->ipAddress);
                 
-                $buttonApiUrl = "http://" . $wifiButton->ipAddress . "/api/v1/device/" .
+            $buttonApiUrl = "http://" . $wifiButton->ipAddress . "/api/v1/device/" .
                 $wifiButton->macAddress;
                 
-                try {
-                    $result = $this->doHttpCall($buttonApiUrl, "single=" . $singleUrl, "POST");
-                    if($result === false)
-                    {
-                        return $result;
-                    }
-
-                    $result = $this->doHttpCall($buttonApiUrl, "double=" . $doubleUrl, "POST");
-                    if($result === false)
-                    {
-                        return $result;
-                    }
-
-                    $result = $this->doHttpCall($buttonApiUrl, "long=" . $longUrl, "POST");
-                    if($result === false)
-                    {
-                        return $result;
-                    }
-                    
-                    if($cmdIdTouched != -1)
-                    {
-                        $result = $this->doHttpCall($buttonApiUrl, "touch=" . $touchedUrl, "POST");
-                        if($result === false)
-                        {
-                            return $result;
-                        }
-                    }
-
-                    return true;
-                } catch (\Exception $e) {
-                    $this->jeedomHelper->logWarning("SaveUrlsForWifiButton - " . $e);
-                    return false;
+            try {
+                $result = $this->doHttpCall($buttonApiUrl, "single=" . $singleUrl, "POST");
+                if ($result === false) {
+                    return $result;
                 }
-            } else {
-                $authToken = $this->jeedomHelper->loadPluginConfiguration("authToken");
-                $this->jeedomHelper->logDebug("SaveUrlsForWifiButton - " . $wifiButton->id);
+
+                $result = $this->doHttpCall($buttonApiUrl, "double=" . $doubleUrl, "POST");
+                if ($result === false) {
+                    return $result;
+                }
+
+                $result = $this->doHttpCall($buttonApiUrl, "long=" . $longUrl, "POST");
+                if ($result === false) {
+                    return $result;
+                }
+                    
+                if ($cmdIdTouched != -1) {
+                    $result = $this->doHttpCall($buttonApiUrl, "touch=" . $touchedUrl, "POST");
+                    if ($result === false) {
+                        return $result;
+                    }
+                }
+
+                return true;
+            } catch (\Exception $e) {
+                $this->jeedomHelper->logWarning("SaveUrlsForWifiButton - " . $e);
+                return false;
+            }
+        } else {
+            $authToken = $this->jeedomHelper->loadPluginConfiguration("authToken");
+            $this->jeedomHelper->logDebug("SaveUrlsForWifiButton - " . $wifiButton->id);
                 
-                $url = $this->myStromApiUrl . "/device/setSettings?" . "authToken=" . $authToken .
+            $url = $this->myStromApiUrl . "/device/setSettings?" . "authToken=" . $authToken .
                 "&id=" . $wifiButton->id .
                 "&localSingleUrl=" . $singleUrl .
                 "&localDoubleUrl=" . $doubleUrl .
                 "&localLongUrl=" . $longUrl;
                 
-                if($cmdIdTouched != -1)
-                {
-                    $url = $url . "&localTouchUrl=" . $touchedUrl;
-                }
+            if ($cmdIdTouched != -1) {
+                $url = $url . "&localTouchUrl=" . $touchedUrl;
+            }
                 
-                $result = $this->doHttpCall($url, null, "GET");
-                $resultApi = json_decode($result);
+            $result = $this->doHttpCall($url, null, "GET");
+            $resultApi = json_decode($result);
                 
-                if($resultApi->status === "ok")
-                {
-                    $this->jeedomHelper->logInfo("Url saved for wifi button id:" .
+            if ($resultApi->status === "ok") {
+                $this->jeedomHelper->logInfo("Url saved for wifi button id:" .
                         $wifiButton->id . " value: " . $resultApi->value);
-                    return true;
-                } else {
-                    $this->jeedomHelper->logWarning("Unable to save url for wifi button id:" .
+                return true;
+            } else {
+                $this->jeedomHelper->logWarning("Unable to save url for wifi button id:" .
                         $wifiButton->id . " error: " . $resultApi->error);
                     
-                    return false;
-                }
+                return false;
             }
         }
     }
+}
