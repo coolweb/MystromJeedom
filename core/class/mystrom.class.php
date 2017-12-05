@@ -104,7 +104,7 @@ class mystrom extends eqLogic
     */
     public function postSave()
     {
-        $this->_jeedomHelper->logDebug("Ajout des commandes sur l'équipement");
+        $this->_jeedomHelper->logDebug("Ajout des commandes sur l'équipement " . $this->getName());
         $deviceType = $this->getConfiguration('mystromType');
         
         if ($deviceType == 'mst' || 
