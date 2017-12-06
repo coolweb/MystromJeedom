@@ -20,8 +20,21 @@ use coolweb\mystrom\jeedomHelper;
 class mystromCmdTest extends TestCase
 {
     private $mystromService;
+
+    /**
+     * The testing target
+     *
+     * @var PHPUnit_Framework_MockObject_MockObject
+     */
     private $target;
     private $jeedomHelper;
+
+    /**
+     * The current linked eqLogic to the cmd
+     *
+     * @var PHPUnit_Framework_MockObject_MockObject
+     */
+    private $currentEqLogic;
 
     private function setCmdId($id)
     {
@@ -50,17 +63,35 @@ class mystromCmdTest extends TestCase
     protected function setUp()
     {
         $this->mystromService = $this->getMockBuilder(MyStromService::class)
-        ->disableOriginalConstructor()
-        ->setMethods([])
+        ->disableOriginalConstructor()        
         ->getMock();
 
         $this->jeedomHelper = $this->getMockBuilder(JeedomHelper::class)
         ->getMock();
         
-        $this->target = $this->getMockBuilder(mystromCmd::class)
-        ->setConstructorArgs([$this->jeedomHelper])
-        ->setMethods(['getEqLogicLogicalId', 'getEqLogicConfiguration', 'getLogicalId', 'getType', 'checkAndUpdateCmd', 'logDebug'])
+        $this->currentEqLogic = $this->getMockBuilder("eqLogic")
         ->getMock();
+
+        $this->currentEqLogic
+        ->expects($this->any())
+        ->method("getName")
+        ->willReturn("deviceName");
+
+        $this->target = $this->getMockBuilder(mystromCmd::class)
+        ->setConstructorArgs([$this->jeedomHelper, $this->mystromService])
+        ->setMethods([
+            'getEqLogicLogicalId', 
+            'getEqLogicConfiguration', 
+            'getLogicalId', 
+            'getType', 
+            'checkAndUpdateCmd', 
+            'getEqLogic'])
+        ->getMock();
+
+        $this->target
+        ->expects($this->any())
+        ->method("getEqLogic")
+        ->willReturn($this->currentEqLogic);
     }
 
     public function testWhenButtonTouched_ItShouldSetTheTouchedInfoOn()
