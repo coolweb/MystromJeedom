@@ -1,2 +1,2 @@
 language: php
-install: npm install
+install: composer install
