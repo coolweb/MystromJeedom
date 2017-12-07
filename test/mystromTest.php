@@ -193,7 +193,7 @@ class mystromTest extends TestCase
 
     public function testPullWhenErrorLoadingDevices_ItShouldLogAnError()
     {
-        $this->setMystromDevices($this->mystromService, null, true);
+        $this->setMystromDevices($this->mystromService, Array(), true);
         $this->jeedomHelper->expects($this->once())
         ->method('logError');
 
