@@ -3,12 +3,12 @@
 include_once('eqLogic.php');
 include_once('cmd.php');
 include_once('./core/class/mystromBaseDevice.class.php');
-include_once('./core/class/myStromDevice.class.php');
-include_once('./core/class/myStromWifiSwitchEurope.class.php');
+include_once('./core/class/mystromDevice.class.php');
+include_once('./core/class/mystromWifiSwitchEurope.class.php');
 include_once('./core/class/mystromApiResult.class.php');
 include_once('./core/class/getAllDevicesResult.class.php');
 include_once('./core/class/MyStromService.class.php');
-include_once('./core/class/myStrom.class.php');
+include_once('./core/class/mystrom.class.php');
 include_once('./core/class/jeedomHelper.class.php');
 
 use PHPUnit\Framework\TestCase;

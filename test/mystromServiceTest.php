@@ -3,12 +3,13 @@ include_once('eqLogic.php');
 include_once('cmd.php');
 include_once('./test/jeedom.php');
 include_once('./core/class/mystromBaseDevice.class.php');
-include_once('./core/class/myStromDevice.class.php');
-include_once('./core/class/myStromApiResult.class.php');
+include_once('./core/class/mystromDevice.class.php');
+include_once('./core/class/mystromApiResult.class.php');
 include_once('./core/class/getAllDevicesResult.class.php');
 include_once('./core/class/mystromButtonDevice.class.php');
 include_once('./core/class/mystromService.class.php');
 include_once('./core/class/mystromWifiSwitchEurope.class.php');
+include_once('./core/class/mystromWifiBulb.class.php');
 
 use PHPUnit\Framework\TestCase;
 use coolweb\mystrom\jeedomHelper;
@@ -240,7 +241,7 @@ class mystromServiceTest extends TestCase
         $this->assertTrue($result->devices[0] instanceof \coolweb\mystrom\MystromWifiSwitchEurope);
     }
 
-    public function testLoadAllDevicesWhenWifiBulbShouldReturnTheWifiBulbClass()
+    /**public function testLoadAllDevicesWhenWifiBulbShouldReturnTheWifiBulbClass()
     {
         $jsonObject = new \stdClass();
         @$jsonObject->status = 'ok';
@@ -269,6 +270,12 @@ class mystromServiceTest extends TestCase
         $this->assertEquals($result->devices[0]->name, $device1->name);
         $this->assertEquals($result->devices[0]->state, $device1->state);
         $this->assertTrue($result->devices[0] instanceof \coolweb\mystrom\MystromWifiBulb);
+    }*/
+
+    public function testWhenSetBulbColor()
+    {
+        $wifiBulb = new \coolweb\mystrom\MystromWifiBulb();
+        $this->target->setBulbColor($wifiBulb, "#00ff11");
     }
 
     public function testLoadAllDevicesWhenLoadReportDataShouldReturnTheConsumptions()

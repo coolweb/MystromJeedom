@@ -7,8 +7,8 @@ include_once('./core/class/mystromBaseDevice.class.php');
 include_once('./core/class/mystromDevice.class.php');
 include_once('./core/class/mystromApiResult.class.php');
 include_once('./core/class/getAllDevicesResult.class.php');
-include_once('./core/class/MyStromService.class.php');
-include_once('./core/class/myStrom.class.php');
+include_once('./core/class/MystromService.class.php');
+include_once('./core/class/mystrom.class.php');
 include_once('./core/class/jeedomHelper.class.php');
 
 use coolweb\mystrom\MyStromService;
