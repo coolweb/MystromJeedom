@@ -4,6 +4,7 @@
     },
     "require": {
         "php": "<=5.7",
-        "php-di/php-di": "^5.4"        
+        "php-di/php-di": "^5.4",
+        "php-coveralls/php-coveralls": "^1.1"        
     }
 }
