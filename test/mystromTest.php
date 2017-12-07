@@ -197,6 +197,7 @@ class mystromTest extends TestCase
         $this->setMystromDevices($this->mystromService, array(), true);
 
         $eqLogic = $this->getMockBuilder(eqLogic::class)
+        ->setMethods(['checkAndUpdateCmd', 'refreshWidget', 'getName'])
         ->getMock();
         $eqLogic->logicalId = '1234';
         
