@@ -195,6 +195,8 @@ class mystromTest extends TestCase
     public function testPullWhenErrorLoadingDevices_ItShouldLogAnError()
     {
         $this->setMystromDevices($this->mystromService, array(), true);
+        
+        $eqLogic = $this->getMockBuilder(eqLogic::class)
         $eqLogic->logicalId = '1234';
         
         $eqLogics = array();
