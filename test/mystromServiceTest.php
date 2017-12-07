@@ -272,11 +272,11 @@ class mystromServiceTest extends TestCase
         $this->assertTrue($result->devices[0] instanceof \coolweb\mystrom\MystromWifiBulb);
     }*/
 
-    public function testWhenSetBulbColor()
+    /*public function testWhenSetBulbColor()
     {
         $wifiBulb = new \coolweb\mystrom\MystromWifiBulb();
         $this->target->setBulbColor($wifiBulb, "#00ff11");
-    }
+    }*/
 
     public function testLoadAllDevicesWhenLoadReportDataShouldReturnTheConsumptions()
     {
