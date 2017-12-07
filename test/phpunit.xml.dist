@@ -12,7 +12,7 @@
         <var name="unitTest" value="true" />
     </php>
   <logging>
-    <log type="coverage-clover" target="build/logs/clover.xml"/>
+    <log type="coverage-clover" target="../build/logs/clover.xml"/>
   </logging>
   <filter>
         <whitelist processUncoveredFilesFromWhitelist="true">
