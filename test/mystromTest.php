@@ -49,6 +49,7 @@ class mystromTest extends TestCase
         } else {
             $result->status = 'ko';
             $result->error = 'error description';
+            $result->devices = array();
         }
 
         $mystromService->method('loadAllDevicesFromServer')
