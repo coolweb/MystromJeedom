@@ -195,6 +195,12 @@ class mystromTest extends TestCase
     public function testPullWhenErrorLoadingDevices_ItShouldLogAnError()
     {
         $this->setMystromDevices($this->mystromService, array(), true);
+        $eqLogic->logicalId = '1234';
+        
+        $eqLogics = array();
+        array_push($eqLogics, $eqLogic);
+        $this->setJeedomDevices($this->target, $eqLogics);
+        
         $this->jeedomHelper->expects($this->once())
         ->method('logError');
 
