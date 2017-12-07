@@ -4,7 +4,7 @@ use PHPUnit\Framework\TestCase;
 include_once('eqLogic.php');
 include_once('cmd.php');
 include_once('./core/class/mystromBaseDevice.class.php');
-include_once('./core/class/myStromDevice.class.php');
+include_once('./core/class/mystromDevice.class.php');
 include_once('./core/class/mystromApiResult.class.php');
 include_once('./core/class/getAllDevicesResult.class.php');
 include_once('./core/class/MyStromService.class.php');
