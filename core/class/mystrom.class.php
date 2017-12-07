@@ -668,6 +668,8 @@ class mystromCmd extends cmd
             $this->_jeedomHelper->logDebug(
             'Execute cmd ' .
             $cmdLogicalId .
+            ' with options ' .
+            print_r($_options, true) .
             ' (' . $this->getEqLogic()->getName() . ')');
         
             if ($cmdLogicalId == 'on') {
