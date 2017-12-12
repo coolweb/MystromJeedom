@@ -30,8 +30,279 @@ class mystromServiceTest extends TestCase
     /** @var \MystromService */
     private $target;
 
+    /** @var string The token returned on login */
+    private $currentLoginToken = "xdfge";
+
+    private $myStromApiUrl = 'https://www.mystrom.ch/mobile';
+    private $jeedomIpAddress = "192.168.1.10";
+
+    private $isLoginOk = false;
+    private $userIdInJeedom = null;
+    private $passwordInJeedom = null;
+    private $loginTokenInJeedom = null;
+
+    private $isLoadingDevicesFromJeedomServerOk = false;
+
+    private $loginUrl;
+    private $loginObject;
+    private $loadDevicesFromServerUrl;
+    private $loadDevicesFromServerWithReportUrl;
+    private $loadDevicesServerObject;
+
+    private $mystromServerDevices = array();
+    private $mystromLocalDevices = array();
+
+    private $isSetStateOk = false;
+    private $setStateObject;
+    private $setStateUrl;
+    private $setStateUrlRestartMaster;
+    
+    private function setLoginIsOk($isOk)
+    {
+        $this->isLoginOk = $isOk;
+    }
+
+    private function setUserPasswordInJeedom($user, $password)
+    {
+        $this->userIdInJeedom = $user;
+        $this->passwordInJeedom = $password;
+    }
+
+    private function initTestData()
+    {
+        $this->loginObject = new \stdClass();
+
+        if ($this->isLoginOk == false) {
+            @$this->loginObject->status = 'ko';
+            @$this->loginObject->error = 'error';
+        } else {
+            @$this->loginObject->status = 'ok';
+            @$this->loginObject->authToken = $this->currentLoginToken;
+        }
+
+        $this->loadDevicesServerObject = new \stdClass();
+        
+        if ($this->isLoadingDevicesFromJeedomServerOk == false) {
+            @$this->loadDevicesServerObject->status = 'ko';
+            @$this->loadDevicesServerObject->error = 'error';
+        } else {
+            @$this->loadDevicesServerObject->status = 'ok';
+            @$this->loadDevicesServerObject->devices = $this->mystromServerDevices;
+        }
+
+        $this->loginUrl = $this->myStromApiUrl . "/auth?email=" . $this->userIdInJeedom
+        . "&password=" . $this->passwordInJeedom;
+
+        $this->loadDevicesFromServerUrl = $this->myStromApiUrl . "/devices?" .
+        "authToken=" . $this->loginTokenInJeedom;
+
+        $this->loadDevicesFromServerWithReportUrl = $this->myStromApiUrl . "/devices?report=true&" .
+        "authToken=" . $this->loginTokenInJeedom;
+
+        $this->setStateUrl = $this->myStromApiUrl . "/switch?" .
+        "authToken=" . $this->loginTokenInJeedom;
+
+        $this->setStateUrlRestartMaster = $this->myStromApiUrl . "/restart?" .
+        "authToken=" . $this->loginTokenInJeedom;
+
+        $this->setStateObject = new \stdClass();
+        
+        if ($this->isSetStateOk == false) {
+            @$this->setStateObject->status = 'ko';
+            @$this->setStateObject->error = 'error';
+        }
+
+        $this->target->method('doJsonCall')
+        ->will($this->returnCallBack(array($this, 'getJson')));
+
+        $this->target->method('doHttpCall')
+        ->will($this->returnCallBack(array($this, 'doHttpCall')));
+
+        $this->jeedomHelper
+        ->method('savePluginConfiguration')
+        ->will($this->returnCallBack(array($this, 'saveInJeedomConfiguration')));
+
+        $this->jeedomHelper
+        ->method('loadPluginConfiguration')
+        ->will($this->returnCallBack(array($this, 'loadPluginConfiguration')));
+    }
+
+    public function addDeviceOnMystromServer($id, $type, $name, $state, $power, $temperature = null)
+    {
+        $this->isLoadingDevicesFromJeedomServerOk = true;
+
+        $device1 = new \stdClass();
+        @$device1->id = $id;
+        @$device1->type = $type;
+        @$device1->name = $name;
+        @$device1->state = $state;
+        @$device1->power = $power;
+        @$device1->wifiSwitchTemp = $temperature;
+        $energyReport = new \stdClass();
+        @$energyReport->daylyConsumption = 15;
+        @$energyReport->monthlyConsumption = 110;
+        @$device1->energyReport = $energyReport;
+
+        array_push($this->mystromServerDevices, $device1);
+    }
+
+    public function addLocalButton($macAddress, $ipAddress){
+        $button = new \stdClass();
+        $button->macAddress = $macAddress;
+        $button->ipAddress = $ipAddress;
+        $button->single = "";
+        $button->double = "";
+        $button->long = "";
+        $button->touch = "";
+
+        array_push($this->mystromLocalDevices, $button);
+    }
+
+    public function loadPluginConfiguration($key)
+    {
+        if ($key == "authToken") {
+            return $this->loginTokenInJeedom;
+        }
+        
+        if ($key == "userId") {
+            return $this->userIdInJeedom;
+        }
+
+        if ($key == "password") {
+            return $this->passwordInJeedom;
+        }
+
+        if($key == "internalAddr") {
+            return $this->jeedomIpAddress;
+        }
+    }
+
+    public function saveInJeedomConfiguration($key, $value)
+    {
+        if ($key == 'authToken') {
+            $this->loginTokenInJeedom = $value;
+        }
+    }
+
+    public function doHttpCall($url, $data, $verb)
+    {
+        if($verb == "GET")
+        {
+            if(strpos($url, "/api/v1/device") != false)
+            {
+                $deviceIpAddressPos = strpos($url, "http://") + 7;
+                $deviceIpAddressEndPos = strpos($url, "/api", $deviceIpAddressPos);
+                $deviceIpAddress = substr($url, $deviceIpAddressPos, $deviceIpAddressEndPos - $deviceIpAddressPos);
+
+                foreach ($this->mystromLocalDevices as $device) {
+                    if($device->ipAddress == $deviceIpAddress)
+                    {
+                        $jsonData = "{\"" . $device->macAddress .
+                            "\":" . json_encode($device) . "}";
+                        return $jsonData;
+                    }
+                }
+            }
+        }
+        
+        if($verb == "POST")
+        {
+            if(strpos($url, "/api/v1/device") != false)
+            {
+                $deviceIpAddressPos = strpos($url, "http://") + 7;
+                $deviceIpAddressEndPos = strpos($url, "/api", $deviceIpAddressPos);
+                $deviceIpAddress = substr($url, $deviceIpAddressPos, $deviceIpAddressEndPos - $deviceIpAddressPos);
+
+                foreach ($this->mystromLocalDevices as $device) {
+                    if($device->ipAddress == $deviceIpAddress)
+                    {
+                        $equalPos = strpos($data, "=") + 1;
+                        $actionName = substr($data, 0, $equalPos -1);
+                        $actionValue = substr($data, $equalPos);
+
+                        switch ($actionName) {
+                            case "single":
+                                $device->single = $data;
+                                break;
+                            
+                            case "double":
+                                $device->double = $data;
+                                break;
+
+                            case "long":
+                                $device->long = $data;
+                                break;
+
+                            case "touch":
+                                $device->touch = $data;
+                                break;
+
+                            default:
+                                break;
+                        }
+                    }
+                }
+
+                return "";
+            }
+        }
+    }
+
+    public function getJson($url)
+    {
+        if ($url == $this->loginUrl) {
+            return $this->loginObject;
+        }
+
+        if ($url == $this->loadDevicesFromServerUrl) {
+            return $this->loadDevicesServerObject;
+        }
+
+        if ($url == $this->loadDevicesFromServerWithReportUrl) {
+            return $this->loadDevicesServerObject;
+        }
+
+        if(strpos($url, $this->setStateUrlRestartMaster) == 0){
+            foreach ($this->mystromServerDevices as $device) {
+                if($device->type != "mst"){
+                    $device->state = "offline";
+                }
+            }
+        }
+
+        if(strpos($url, $this->setStateUrl) == 0){
+            $on = false;
+            if(strpos($url, "true") != false){
+                $on = true;
+            }
+
+            $idPosition = strpos($url, "id") + 3;
+            $endIdPosition = strpos($url, "&", $idPosition);
+            $deviceId = substr($url, $idPosition, $endIdPosition - $idPosition) ;
+            
+            foreach ($this->mystromServerDevices as $device) {
+                if($device->id == $deviceId){
+                    $device->state = $on == true ? "on" : "off";
+                }
+            }
+
+            return $this->setStateObject;
+        }
+
+        if(strpos($url, $this->setStateUrlRestartMaster) == 0){
+            return $this->setStateObject;
+        }
+    }
+
     protected function setUp()
     {
+        $this->currentLoginToken = null;
+        $this->isLoadingDevicesFromJeedomServerOk = false;
+        $this->isLoginOk = false;
+        $this->mystromServerDevices = array();
+        $this->mystromLocalDevices = array();
+        $this->isSetStateOk = false;
+
         $this->jeedomHelper = $this->getMockBuilder(JeedomHelper::class)
         ->setMethods([
         'logDebug',
@@ -43,7 +314,7 @@ class mystromServiceTest extends TestCase
         'getEqLogicByLogicalId',
         'createAndSaveEqLogic',
         'createCmd',
-        'getJeedomApiKey'])        
+        'getJeedomApiKey'])
         ->getMock();
 
         $this->target = $this->getMockBuilder(MyStromService::class)
@@ -58,12 +329,7 @@ class mystromServiceTest extends TestCase
 
     public function testDoAuthentificationWhenErrorShouldReturnFalse()
     {
-        $jsonObject = new \stdClass();
-        @$jsonObject->status = 'ko';
-        @$jsonObject->error = 'error';
-        
-        $this->target->method('doJsonCall')
-        ->willReturn($jsonObject);
+        $this->initTestData();
         
         $result = $this->target->doAuthentification();
         
@@ -72,205 +338,106 @@ class mystromServiceTest extends TestCase
     
     public function testDoAuthentificationWhenOkShouldSaveTheToken()
     {
-        $jsonObject = new \stdClass();
-        @$jsonObject->status = 'ok';
-        @$jsonObject->authToken = '1234';
-        
-        $this->target->method('doJsonCall')
-        ->willReturn($jsonObject);
-        
-        $this->jeedomHelper->expects($this->once())
-        ->method('savePluginConfiguration')
-        ->with($this->equalTo('authToken'), $this->equalTo($jsonObject->authToken));
-        
+        $this->isLoginOk = true;
+        $this->setUserPasswordInJeedom("userId", "ssss");
+        $this->initTestData();
+
         $result = $this->target->doAuthentification();
         
         $this->assertTrue($result);
+        $this->assertEquals($this->currentLoginToken, $this->loginTokenInJeedom);
     }
     
     public function testLoadAllDevicesWhenErrorShouldReturnTheError()
     {
-        $jsonObject = new \stdClass();
-        @$jsonObject->status = 'ko';
-        @$jsonObject->error = 'error';
-        
-        $this->target->method('doJsonCall')
-        ->willReturn($jsonObject);
+        $this->initTestData();
         
         $result = $this->target->loadAllDevicesFromServer();
         
-        $this->assertEquals($result->error, $jsonObject->error);
+        $this->assertEquals($result->error, $this->loadDevicesServerObject->error);
     }
     
     public function testLoadAllDevicesWhenOkShouldReturnTheDevices()
     {
-        $jsonObject = new \stdClass();
-        @$jsonObject->status = 'ok';
-        @$jsonObject->devices = array();
-        
-        $device1 = new \stdClass();
-        @$device1->id = '1234';
-        @$device1->type = 'eth';
-        @$device1->name = 'device1';
-        @$device1->state = 'on';
-        @$device1->power = '1';
-        array_push($jsonObject->devices, $device1);
-        
-        $device2 = new \stdClass();
-        @$device2->id = '4321';
-        @$device2->type = 'mst';
-        @$device2->name = 'device2';
-        @$device2->state = 'off';
-        @$device2->power = '0';
-        array_push($jsonObject->devices, $device2);
-        
-        $this->target->method('doJsonCall')
-        ->willReturn($jsonObject);
-
-        $this->target->expects($this->once())
-        ->method('doJsonCall')
-        ->with($this->equalTo('https://www.mystrom.ch/mobile/devices?authToken='));
+        $this->addDeviceOnMystromServer('1234', 'eth', 'device1', 'on', '1');
+        $this->addDeviceOnMystromServer('4321', 'mst', 'device2', 'off', '0');
+        $this->initTestData();
         
         $result = $this->target->loadAllDevicesFromServer();
         
         $this->assertEquals(count($result->devices), 2);
-        $this->assertEquals($result->devices[0]->id, $device1->id);
-        $this->assertEquals($result->devices[0]->type, $device1->type);
-        $this->assertEquals($result->devices[0]->name, $device1->name);
-        $this->assertEquals($result->devices[0]->state, $device1->state);
-        $this->assertEquals($result->devices[0]->power, $device1->power);
+        $this->assertEquals($result->devices[0]->id, $this->mystromServerDevices[0]->id);
+        $this->assertEquals($result->devices[0]->type, $this->mystromServerDevices[0]->type);
+        $this->assertEquals($result->devices[0]->name, $this->mystromServerDevices[0]->name);
+        $this->assertEquals($result->devices[0]->state, $this->mystromServerDevices[0]->state);
+        $this->assertEquals($result->devices[0]->power, $this->mystromServerDevices[0]->power);
         
-        $this->assertEquals($result->devices[1]->id, $device2->id);
-        $this->assertEquals($result->devices[1]->type, $device2->type);
-        $this->assertEquals($result->devices[1]->name, $device2->name);
-        $this->assertEquals($result->devices[1]->power, $device2->power);
+        $this->assertEquals($result->devices[1]->id, $this->mystromServerDevices[1]->id);
+        $this->assertEquals($result->devices[1]->type, $this->mystromServerDevices[1]->type);
+        $this->assertEquals($result->devices[1]->name, $this->mystromServerDevices[1]->name);
+        $this->assertEquals($result->devices[1]->power, $this->mystromServerDevices[1]->power);
     }
 
     public function testLoadAllDevicesWhenButtonPlusShouldReturnTheButtonClass()
     {
-        $jsonObject = new \stdClass();
-        @$jsonObject->status = 'ok';
-        @$jsonObject->devices = array();
-        
-        $device1 = new \stdClass();
-        @$device1->id = '1234';
-        @$device1->type = 'wbp';
-        @$device1->name = 'device1';
-        @$device1->state = 'offline';
-        @$device1->power = '0';
-        array_push($jsonObject->devices, $device1);
-        
-        $this->target->method('doJsonCall')
-        ->willReturn($jsonObject);
-
-        $this->target->expects($this->once())
-        ->method('doJsonCall')
-        ->with($this->equalTo('https://www.mystrom.ch/mobile/devices?authToken='));
+        $this->addDeviceOnMystromServer('1234', 'wbp', 'device1', 'on', '1');
+        $this->initTestData();
         
         $result = $this->target->loadAllDevicesFromServer();
         
         $this->assertEquals(count($result->devices), 1);
-        $this->assertEquals($result->devices[0]->id, $device1->id);
-        $this->assertEquals($result->devices[0]->type, $device1->type);
-        $this->assertEquals($result->devices[0]->name, $device1->name);
-        $this->assertEquals($result->devices[0]->state, $device1->state);
+        $this->assertEquals($result->devices[0]->id, $this->mystromServerDevices[0]->id);
+        $this->assertEquals($result->devices[0]->type, $this->mystromServerDevices[0]->type);
+        $this->assertEquals($result->devices[0]->name, $this->mystromServerDevices[0]->name);
+        $this->assertEquals($result->devices[0]->state, $this->mystromServerDevices[0]->state);
         $this->assertTrue($result->devices[0] instanceof MystromButtonDevice);
     }
 
     public function testLoadAllDevicesWhenButtonSimpleShouldReturnTheButtonClass()
     {
-        $jsonObject = new \stdClass();
-        @$jsonObject->status = 'ok';
-        @$jsonObject->devices = array();
-        
-        $device1 = new \stdClass();
-        @$device1->id = '1234';
-        @$device1->type = 'wbs';
-        @$device1->name = 'device1';
-        @$device1->state = 'offline';
-        @$device1->power = '0';
-        array_push($jsonObject->devices, $device1);
-        
-        $this->target->method('doJsonCall')
-        ->willReturn($jsonObject);
-
-        $this->target->expects($this->once())
-        ->method('doJsonCall')
-        ->with($this->equalTo('https://www.mystrom.ch/mobile/devices?authToken='));
+        $this->addDeviceOnMystromServer('1234', 'wbs', 'device1', 'on', '1');
+        $this->initTestData();
         
         $result = $this->target->loadAllDevicesFromServer();
         
         $this->assertEquals(count($result->devices), 1);
-        $this->assertEquals($result->devices[0]->id, $device1->id);
-        $this->assertEquals($result->devices[0]->type, $device1->type);
-        $this->assertEquals($result->devices[0]->name, $device1->name);
-        $this->assertEquals($result->devices[0]->state, $device1->state);
+        $this->assertEquals($result->devices[0]->id, $this->mystromServerDevices[0]->id);
+        $this->assertEquals($result->devices[0]->type, $this->mystromServerDevices[0]->type);
+        $this->assertEquals($result->devices[0]->name, $this->mystromServerDevices[0]->name);
+        $this->assertEquals($result->devices[0]->state, $this->mystromServerDevices[0]->state);
         $this->assertTrue($result->devices[0] instanceof MystromButtonDevice);
     }
 
     public function testLoadAllDevicesWhenWifiSwitchEuropeShouldReturnTheWifiSwithEuropeClass()
     {
-        $jsonObject = new \stdClass();
-        @$jsonObject->status = 'ok';
-        @$jsonObject->devices = array();
-        
-        $device1 = new \stdClass();
-        @$device1->id = '1234';
-        @$device1->type = 'wse';
-        @$device1->name = 'device1';
-        @$device1->state = 'offline';
-        @$device1->power = '0';
-        @$device1->wifiSwitchTemp = '21';
-        array_push($jsonObject->devices, $device1);
-        
-        $this->target->method('doJsonCall')
-        ->willReturn($jsonObject);
+        $this->addDeviceOnMystromServer('1234', 'wse', 'device1', 'on', '1', '21');
+        $this->initTestData();
 
-        $this->target->expects($this->once())
-        ->method('doJsonCall')
-        ->with($this->equalTo('https://www.mystrom.ch/mobile/devices?authToken='));
-        
         $result = $this->target->loadAllDevicesFromServer();
         
         $this->assertEquals(count($result->devices), 1);
-        $this->assertEquals($result->devices[0]->id, $device1->id);
-        $this->assertEquals($result->devices[0]->type, $device1->type);
-        $this->assertEquals($result->devices[0]->name, $device1->name);
-        $this->assertEquals($result->devices[0]->state, $device1->state);
-        $this->assertEquals($result->devices[0]->temperature, $device1->wifiSwitchTemp);
+        $this->assertEquals($result->devices[0]->id, $this->mystromServerDevices[0]->id);
+        $this->assertEquals($result->devices[0]->type, $this->mystromServerDevices[0]->type);
+        $this->assertEquals($result->devices[0]->name, $this->mystromServerDevices[0]->name);
+        $this->assertEquals($result->devices[0]->state, $this->mystromServerDevices[0]->state);
+        $this->assertEquals($result->devices[0]->temperature, $this->mystromServerDevices[0]->wifiSwitchTemp);
         $this->assertTrue($result->devices[0] instanceof \coolweb\mystrom\MystromWifiSwitchEurope);
     }
 
-    /**public function testLoadAllDevicesWhenWifiBulbShouldReturnTheWifiBulbClass()
+    public function testLoadAllDevicesWhenWifiBulbShouldReturnTheWifiBulbClass()
     {
-        $jsonObject = new \stdClass();
-        @$jsonObject->status = 'ok';
-        @$jsonObject->devices = array();
-        
-        $device1 = new \stdClass();
-        @$device1->id = '1234';
-        @$device1->type = 'wrb';
-        @$device1->name = 'device1';
-        @$device1->state = 'offline';
-        @$device1->power = '0';
-        array_push($jsonObject->devices, $device1);
-        
-        $this->target->method('doJsonCall')
-        ->willReturn($jsonObject);
-
-        $this->target->expects($this->once())
-        ->method('doJsonCall')
-        ->with($this->equalTo('https://www.mystrom.ch/mobile/devices?authToken='));
+        $this->addDeviceOnMystromServer('1234', 'wrb', 'device1', 'on', '1', '21');
+        $this->initTestData();
         
         $result = $this->target->loadAllDevicesFromServer();
         
         $this->assertEquals(count($result->devices), 1);
-        $this->assertEquals($result->devices[0]->id, $device1->id);
-        $this->assertEquals($result->devices[0]->type, $device1->type);
-        $this->assertEquals($result->devices[0]->name, $device1->name);
-        $this->assertEquals($result->devices[0]->state, $device1->state);
+        $this->assertEquals($result->devices[0]->id, $this->mystromServerDevices[0]->id);
+        $this->assertEquals($result->devices[0]->type, $this->mystromServerDevices[0]->type);
+        $this->assertEquals($result->devices[0]->name, $this->mystromServerDevices[0]->name);
+        $this->assertEquals($result->devices[0]->state, $this->mystromServerDevices[0]->state);
         $this->assertTrue($result->devices[0] instanceof \coolweb\mystrom\MystromWifiBulb);
-    }*/
+    }
 
     /*public function testWhenSetBulbColor()
     {
@@ -280,61 +447,22 @@ class mystromServiceTest extends TestCase
 
     public function testLoadAllDevicesWhenLoadReportDataShouldReturnTheConsumptions()
     {
-        $jsonObject = new \stdClass();
-        @$jsonObject->status = 'ok';
-        @$jsonObject->devices = array();
-        
-        $device1 = new \stdClass();
-        @$device1->id = '1234';
-        @$device1->type = 'eth';
-        @$device1->name = 'device1';
-        @$device1->state = 'on';
-        @$device1->power = '1';
-        @$device1->energyReport->daylyConsumption = 12;
-        @$device1->energyReport->monthlyConsumption = 100;
-        array_push($jsonObject->devices, $device1);
-        
-        $device2 = new \stdClass();
-        @$device2->id = '4321';
-        @$device2->type = 'mst';
-        @$device2->name = 'device2';
-        @$device2->state = 'on';
-        @$device2->power = '1';
-        @$device2->energyReport->daylyConsumption = 15;
-        @$device2->energyReport->monthlyConsumption = 110;
-        array_push($jsonObject->devices, $device2);
-        
-        $this->target->method('doJsonCall')
-        ->willReturn($jsonObject);
+        $this->addDeviceOnMystromServer('1234', 'eth', 'device1', 'on', '1');
+        $this->initTestData();
 
-        $this->target->expects($this->once())
-        ->method('doJsonCall')
-        ->with($this->equalTo('https://www.mystrom.ch/mobile/devices?report=true&authToken='));
-        
         $result = $this->target->loadAllDevicesFromServer(true);
         
-        $this->assertEquals(count($result->devices), 2);
-        $this->assertEquals($result->devices[0]->id, $device1->id);
-        $this->assertEquals($result->devices[0]->type, $device1->type);
-        $this->assertEquals($result->devices[0]->name, $device1->name);
-        $this->assertEquals($result->devices[0]->daylyConsumption, $device1->energyReport->daylyConsumption);
-        $this->assertEquals($result->devices[0]->monthlyConsumption, $device1->energyReport->monthlyConsumption);
-        
-        $this->assertEquals($result->devices[1]->id, $device2->id);
-        $this->assertEquals($result->devices[1]->type, $device2->type);
-        $this->assertEquals($result->devices[1]->name, $device2->name);
-        $this->assertEquals($result->devices[1]->daylyConsumption, $device2->energyReport->daylyConsumption);
-        $this->assertEquals($result->devices[1]->monthlyConsumption, $device2->energyReport->monthlyConsumption);
+        $this->assertEquals(count($result->devices), 1);
+        $this->assertEquals($result->devices[0]->id, $this->mystromServerDevices[0]->id);
+        $this->assertEquals($result->devices[0]->type, $this->mystromServerDevices[0]->type);
+        $this->assertEquals($result->devices[0]->name, $this->mystromServerDevices[0]->name);
+        $this->assertEquals($result->devices[0]->daylyConsumption, $this->mystromServerDevices[0]->energyReport->daylyConsumption);
+        $this->assertEquals($result->devices[0]->monthlyConsumption, $this->mystromServerDevices[0]->energyReport->monthlyConsumption);
     }
     
     public function testSetStateWhenErrorShouldReturnTheError()
     {
-        $jsonObject = new \stdClass();
-        @$jsonObject->status = 'ko';
-        @$jsonObject->error = 'error';
-        
-        $this->target->method('doJsonCall')
-        ->willReturn($jsonObject);
+        $this->initTestData();
         
         $result = $this->target->setState('1234', 'eth', true);
         
@@ -342,120 +470,82 @@ class mystromServiceTest extends TestCase
         $this->assertEquals($result->error, 'error');
     }
     
-    public function testSetStateWhenStateIsOnShouldCallTheCorrectUrl()
+    public function testSetStateWhenStateIsOnShouldSetStateOn()
     {
-        $jsonObject = new \stdClass();
-        @$jsonObject->status = 'ok';
-        
-        $this->target->method('doJsonCall')
-        ->willReturn($jsonObject);
-        
-        $this->target->expects($this->once())
-        ->method('doJsonCall')
-        ->with($this->equalTo('https://www.mystrom.ch/mobile/device/switch?authToken=&id=1234&on=true'));
-        
+        $this->addDeviceOnMystromServer('1234', 'eth', 'device1', 'off', '1');
+        $this->initTestData();
+
         $result = $this->target->setState('1234', 'eth', true);
         
-        $this->assertEquals($result->status, 'ok');
+        $this->assertEquals($this->mystromServerDevices[0]->state, 'on');
     }
     
-    public function testSetStateWhenStateIsOffShouldCallTheCorrectUrl()
+    public function testSetStateWhenStateIsOffSetStateOff()
     {
-        $jsonObject = new \stdClass();
-        @$jsonObject->status = 'ok';
-        
-        $this->target->method('doJsonCall')
-        ->willReturn($jsonObject);
-        
-        $this->target->expects($this->once())
-        ->method('doJsonCall')
-        ->with($this->equalTo('https://www.mystrom.ch/mobile/device/switch?authToken=&id=1234&on=false'));
-        
+        $this->addDeviceOnMystromServer('1234', 'eth', 'device1', 'on', '1');
+        $this->initTestData();
+
         $result = $this->target->setState('1234', 'eth', false);
         
-        $this->assertEquals($result->status, 'ok');
+        $this->assertEquals($this->mystromServerDevices[0]->state, 'off');
     }
     
     public function testSetStateWhenDeviceIsMasterShouldDoAReset()
     {
-        $jsonObject = new \stdClass();
-        @$jsonObject->status = 'ok';
+        $this->addDeviceOnMystromServer('1234', 'eth', 'device1', 'on', '1');
+        $this->addDeviceOnMystromServer('4444', 'mst', 'device1', 'on', '1');
+        $this->initTestData();
+
+        $result = $this->target->setState('4444', 'mst', false);
         
-        $this->target->method('doJsonCall')
-        ->willReturn($jsonObject);
-        
-        $this->target->expects($this->once())
-        ->method('doJsonCall')
-        ->with($this->equalTo('https://www.mystrom.ch/mobile/device/restart?authToken=&id=1234'));
-        
-        $result = $this->target->setState('1234', 'mst', false);
-        
-        $this->assertEquals($result->status, 'ok');
+        $this->assertEquals($this->mystromServerDevices[0]->state, 'offline');
     }
 
     public function testWhenRetrieveLocalButtonInfo_ShouldGetTheMACAddress()
     {
-        $jsonResult = '{"7C2F1D4G5H":{"type": "button", "battery": true, "reachable": true, "meshroot": false, "charge": false, "voltage": 3.705, "fw_version": "2.37", "single": "", "double": "", "long": "", "touch": ""}}';
-        $this->target->method('doHttpCall')
-        ->willReturn($jsonResult);
+        $this->addLocalButton("7C2F1D4G5H", "192.168.1.2");
+        $this->initTestData();
 
-        $buttonInfo = $this->target->RetrieveLocalButtonInfo('192.168.1.2');
+        $buttonInfo = $this->target->RetrieveLocalButtonInfo("192.168.1.2");
 
-        $this->assertEquals($buttonInfo->macAddress, '7C2F1D4G5H');
+        $this->assertEquals($buttonInfo->macAddress, "7C2F1D4G5H");
     }
 
     public function testSaveUrlsForLocalWifiButtonPlusWhenSaved_ShouldCallTheCorrectUrls()
-    {
-        $this->jeedomHelper->method('logWarning')
-        ->will($this->returnCallback(function($message){
-            throw new Exception($message);
-        }));
-
-        $jeedomIp = '192.168.1.10';
-        $this->jeedomHelper->method("loadPluginConfiguration")
-        ->with(
-            $this->equalTo('internalAddr'),
-            $this->equalTo(true)
-        )
-        ->willReturn($jeedomIp);
-
+    {        
         $button = new MystromButtonDevice();
         $button->ipAddress = '192.168.1.2';
         $button->macAddress = 'F1G2H3J5';
         $button->isLocal= true;
+        $this->addLocalButton($button->macAddress, $button->ipAddress);
 
         $singleId = '1';
         $doubleId = '2';
         $longId = '3';
         $touchId = '4';
 
-        $buttonUrl = 'http://' . $button->ipAddress . '/api/v1/device/' . $button->macAddress;
-        $singleUrl = 'single=get://' . $jeedomIp . '/core/api/jeeApi.php?apikey%3D' 
+        $singleUrl = 'single=get://' . $this->jeedomIpAddress . '/core/api/jeeApi.php?apikey%3D'
             . 'FFFFFF' . '%26type%3Dcmd%26id%3D' . $singleId;
-        $doubleUrl = 'double=get://' . $jeedomIp . '/core/api/jeeApi.php?apikey%3D' 
+        $doubleUrl = 'double=get://' . $this->jeedomIpAddress . '/core/api/jeeApi.php?apikey%3D'
             . 'FFFFFF' . '%26type%3Dcmd%26id%3D' . $doubleId;
-        $longUrl = 'long=get://' . $jeedomIp . '/core/api/jeeApi.php?apikey%3D' 
+        $longUrl = 'long=get://' . $this->jeedomIpAddress . '/core/api/jeeApi.php?apikey%3D'
             . 'FFFFFF' . '%26type%3Dcmd%26id%3D' . $longId;
-        $touchUrl = 'touch=get://' . $jeedomIp . '/core/api/jeeApi.php?apikey%3D' 
+        $touchUrl = 'touch=get://' . $this->jeedomIpAddress . '/core/api/jeeApi.php?apikey%3D'
             . 'FFFFFF' . '%26type%3Dcmd%26id%3D' . $touchId;
-
-        $this->target->expects($this->exactly(4))
-        ->method('doHttpCall')
-        ->withConsecutive(
-            [$this->equalTo($buttonUrl), $this->equalTo($singleUrl), $this->equalTo('POST')],
-            [$this->equalTo($buttonUrl), $this->equalTo($doubleUrl), $this->equalTo('POST')],
-            [$this->equalTo($buttonUrl), $this->equalTo($longUrl), $this->equalTo('POST')],
-            [$this->equalTo($buttonUrl), $this->equalTo($touchUrl), $this->equalTo('POST')]
-        )
-        ->willReturnOnConsecutiveCalls('','','','');
+        $this->initTestData();
 
         $this->target->SaveUrlsForWifiButton($button, $singleId, $doubleId, $longId, $touchId);
+
+        $this->assertEquals($this->mystromLocalDevices[0]->single, $singleUrl);
+        $this->assertEquals($this->mystromLocalDevices[0]->double, $doubleUrl);
+        $this->assertEquals($this->mystromLocalDevices[0]->long, $longUrl);
+        $this->assertEquals($this->mystromLocalDevices[0]->touch, $touchUrl);
     }
 
     public function testSaveUrlsForLocalWifiButtonSimpleWhenSaved_ShouldCallTheCorrectUrls()
     {
         $this->jeedomHelper->method('logWarning')
-        ->will($this->returnCallback(function($message){
+        ->will($this->returnCallback(function ($message) {
             throw new Exception($message);
         }));
 
@@ -478,11 +568,11 @@ class mystromServiceTest extends TestCase
         $longId = '3';
 
         $buttonUrl = 'http://' . $button->ipAddress . '/api/v1/device/' . $button->macAddress;
-        $singleUrl = 'single=get://' . $jeedomIp . '/core/api/jeeApi.php?apikey%3D' 
+        $singleUrl = 'single=get://' . $jeedomIp . '/core/api/jeeApi.php?apikey%3D'
             . 'FFFFFF' . '%26type%3Dcmd%26id%3D' . $singleId;
-        $doubleUrl = 'double=get://' . $jeedomIp . '/core/api/jeeApi.php?apikey%3D' 
+        $doubleUrl = 'double=get://' . $jeedomIp . '/core/api/jeeApi.php?apikey%3D'
             . 'FFFFFF' . '%26type%3Dcmd%26id%3D' . $doubleId;
-        $longUrl = 'long=get://' . $jeedomIp . '/core/api/jeeApi.php?apikey%3D' 
+        $longUrl = 'long=get://' . $jeedomIp . '/core/api/jeeApi.php?apikey%3D'
             . 'FFFFFF' . '%26type%3Dcmd%26id%3D' . $longId;
        
         $this->target->expects($this->exactly(3))
@@ -490,9 +580,9 @@ class mystromServiceTest extends TestCase
         ->withConsecutive(
             [$this->equalTo($buttonUrl), $this->equalTo($singleUrl), $this->equalTo('POST')],
             [$this->equalTo($buttonUrl), $this->equalTo($doubleUrl), $this->equalTo('POST')],
-            [$this->equalTo($buttonUrl), $this->equalTo($longUrl), $this->equalTo('POST')]            
+            [$this->equalTo($buttonUrl), $this->equalTo($longUrl), $this->equalTo('POST')]
         )
-        ->willReturnOnConsecutiveCalls('','','');
+        ->willReturnOnConsecutiveCalls('', '', '');
 
         $this->target->SaveUrlsForWifiButton($button, $singleId, $doubleId, $longId);
     }
@@ -521,9 +611,10 @@ class mystromServiceTest extends TestCase
         ->method('doHttpCall')
         ->with(
             $this->equalTo('http://' . $button->ipAddress . '/api/v1/device/' . $button->macAddress),
-            $this->equalTo('single=get://' . $jeedomIp . '/core/api/jeeApi.php?apikey%3D' 
+            $this->equalTo('single=get://' . $jeedomIp . '/core/api/jeeApi.php?apikey%3D'
             . 'FFFFFF' . '%26type%3Dcmd%26id%3D' . $singleId),
-            'POST')
+            'POST'
+        )
         ->will($this->throwException(new \Exception));
 
         $result = $this->target->SaveUrlsForWifiButton($button, $singleId, $doubleId, $longId, $touchId);
@@ -534,7 +625,7 @@ class mystromServiceTest extends TestCase
     public function testSaveUrlsForServerWifiButtonSimpleWhenSaved_ShouldCallTheCorrectUrls()
     {
         $this->jeedomHelper->method('logWarning')
-        ->will($this->returnCallback(function($message){
+        ->will($this->returnCallback(function ($message) {
             throw new \Exception($message);
         }));
 
@@ -558,11 +649,11 @@ class mystromServiceTest extends TestCase
 
         $serverUrl = 'https://www.mystrom.ch/mobile/device/setSettings?authToken=' . $authToken .
         '&id=' . $button->id;
-        $singleUrl = 'get://' . $jeedomIp . '/core/api/jeeApi.php?apikey%3D' 
+        $singleUrl = 'get://' . $jeedomIp . '/core/api/jeeApi.php?apikey%3D'
             . 'FFFFFF' . '%26type%3Dcmd%26id%3D' . $singleId;
-        $doubleUrl = 'get://' . $jeedomIp . '/core/api/jeeApi.php?apikey%3D' 
+        $doubleUrl = 'get://' . $jeedomIp . '/core/api/jeeApi.php?apikey%3D'
             . 'FFFFFF' . '%26type%3Dcmd%26id%3D' . $doubleId;
-        $longUrl = 'get://' . $jeedomIp . '/core/api/jeeApi.php?apikey%3D' 
+        $longUrl = 'get://' . $jeedomIp . '/core/api/jeeApi.php?apikey%3D'
             . 'FFFFFF' . '%26type%3Dcmd%26id%3D' . $longId;
         $urlToBeCalled = $serverUrl .
                         '&localSingleUrl=' . $singleUrl .
@@ -584,7 +675,7 @@ class mystromServiceTest extends TestCase
     public function testSaveUrlsForServerWifiButtonPlusWhenSaved_ShouldCallTheCorrectUrls()
     {
         $this->jeedomHelper->method('logWarning')
-        ->will($this->returnCallback(function($message){
+        ->will($this->returnCallback(function ($message) {
             throw new Exception($message);
         }));
 
@@ -608,13 +699,13 @@ class mystromServiceTest extends TestCase
 
         $serverUrl = 'https://www.mystrom.ch/mobile/device/setSettings?authToken=' . $authToken .
         '&id=' . $button->id;
-        $singleUrl = 'get://' . $jeedomIp . '/core/api/jeeApi.php?apikey%3D' 
+        $singleUrl = 'get://' . $jeedomIp . '/core/api/jeeApi.php?apikey%3D'
             . 'FFFFFF' . '%26type%3Dcmd%26id%3D' . $singleId;
-        $doubleUrl = 'get://' . $jeedomIp . '/core/api/jeeApi.php?apikey%3D' 
+        $doubleUrl = 'get://' . $jeedomIp . '/core/api/jeeApi.php?apikey%3D'
             . 'FFFFFF' . '%26type%3Dcmd%26id%3D' . $doubleId;
-        $longUrl = 'get://' . $jeedomIp . '/core/api/jeeApi.php?apikey%3D' 
+        $longUrl = 'get://' . $jeedomIp . '/core/api/jeeApi.php?apikey%3D'
             . 'FFFFFF' . '%26type%3Dcmd%26id%3D' . $longId;
-        $touchUrl = 'get://' . $jeedomIp . '/core/api/jeeApi.php?apikey%3D' 
+        $touchUrl = 'get://' . $jeedomIp . '/core/api/jeeApi.php?apikey%3D'
             . 'FFFFFF' . '%26type%3Dcmd%26id%3D' . $touchId;
         $urlToBeCalled = $serverUrl .
                         '&localSingleUrl=' . $singleUrl .
@@ -656,13 +747,13 @@ class mystromServiceTest extends TestCase
 
         $serverUrl = 'https://www.mystrom.ch/mobile/device/setSettings?authToken=' . $authToken .
         '&id=' . $button->id;
-        $singleUrl = 'get://' . $jeedomIp . '/core/api/jeeApi.php?apikey%3D' 
+        $singleUrl = 'get://' . $jeedomIp . '/core/api/jeeApi.php?apikey%3D'
             . 'FFFFFF' . '%26type%3Dcmd%26id%3D' . $singleId;
-        $doubleUrl = 'get://' . $jeedomIp . '/core/api/jeeApi.php?apikey%3D' 
+        $doubleUrl = 'get://' . $jeedomIp . '/core/api/jeeApi.php?apikey%3D'
             . 'FFFFFF' . '%26type%3Dcmd%26id%3D' . $doubleId;
-        $longUrl = 'get://' . $jeedomIp . '/core/api/jeeApi.php?apikey%3D' 
+        $longUrl = 'get://' . $jeedomIp . '/core/api/jeeApi.php?apikey%3D'
             . 'FFFFFF' . '%26type%3Dcmd%26id%3D' . $longId;
-        $touchUrl = 'get://' . $jeedomIp . '/core/api/jeeApi.php?apikey%3D' 
+        $touchUrl = 'get://' . $jeedomIp . '/core/api/jeeApi.php?apikey%3D'
             . 'FFFFFF' . '%26type%3Dcmd%26id%3D' . $touchId;
         $urlToBeCalled = $serverUrl .
                         '&localSingleUrl=' . $singleUrl .
