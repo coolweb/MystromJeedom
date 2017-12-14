@@ -140,6 +140,7 @@ class mystromServiceTest extends TestCase
         @$device1->name = $name;
         @$device1->state = $state;
         @$device1->power = $power;
+        @$device1->color = "";
         @$device1->wifiSwitchTemp = $temperature;
         $energyReport = new \stdClass();
         @$energyReport->daylyConsumption = 15;
@@ -322,18 +323,31 @@ class mystromServiceTest extends TestCase
         }
 
         if(strpos($url, $this->setStateUrl) == 0){
+            $parts = parse_url($url);
+            parse_str($parts["query"], $query);
+
+            $isColor = false;
+
             $on = false;
             if(strpos($url, "true") != false){
                 $on = true;
             }
 
-            $idPosition = strpos($url, "id") + 3;
-            $endIdPosition = strpos($url, "&", $idPosition);
-            $deviceId = substr($url, $idPosition, $endIdPosition - $idPosition) ;
+            if(key_exists("color", $query))
+            {
+                $isColor = true;
+            }
+
+            $deviceId = $query["id"];
             
             foreach ($this->mystromServerDevices as $device) {
                 if($device->id == $deviceId){
-                    $device->state = $on == true ? "on" : "off";
+                    if($isColor == false)
+                    {
+                        $device->state = $on == true ? "on" : "off";
+                    } else {
+                        $device->color = $query["color"];
+                    }
                 }
             }
 
@@ -492,11 +506,20 @@ class mystromServiceTest extends TestCase
         $this->assertTrue($result->devices[0] instanceof \coolweb\mystrom\MystromWifiBulb);
     }
 
-    /*public function testWhenSetBulbColor()
+    public function testWhenSetBulbColor()
     {
+        // Arrange
+        $this->addDeviceOnMystromServer("1234", "wrb", "device1", "on", "1", "21");
+        $this->initTestData();
+
+        // Act
         $wifiBulb = new \coolweb\mystrom\MystromWifiBulb();
+        $wifiBulb->id = "1234";
         $this->target->setBulbColor($wifiBulb, "#00ff11");
-    }*/
+
+        // Assert
+        $this->assertEquals($this->mystromServerDevices[0]->color, "124;100;100");
+    }
 
     public function testLoadAllDevicesWhenLoadReportDataShouldReturnTheConsumptions()
     {
