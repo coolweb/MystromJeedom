@@ -5,4 +5,7 @@
  */
 class cmd
 {
+    public $logicalId = "";
+    public $type = "";
+    public $value = "";
 }

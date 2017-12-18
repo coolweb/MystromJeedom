@@ -29,53 +29,134 @@ class mystromCmdTest extends TestCase
     private $target;
     private $jeedomHelper;
 
+    private $currentEqLogic;
+    private $currentEqLogicId = "";
+    private $currentCmd;
+    private $eqLogics = [];
+    private $cmds = [];
+
     /**
      * The current linked eqLogic to the cmd
      *
      * @var PHPUnit_Framework_MockObject_MockObject
      */
-    private $currentEqLogic;
+    private $currentEqLogicInJeedom;
 
-    private function setCmdId($id)
+    private function launchExecuteEvent($eqLogicId, $cmdLogicalId, $cmdType)
+    {
+        $this->currentEqLogicId = $eqLogicId;
+
+        foreach ($this->eqLogics as $eqLogic) {
+            if($eqLogic->logicalId == $this->currentEqLogicId)
+            {
+                $this->currentEqLogic = $eqLogic;
+            }
+        }
+        
+        $cmd = new Cmd();
+        $cmd->logicalId = $cmdLogicalId;
+        $cmd->type = $cmdType;
+        $this->currentCmd = $cmd;
+
+        $this->target->execute();
+    }
+
+    private function addEqLogicInJeedom($logicalId, $name, $mystromType, $cmds)
+    {
+        $eqLogic = new eqLogic();
+        $eqLogic->logicalId = $logicalId;
+        $eqLogic->mystromType = $mystromType;
+        $eqLogic->name = $name;
+        $eqLogic->cmds = $cmds;
+
+        array_push($this->eqLogics, $eqLogic);
+    }
+
+    private function initTestData()
     {
         $this->target->method('getLogicalId')
-        ->willReturn($id);
-    }
+        ->will($this->returnCallBack(array($this, 'getLogicalId')));
 
-    private function setEqLogicLogicaldId($id)
-    {
         $this->target->method('getEqLogicLogicalId')
-        ->willReturn($id);
-    }
+        ->will($this->returnCallBack(array($this, 'getEqLogicLogicalId')));
 
-    private function setMystromType($mystromType)
-    {
         $this->target->method('getEqLogicConfiguration')
-        ->willReturn($mystromType);
+        ->will($this->returnCallBack(array($this, 'getEqLogicConfiguration')));
+
+        $this->target
+        ->method("getEqLogic")
+        ->will($this->returnCallBack(array($this, 'getEqLogic')));
+
+        $this->target->method("checkAndUpdateCmd")
+        ->will($this->returnCallBack(array($this, 'checkAndUpdateCmd')));
     }
 
-    private function setCmdType($cmdType)
+    public function getEqLogic()
     {
-        $this->target->method('getType')
-        ->willReturn($cmdType);
+        return $this->currentEqLogic;
+    }
+
+    public function getEqLogicLogicalId()
+    {
+        return $this->currentEqLogicId;
+    }
+
+    public function getLogicalId()
+    {
+        return $this->currentCmd->logicalId;
+    }
+
+    public function checkAndUpdateCmd($cmdName, $cmdValue)
+    {
+        $cmdFound = false;
+
+        foreach ($this->currentEqLogic->cmds as $cmd) {
+            if($cmd->logicalId == $cmdName)
+            {
+                $cmd->value = $cmdValue;
+                $cmdFound = true;
+            }
+        }
+
+        if($cmdFound == false)
+        {
+            $cmdToAdd = new Cmd();
+            $cmdToAdd->logicalId = $cmdName;
+            $cmdToAdd->value = $cmdValue;
+
+            array_push($this->currentEqLogicInJeedom->cmds, $cmdToAdd);
+        }
+    }
+
+    public function getEqLogicConfiguration($key)
+    {
+        foreach ($this->eqLogics as $eqLogic) {
+            if($eqLogic->getLogicalId() == $this->currentEqLogicId)
+            {
+                switch ($key) {
+                    case 'mystromType':
+                        return $eqLogic->mystromType;                        
+                    
+                    default:
+                        return null;
+                }
+            }
+        }
     }
 
     protected function setUp()
     {
+        $this->currentCmdId = "";
+        $this->currentEqLogicId = "";
+        $this->eqLogics = [];
+        $this->cmds = [];
+
         $this->mystromService = $this->getMockBuilder(MyStromService::class)
         ->disableOriginalConstructor()        
         ->getMock();
 
         $this->jeedomHelper = $this->getMockBuilder(JeedomHelper::class)
-        ->getMock();
-        
-        $this->currentEqLogic = $this->getMockBuilder("eqLogic")
-        ->getMock();
-
-        $this->currentEqLogic
-        ->expects($this->any())
-        ->method("getName")
-        ->willReturn("deviceName");
+        ->getMock();            
 
         $this->target = $this->getMockBuilder(mystromCmd::class)
         ->setConstructorArgs([$this->jeedomHelper, $this->mystromService])
@@ -87,24 +168,26 @@ class mystromCmdTest extends TestCase
             'checkAndUpdateCmd', 
             'getEqLogic'])
         ->getMock();
-
-        $this->target
-        ->expects($this->any())
-        ->method("getEqLogic")
-        ->willReturn($this->currentEqLogic);
     }
 
     public function testWhenButtonTouched_ItShouldSetTheTouchedInfoOn()
     {
-        $this->setCmdId('isTouchedAction');
-        $this->setMystromType(null);
-        $this->setCmdType('action');
+        // Arrange
+        $cmd = new Cmd();
+        $cmd->type = "action";
+        $cmd->logicalId = "isTouchedAction";
 
-        $this->target->expects($this->exactly(1))
-        ->method('checkAndUpdateCmd')
-        ->withConsecutive(
-            [$this->equalTo('isTouched'), $this->equalTo(1)]);
+        $cmdTouched = new Cmd();
+        $cmdTouched->type = "info";
+        $cmdTouched->logicalId = "isTouched";
 
-        $this->target->execute(null, $this->mystromService);
+        $this->initTestData();
+
+        // Act
+        $this->addEqLogicInJeedom("def", "test device", "wbp", Array($cmd, $cmdTouched));
+        $this->launchExecuteEvent("def", $cmd->logicalId, $cmd->type);
+
+        // Assert
+        $this->assertEquals($cmdTouched->value, 1);
     }
 }

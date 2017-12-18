@@ -474,11 +474,12 @@ class mystrom extends eqLogic
     */
     public static function getAllDevices()
     {
-        $this->_jeedomHelper->logDebug("getAllDevices");
+        $jeedomHelper = new JeedomHelper();
+        $jeedomHelper->logDebug("getAllDevices");
         
         $devices = array();
         $jeedomDevices = eqLogic::byType('mystrom');
-        $this->_jeedomHelper->logDebug("jeedom devices retrieved");
+        $jeedomHelper->logDebug("jeedom devices retrieved");
         
         foreach ($jeedomDevices as $eqLogic) {
             $device = new stdClass();
@@ -724,7 +725,7 @@ class mystromCmd extends cmd
             if ($commandOk == false) {
                 $this->_jeedomHelper->logError("Commande non reconnue " . $this->getLogicalId());
             } else {
-                if ($commandWifiButton == false) {
+                if ($state != "") {
                     $changed = $this->checkAndUpdateCmd('state', $state) || $changed;
                     $changed = $this->checkAndUpdateCmd('stateBinary', $stateBinary) || $changed;
                 

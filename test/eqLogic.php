@@ -7,6 +7,8 @@ class eqLogic
 {
     public $logicalId = "";
     public $name = "";
+    public $mystromType = "";
+    public $cmds = [];
 
     public function getLogicalId()
     {
