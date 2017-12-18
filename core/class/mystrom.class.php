@@ -721,6 +721,14 @@ class mystromCmd extends cmd
             
                 $changed = $this->checkAndUpdateCmd('isLongPressed', 1) || $changed;
             }
+
+            if($cmdLogicalId == "color")
+            {                
+                $commandOk = true;
+                $bulbDevice = new \coolweb\mystrom\MystromWifiBulb();
+                $bulbDevice->id = $mystromId;
+                $this->_mystromService->setBulbColor($bulbDevice, $_options["color"]);
+            }
         
             if ($commandOk == false) {
                 $this->_jeedomHelper->logError("Commande non reconnue " . $this->getLogicalId());

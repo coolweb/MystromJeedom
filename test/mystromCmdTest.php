@@ -11,6 +11,7 @@ include_once('./core/class/mystromService.class.php');
 include_once('./core/class/mystrom.class.php');
 include_once('./core/class/jeedomHelper.class.php');
 
+use coolweb\mystrom\MystromWifiBulb;
 use coolweb\mystrom\MyStromService;
 use coolweb\mystrom\jeedomHelper;
 
@@ -35,6 +36,8 @@ class mystromCmdTest extends TestCase
     private $eqLogics = [];
     private $cmds = [];
 
+    private $mystromServerDevices = Array();
+
     /**
      * The current linked eqLogic to the cmd
      *
@@ -42,7 +45,7 @@ class mystromCmdTest extends TestCase
      */
     private $currentEqLogicInJeedom;
 
-    private function launchExecuteEvent($eqLogicId, $cmdLogicalId, $cmdType)
+    private function launchExecuteEvent($eqLogicId, $cmdLogicalId, $cmdType, $cmdOptions = Array())
     {
         $this->currentEqLogicId = $eqLogicId;
 
@@ -58,7 +61,7 @@ class mystromCmdTest extends TestCase
         $cmd->type = $cmdType;
         $this->currentCmd = $cmd;
 
-        $this->target->execute();
+        $this->target->execute($cmdOptions);
     }
 
     private function addEqLogicInJeedom($logicalId, $name, $mystromType, $cmds)
@@ -89,6 +92,29 @@ class mystromCmdTest extends TestCase
 
         $this->target->method("checkAndUpdateCmd")
         ->will($this->returnCallBack(array($this, 'checkAndUpdateCmd')));
+
+        $this->mystromService->method("setBulbColor")
+        ->will($this->returnCallBack(array($this, 'setBulbColor')));
+    }
+
+    public function setBulbColor(MystromWifiBulb $bulbDevice, $color)
+    {
+        $foundDevice = null;
+
+        foreach ($this->mystromServerDevices as $mystromDevice) {
+            if($mystromDevice->id == $bulbDevice->id)
+            {
+                $foundDevice = $mystromDevice;
+            }
+        }
+
+        if($foundDevice == null)
+        {
+            $foundDevice = $bulbDevice;
+            array_push($this->mystromServerDevices, $bulbDevice);
+        }
+
+        $foundDevice->color = $color;
     }
 
     public function getEqLogic()
@@ -150,6 +176,7 @@ class mystromCmdTest extends TestCase
         $this->currentEqLogicId = "";
         $this->eqLogics = [];
         $this->cmds = [];
+        $this->mystromServerDevices = Array();
 
         $this->mystromService = $this->getMockBuilder(MyStromService::class)
         ->disableOriginalConstructor()        
@@ -181,13 +208,31 @@ class mystromCmdTest extends TestCase
         $cmdTouched->type = "info";
         $cmdTouched->logicalId = "isTouched";
 
+        $this->addEqLogicInJeedom("def", "test device", "wbp", Array($cmd, $cmdTouched));
         $this->initTestData();
 
         // Act
-        $this->addEqLogicInJeedom("def", "test device", "wbp", Array($cmd, $cmdTouched));
         $this->launchExecuteEvent("def", $cmd->logicalId, $cmd->type);
 
         // Assert
         $this->assertEquals($cmdTouched->value, 1);
+    }
+
+    public function testWhenBulbChangeColor_ItShouldChangeColorOfBulb()
+    {
+        // Arrange
+        $cmd = new Cmd();
+        $cmd->type = "color";
+        $cmd->logicalId = "color";
+        $options = Array("color" => "#00ff11");
+
+        $this->addEqLogicInJeedom("def", "test device", "wrb", Array($cmd));
+        $this->initTestData();
+
+        // Act
+        $this->launchExecuteEvent("def", $cmd->logicalId, $cmd->type, $options);
+
+        // Assert
+        $this->assertEquals($this->mystromServerDevices[0]->color, "#00ff11");
     }
 }
