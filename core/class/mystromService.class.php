@@ -183,6 +183,13 @@ class MyStromService
                             $mystromDevice->daylyConsumption = $device->energyReport->daylyConsumption;
                             $mystromDevice->monthlyConsumption = $device->energyReport->monthlyConsumption;
                         }
+
+                        $hsv = explode(";", $device->bulbColor);
+                        $rgb = explode(";", $this->hsvToRgb($hsv[0], $hsv[1], $hsv[2]));
+                        $mystromDevice->color = "#" . \sprintf("%'.02s", \dechex($rgb[0]))
+                        . \sprintf("%'.02s", \dechex($rgb[1]))
+                        . \sprintf("%'.02s", \dechex($rgb[2]));
+
                         break;
 
                     default:
@@ -375,7 +382,7 @@ class MyStromService
 
         $authToken = $this->jeedomHelper->loadPluginConfiguration("authToken");
         $colorUrl = $this->myStromApiUrl . "/device/switch?authToken=" . $authToken
-            . "&id=" . $bulbDevice->id . "&color=" . $hsvQueryParam;
+            . "&id=" . $bulbDevice->id . "&color=" . $hsvQueryParam . "&ramp=1000";
 
         $jsonObj = $this->doJsonCall($colorUrl);
             
@@ -412,8 +419,9 @@ class MyStromService
         //   attempting to calculate it would cause division by zero (see
         //   below), so most applications simply substitute a Hue of zero.
         // Saturation will always be zero in this case, see below for details.
-        if ($chroma == 0)
+        if ($chroma == 0) {
             return array(0, 0, $computedV);
+        }
     
         // Saturation is also simple to compute, and is simply the chroma
         //   over the Value (or Brightness)
@@ -425,17 +433,79 @@ class MyStromService
         //   as a 2D hexagon, divided into six 60-degree sectors. We calculate
         //   the bisecting angle as a value 0 <= x < 6, that represents which
         //   portion of which sector the line falls on.
-        if ($R == $minRGB)
+        if ($R == $minRGB) {
             $h = 3 - (($G - $B) / $chroma);
-        elseif ($B == $minRGB)
+        } elseif ($B == $minRGB) {
             $h = 1 - (($R - $G) / $chroma);
-        else // $G == $minRGB
+        } else { // $G == $minRGB
             $h = 5 - (($B - $R) / $chroma);
+        }
     
         // After we have the sector position, we multiply it by the size of
         //   each sector's arc (60 degrees) to obtain the angle in degrees.
         $computedH = 60 * $h;
     
-        return array($computedH, $computedS, $computedV);
+        return array(floor($computedH), floor($computedS), floor($computedV));
+    }
+
+    private function hsvToRgb($hue, $sat, $val, $array = false, $format = '%d;%d;%d')
+    {
+        if ($hue < 0) {
+            $hue = 0;
+        }
+        if ($hue > 360) {
+            $hue = 360;
+        }
+        if ($sat < 0) {
+            $sat = 0;
+        }
+        if ($sat > 100) {
+            $sat = 100;
+        }
+        if ($val < 0) {
+            $val = 0;
+        }
+        if ($val > 100) {
+            $val = 100;
+        }
+     
+        $dS = $sat/100.0;
+        $dV = $val/100.0;
+        $dC = $dV*$dS;
+        $dH = $hue/60.0;
+        $dT = $dH;
+     
+        while ($dT >= 2.0) {
+            $dT -= 2.0;
+        }
+        $dX = $dC*(1-abs($dT-1));
+     
+        switch (floor($dH)) {
+          case 0:
+            $dR = $dC; $dG = $dX; $dB = 0.0; break;
+          case 1:
+            $dR = $dX; $dG = $dC; $dB = 0.0; break;
+          case 2:
+            $dR = 0.0; $dG = $dC; $dB = $dX; break;
+          case 3:
+            $dR = 0.0; $dG = $dX; $dB = $dC; break;
+          case 4:
+            $dR = $dX; $dG = 0.0; $dB = $dC; break;
+          case 5:
+            $dR = $dC; $dG = 0.0; $dB = $dX; break;
+          default:
+            $dR = 0.0; $dG = 0.0; $dB = 0.0; break;
+        }
+     
+        $dM  = $dV - $dC;
+        $dR += $dM;
+        $dG += $dM;
+        $dB += $dM;
+        $dR *= 255;
+        $dG *= 255;
+        $dB *= 255;
+        $rgb = ($array) ? array('r'=>round($dR), 'b'=>round($dG), 'g'=>round($dB)) : sprintf($format, round($dR), round($dG), round($dB));
+     
+        return $rgb;
     }
 }

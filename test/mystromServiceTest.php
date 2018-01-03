@@ -130,7 +130,7 @@ class mystromServiceTest extends TestCase
         ->will($this->returnCallBack(array($this, 'loadPluginConfiguration')));
     }
 
-    public function addDeviceOnMystromServer($id, $type, $name, $state, $power, $temperature = null)
+    public function addDeviceOnMystromServer($id, $type, $name, $state, $power, $temperature = null, $color = null)
     {
         $this->isLoadingDevicesFromJeedomServerOk = true;
 
@@ -140,7 +140,7 @@ class mystromServiceTest extends TestCase
         @$device1->name = $name;
         @$device1->state = $state;
         @$device1->power = $power;
-        @$device1->color = "";
+        @$device1->bulbColor = $color;
         @$device1->wifiSwitchTemp = $temperature;
         $energyReport = new \stdClass();
         @$energyReport->daylyConsumption = 15;
@@ -493,7 +493,7 @@ class mystromServiceTest extends TestCase
 
     public function testLoadAllDevicesWhenWifiBulbShouldReturnTheWifiBulbClass()
     {
-        $this->addDeviceOnMystromServer('1234', 'wrb', 'device1', 'on', '1', '21');
+        $this->addDeviceOnMystromServer('1234', 'wrb', 'device1', 'on', '1', null, "124;100;100");
         $this->initTestData();
         
         $result = $this->target->loadAllDevicesFromServer();
@@ -503,6 +503,7 @@ class mystromServiceTest extends TestCase
         $this->assertEquals($result->devices[0]->type, $this->mystromServerDevices[0]->type);
         $this->assertEquals($result->devices[0]->name, $this->mystromServerDevices[0]->name);
         $this->assertEquals($result->devices[0]->state, $this->mystromServerDevices[0]->state);
+        $this->assertEquals($result->devices[0]->color, "#00ff11");
         $this->assertTrue($result->devices[0] instanceof \coolweb\mystrom\MystromWifiBulb);
     }
 
