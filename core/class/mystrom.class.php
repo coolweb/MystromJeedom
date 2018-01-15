@@ -258,10 +258,9 @@ class mystrom extends eqLogic
                     $colorRgb->setSubType('string');
                     $colorRgb->setDisplay('showNameOndashboard', '0');
                     $colorRgb->setEqLogic_id($this->getId());
+                    $colorRgb->setIsVisible('0');
                     $colorRgb->save();
                 }
-                $colorRgb->setIsVisible('0');
-                $colorRgb->save();
                 
                 $color = $this->getCmd(null, 'color');
                 if (!is_object($color)) {
