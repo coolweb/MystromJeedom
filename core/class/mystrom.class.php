@@ -189,21 +189,7 @@ class mystrom extends eqLogic
                         $temperature->setEqLogic_id($this->getId());
                         $temperature->save();
                     }
-                }
-
-                if($deviceType == "wrb"){
-                    $color = $this->getCmd(null, 'color');
-                    if (!is_object($color)) {
-                        $color = new mystromCmd();
-                        $color->setLogicalId('color');
-                        $color->setName(__('Couleur', __FILE__));
-                        $color->setType('action');
-                        $color->setSubType('color');
-                        $color->setDisplay('showNameOndashboard', '0');
-                        $color->setEqLogic_id($this->getId());
-                        $color->save();
-                    }
-                }
+                }                
             } else {
                 $restart = $this->getCmd(null, 'restart');
                 if (!is_object($restart)) {
@@ -260,6 +246,37 @@ class mystrom extends eqLogic
                 $cmd->setUnite('Kw');
                 $cmd->setIsHistorized(1);
                 $cmd->save();
+            }
+
+            if($deviceType == "wrb"){                    
+                $colorRgb = $this->getCmd(null, 'colorRgb');
+                if (!is_object($colorRgb)) {
+                    $colorRgb = new mystromCmd();
+                    $colorRgb->setLogicalId('colorRgb');
+                    $colorRgb->setName(__('Etat couleur', __FILE__));
+                    $colorRgb->setType('info');
+                    $colorRgb->setSubType('string');
+                    $colorRgb->setDisplay('showNameOndashboard', '0');
+                    $colorRgb->setEqLogic_id($this->getId());
+                    $colorRgb->save();
+                }
+                $colorRgb->setIsVisible('0');
+                $colorRgb->save();
+                
+                $color = $this->getCmd(null, 'color');
+                if (!is_object($color)) {
+                    $color = new mystromCmd();
+                    $color->setLogicalId('color');
+                    $color->setName(__('Couleur', __FILE__));
+                    $color->setType('action');
+                    $color->setSubType('color');
+                    $color->setDisplay('showNameOndashboard', '0');
+                    $color->setEqLogic_id($this->getId());
+                    $color->save();
+                }
+
+                $color->setValue($colorRgb->getId());
+                $color->save();
             }
         } else {
             $isTouchedCmd = $this->getCmd(null, 'isTouched');
@@ -578,6 +595,10 @@ class mystrom extends eqLogic
 
                 if ($foundMystromDevice instanceof MystromWifiSwitchEurope) {
                     $changed = $eqLogic->checkAndUpdateCmd('temperature', $foundMystromDevice->temperature) || $changed;
+                }
+
+                if ($foundMystromDevice instanceof MystromWifiBulb) {
+                    $changed = $eqLogic->checkAndUpdateCmd('colorRgb', $foundMystromDevice->color) || $changed;
                 }
 
                 if ($changed) {
