@@ -445,7 +445,7 @@ class MyStromService
         //   each sector's arc (60 degrees) to obtain the angle in degrees.
         $computedH = 60 * $h;
     
-        return array(floor($computedH), floor($computedS), floor($computedV));
+        return array(round($computedH), round($computedS), round($computedV));
     }
 
     private function hsvToRgb($hue, $sat, $val, $array = false, $format = '%d;%d;%d')
