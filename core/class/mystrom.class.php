@@ -569,7 +569,7 @@ class mystrom extends eqLogic
         foreach (mystrom::$_eqLogics as $eqLogic) {
             $foundMystromDevice = null;
             $changed = false;
-            $isLocal = $this->getConfiguration('isLocal');
+            $isLocal = $eqLogic->getConfiguration('isLocal');
             
             if ($isLocal != true) {
                 foreach ($resultDevices->devices as $device) {
