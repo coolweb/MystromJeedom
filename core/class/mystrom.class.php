@@ -780,6 +780,7 @@ class mystromCmd extends cmd
                 $bulbDevice = new \coolweb\mystrom\MystromWifiBulb();
                 $bulbDevice->id = $mystromId;
                 $this->_mystromService->setBulbColor($bulbDevice, $_options["color"]);
+                $changed = $this->checkAndUpdateCmd('colorRgb', $_options["color"]) || $changed;
             }
         
             if ($commandOk == false) {

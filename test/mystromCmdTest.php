@@ -64,13 +64,14 @@ class mystromCmdTest extends TestCase
         $this->target->execute($cmdOptions);
     }
 
-    private function addEqLogicInJeedom($logicalId, $name, $mystromType, $cmds)
+    private function addEqLogicInJeedom($logicalId, $name, $mystromType, $cmds, $isLocal = false)
     {
         $eqLogic = new eqLogic();
         $eqLogic->logicalId = $logicalId;
         $eqLogic->mystromType = $mystromType;
         $eqLogic->name = $name;
         $eqLogic->cmds = $cmds;
+        $eqLogic->isLocal = $isLocal;
 
         array_push($this->eqLogics, $eqLogic);
     }
@@ -226,7 +227,11 @@ class mystromCmdTest extends TestCase
         $cmd->logicalId = "color";
         $options = Array("color" => "#00ff11");
 
-        $this->addEqLogicInJeedom("def", "test device", "wrb", Array($cmd));
+        $cmdRgb = new Cmd();
+        $cmdRgb->type = "string";
+        $cmdRgb->logicalId = "colorRgb";
+
+        $this->addEqLogicInJeedom("def", "test device", "wrb", Array($cmd, $cmdRgb));
         $this->initTestData();
 
         // Act
@@ -234,5 +239,6 @@ class mystromCmdTest extends TestCase
 
         // Assert
         $this->assertEquals($this->mystromServerDevices[0]->color, "#00ff11");
+        $this->assertEquals($cmdRgb->value, "#00ff11");
     }
 }
