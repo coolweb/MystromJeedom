@@ -162,6 +162,18 @@ class mystromServiceTest extends TestCase
         array_push($this->mystromLocalDevices, $button);
     }
 
+    public function addLocalBulb($macAddress, $ipAddress, $on, $power, $color)
+    {
+        $bulb = new \stdClass();
+        $bulb->macAddress = $macAddress;
+        $bulb->ipAddress = $ipAddress;
+        $bulb->on = $on;
+        $bulb->power = $power;
+        $bulb->color = $color;
+
+        array_push($this->mystromLocalDevices, $bulb);
+    }
+
     public function loadPluginConfiguration($key)
     {
         if ($key == "authToken") {
@@ -576,6 +588,19 @@ class mystromServiceTest extends TestCase
         $result = $this->target->setState('4444', 'mst', false);
         
         $this->assertEquals($this->mystromServerDevices[0]->state, 'offline');
+    }
+
+    public function testWhenRetrieveLocalBulbInfo_ShouldReturnCorrectInfo()
+    {
+        $this->addLocalBulb("7C2F1D4G5H", "192.168.1.2", true, 2.5, "124;100;100");
+        $this->initTestData();
+
+        $bulbInfo = $this->target->RetrieveLocalRgbBulbInfo("192.168.1.2");
+
+        $this->assertEquals($bulbInfo->macAddress, "7C2F1D4G5H");
+        $this->assertEquals($bulbInfo->state, "on");
+        $this->assertEquals($bulbInfo->power, "2.5");
+        $this->assertEquals($bulbInfo->color, "#00ff11");
     }
 
     public function testWhenRetrieveLocalButtonInfo_ShouldGetTheMACAddress()

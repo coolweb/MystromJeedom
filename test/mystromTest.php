@@ -39,6 +39,12 @@ class mystromTest extends TestCase
         ->willReturn($id);
     }
 
+    private function setLocalBulbDevice(MyStromService $mystromService, $device)
+    {
+        $mystromService->method('RetrieveLocalRgbBulbInfo')
+        ->willReturn($device);
+    }
+
     private function setMystromDevices(MyStromService $mystromService, $devices, $error = false)
     {
         $result = new GetAllDevicesResult();
@@ -91,7 +97,7 @@ class mystromTest extends TestCase
     {
         $this->mystromService = $this->getMockBuilder(MyStromService::class)
         ->disableOriginalConstructor()
-        ->setMethods(['loadAllDevicesFromServer'])
+        ->setMethods(['loadAllDevicesFromServer', 'RetrieveLocalRgbBulbInfo'])
         ->getMock();
 
         $this->jeedomHelper = $this->getMockBuilder(JeedomHelper::class)
@@ -209,6 +215,40 @@ class mystromTest extends TestCase
         ->method('logError');
 
         $this->target->pull();
+    }
+
+    public function testPullWhenLocalDevice_ItShouldSetDataIntoJeedom()
+    {
+        $bulbLocal = new \coolweb\mystrom\MystromWifiBulb();
+        $bulbLocal->ipAddress = "192.168.1.2";
+        $bulbLocal->state = "on";
+        $bulbLocal->power = 2.5;
+        $bulbLocal->color = "124;100;100";
+        
+        $this->setMystromDevices($this->mystromService, array());
+        $this->setLocalBulbDevice($this->mystromService, $bulbLocal);
+
+        $eqLogic = $this->getMockBuilder(eqLogic::class)
+        ->setMethods(['checkAndUpdateCmd', 'refreshWidget', 'getName'])
+        ->getMock();
+        $eqLogic->logicalId = '1234';
+        $eqLogic->isLocal = true;
+        $eqLogic->ipAddress = "192.168.1.2";
+        $eqLogic->mystromType = "wrb";
+        
+        $eqLogics = array();
+        array_push($eqLogics, $eqLogic);
+        $this->setJeedomDevices($this->target, $eqLogics);
+        
+        $eqLogic->expects($this->exactly(4))
+        ->method('checkAndUpdateCmd')
+        ->withConsecutive(
+            ["state", $bulbLocal->state],
+            ["stateBinary", "1"],
+            ["conso", $bulbLocal->power],
+            ["colorRgb", "124;100;100"]);
+
+        $this->target->pull();        
     }
 
     public function testPreInsertWhenUserCreated_ItShouldSetIsLocal()

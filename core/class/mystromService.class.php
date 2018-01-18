@@ -266,7 +266,6 @@ class MyStromService
             $jsonObj = json_decode($result);
             $macAddress = key($properties = get_object_vars($jsonObj));
                 
-                
             $mystromButton = new MystromButtonDevice();
             $mystromButton->macAddress = $macAddress;
             $mystromButton->ipAddress = $ipAddress;
@@ -278,6 +277,45 @@ class MyStromService
             return $mystromButton;
         } catch (Exception $e) {
             $this->jeedomHelper->logWarning("RetrieveLocalButtonInfo - " . $e);
+            return null;
+        }
+    }
+
+    /**
+     * Retrieve information of local rgb bulb
+     *
+     * @param [string] $ipAddress
+     * @return MyStromWifiBulb The bulb if found otherwise null.
+     */
+    public function RetrieveLocalRgbBulbInfo($ipAddress)
+    {
+        try {
+            $this->jeedomHelper->logDebug("Retrieve info of wifi bulb " . $ipAddress);
+            $url = "http://" . $ipAddress . "/api/v1/device";
+            $result = $this->doHttpCall($url, null, "GET");
+            if ($result === false) {
+                return null;
+            }
+                
+            $jsonObj = json_decode($result);
+            $macAddress = key($properties = get_object_vars($jsonObj));
+                
+            $mystromBulb = new MystromWifiBulb();
+            $mystromBulb->macAddress = $macAddress;
+            $mystromBulb->ipAddress = $ipAddress;
+            $mystromBulb->state = $jsonObj->$macAddress->on == true ? "on" : "off";
+            $mystromBulb->power = $jsonObj->$macAddress->power;
+            $mystromBulb->color = $jsonObj->$macAddress->color;
+
+            $hsv = explode(";", $mystromBulb->color);
+            $rgb = explode(";", $this->hsvToRgb($hsv[0], $hsv[1], $hsv[2]));
+            $mystromBulb->color = "#" . \sprintf("%'.02s", \dechex($rgb[0]))
+            . \sprintf("%'.02s", \dechex($rgb[1]))
+            . \sprintf("%'.02s", \dechex($rgb[2]));
+
+            return $mystromBulb;
+        } catch (Exception $e) {
+            $this->jeedomHelper->logWarning("RetrieveLocalRgbBulbInfo - " . $e);
             return null;
         }
     }

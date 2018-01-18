@@ -90,9 +90,11 @@ class mystrom extends eqLogic
     public function preSave()
     {
         if ($this->getConfiguration('isLocal') == true) {
-            // only mystrom button is supported for the moment
-            if (!($this->getConfiguration('mystromType') == 'wbp' || $this->getConfiguration('mystromType') == 'wbs')) {
-                throw new Exception('Vous ne pouvez créer que le type Wifi Bouton Plus ou Wifi Bouton', 1);
+            // only mystrom button/wifi bulb is supported for the moment
+            if (!($this->getConfiguration('mystromType') == 'wbp' 
+            || $this->getConfiguration('mystromType') == 'wbs'
+            || $this->getConfiguration('mystromType') == 'wrb')) {
+                throw new Exception('Vous ne pouvez créer que le type Wifi Bouton Plus, Wifi Bouton ou la lampe RGB', 1);
             }
             
             if ($this->getConfiguration('ipAddress') == null || $this->getConfiguration('ipAddress') == '') {
@@ -276,6 +278,10 @@ class mystrom extends eqLogic
 
                 $color->setValue($colorRgb->getId());
                 $color->save();
+
+                if ($this->getConfiguration('isLocal') == true) {
+                    $bulbIp = $this->getConfiguration('ipAddress');
+                }
             }
         } else {
             $isTouchedCmd = $this->getCmd(null, 'isTouched');
@@ -604,8 +610,34 @@ class mystrom extends eqLogic
                     $eqLogic->refreshWidget();
                 }
             } else {
-                continue;
+                $this->RefreshLocalDevice($eqLogic);
             }
+        }
+    }
+
+    private function RefreshLocalDevice($eqLogic)
+    {
+        $changed = false;
+        $mystromType = $eqLogic->getConfiguration("mystromType");
+        $ipAddress = $eqLogic->getConfiguration("ipAddress");
+
+        if($mystromType == "wrb")
+        {
+            $localBulbInfo = $this->_mystromService->RetrieveLocalRgbBulbInfo($ipAddress);
+
+            if($localBulbInfo != null)
+            {
+                $changed = $eqLogic->checkAndUpdateCmd('state', $localBulbInfo->state) || $changed;
+                $changed = $eqLogic->checkAndUpdateCmd('stateBinary', (($localBulbInfo->state == 'on') ? '1' : '0')) || $changed;
+                $changed = $eqLogic->checkAndUpdateCmd('conso', $localBulbInfo->power) || $changed;
+                $changed = $eqLogic->checkAndUpdateCmd('colorRgb', $localBulbInfo->color) || $changed;
+            } else {
+                $this->_jeedomHelper->logWarning("Impossible de contacter la lampe RGB ip:" . $ipAddress);
+            }
+        }
+
+        if ($changed) {
+            $eqLogic->refreshWidget();
         }
     }
 }
