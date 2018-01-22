@@ -281,6 +281,16 @@ class mystrom extends eqLogic
 
                 if ($this->getConfiguration('isLocal') == true) {
                     $bulbIp = $this->getConfiguration('ipAddress');
+
+                    if (is_null($bulbIp) === false && $bulbIp != '') {
+                        $bulb = $this->_mystromService->RetrieveLocalRgbBulbInfo($bulbIp);
+                        
+                        if ($bulb === null) {
+                            throw new Exception('La lampe ne semble pas accessible, vérifiez l\'ip', 1);
+                        }
+
+                        $this->setConfiguration("macAddress", $bulb->macAddress);
+                    }
                 }
             }
         } else {
@@ -715,6 +725,8 @@ class mystromCmd extends cmd
         
             $mystromId = $this->getEqLogicLogicalId();
             $deviceType = $this->getEqLogicConfiguration('mystromType');
+            $isLocal = $this->getEqLogicConfiguration('isLocal');
+            $macAddress = $this->getEqLogicConfiguration('macAddress');
             $state = '';
             $cmdLogicalId = $this->getLogicalId();
         
@@ -779,6 +791,9 @@ class mystromCmd extends cmd
                 $commandOk = true;
                 $bulbDevice = new \coolweb\mystrom\MystromWifiBulb();
                 $bulbDevice->id = $mystromId;
+                $bulbDevice->isLocal = $isLocal;
+                $bulbDevice->macAddress = $macAddress;
+                
                 $this->_mystromService->setBulbColor($bulbDevice, $_options["color"]);
                 $changed = $this->checkAndUpdateCmd('colorRgb', $_options["color"]) || $changed;
             }

@@ -162,7 +162,13 @@ class mystromCmdTest extends TestCase
             {
                 switch ($key) {
                     case 'mystromType':
-                        return $eqLogic->mystromType;                        
+                        return $eqLogic->mystromType;
+                        
+                    case 'macAddress':
+                        return $eqLogic->macAddress;
+
+                    case 'isLocal':
+                        return $eqLogic->isLocal;
                     
                     default:
                         return null;
