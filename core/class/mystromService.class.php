@@ -413,24 +413,41 @@ class MyStromService
      */
     public function setBulbColor(MystromWifiBulb $bulbDevice, $color)
     {
+        $result = new MyStromApiResult();
+        
         list($r, $g, $b) = sscanf($color, "#%02x%02x%02x");
         
         $hsv = $this->RGBtoHSV($r, $g, $b);
         $hsvQueryParam = $hsv[0] . ";" . $hsv[1] . ";" . $hsv[2];
 
-        $authToken = $this->jeedomHelper->loadPluginConfiguration("authToken");
-        $colorUrl = $this->myStromApiUrl . "/device/switch?authToken=" . $authToken
-            . "&id=" . $bulbDevice->id . "&color=" . $hsvQueryParam . "&ramp=1000";
+        if($bulbDevice->isLocal == true)
+        {
+            $url = "http://" . $bulbDevice->ipAddress . "/api/v1/device";
+            $dataColor = new \stdClass();
+            @$dataColor->color = $hsvQueryParam;
+            $data = array($bulbDevice->macAddress => $dataColor);
+            $dataJson = json_encode($data);
 
-        $jsonObj = $this->doJsonCall($colorUrl);
-            
-        $result = new MyStromApiResult();
-        $result->status = $jsonObj->status;
-            
-        if ($jsonObj->status !== "ok") {
-            $result->error = $jsonObj->error;
-        }
-            
+            $resultHttp = $this->doHttpCall($url, $dataJson, "POST");
+            if ($resultHttp === false) {
+                $result->status = "ko";
+                $result->error = "Error setting color of local bulb " . $bulbDevice->ipAddress;
+            } else {
+                $result->status = "ok";
+            }
+        } else {
+            $authToken = $this->jeedomHelper->loadPluginConfiguration("authToken");
+            $colorUrl = $this->myStromApiUrl . "/device/switch?authToken=" . $authToken
+                . "&id=" . $bulbDevice->id . "&color=" . $hsvQueryParam . "&ramp=1000";
+
+            $jsonObj = $this->doJsonCall($colorUrl);
+                
+            $result->status = $jsonObj->status;
+                
+            if ($jsonObj->status !== "ok") {
+                $result->error = $jsonObj->error;
+            }
+        }   
         return $result;
     }
 

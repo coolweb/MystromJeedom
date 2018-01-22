@@ -158,6 +158,7 @@ class mystromServiceTest extends TestCase
         $button->double = "";
         $button->long = "";
         $button->touch = "";
+        $button->type = "wbp";
 
         array_push($this->mystromLocalDevices, $button);
     }
@@ -170,6 +171,7 @@ class mystromServiceTest extends TestCase
         $bulb->on = $on;
         $bulb->power = $power;
         $bulb->color = $color;
+        $bulb->type = "wrb";
 
         array_push($this->mystromLocalDevices, $bulb);
     }
@@ -280,29 +282,43 @@ class mystromServiceTest extends TestCase
                 foreach ($this->mystromLocalDevices as $device) {
                     if($device->ipAddress == $deviceIpAddress)
                     {
-                        $equalPos = strpos($data, "=") + 1;
-                        $actionName = substr($data, 0, $equalPos -1);
-                        $actionValue = substr($data, $equalPos);
+                        if($device->type == "wbp")
+                        {
+                            $equalPos = strpos($data, "=") + 1;
+                            $actionName = substr($data, 0, $equalPos -1);
+                            $actionValue = substr($data, $equalPos);
 
-                        switch ($actionName) {
-                            case "single":
-                                $device->single = $data;
-                                break;
+                            switch ($actionName) {
+                                case "single":
+                                    $device->single = $data;
+                                    break;
+                                
+                                case "double":
+                                    $device->double = $data;
+                                    break;
+
+                                case "long":
+                                    $device->long = $data;
+                                    break;
+
+                                case "touch":
+                                    $device->touch = $data;
+                                    break;
+
+                                default:
+                                    break;
+                            }
+                        }
+
+                        if($device->type == "wrb")
+                        {
+                            $dataObj = json_decode($data);
+                            $macAddress = key($properties = get_object_vars($dataObj));
                             
-                            case "double":
-                                $device->double = $data;
-                                break;
-
-                            case "long":
-                                $device->long = $data;
-                                break;
-
-                            case "touch":
-                                $device->touch = $data;
-                                break;
-
-                            default:
-                                break;
+                            if($device->ipAddress == $deviceIpAddress)
+                            {
+                                $device->color = $dataObj->$macAddress->color;
+                            }
                         }
                     }
                 }
@@ -519,7 +535,7 @@ class mystromServiceTest extends TestCase
         $this->assertTrue($result->devices[0] instanceof \coolweb\mystrom\MystromWifiBulb);
     }
 
-    public function testWhenSetBulbColor()
+    public function testWhenSetBulbColorAndDeviceIsOnMystromServer()
     {
         // Arrange
         $this->addDeviceOnMystromServer("1234", "wrb", "device1", "on", "1", "21");
@@ -532,6 +548,31 @@ class mystromServiceTest extends TestCase
 
         // Assert
         $this->assertEquals($this->mystromServerDevices[0]->color, "124;100;100");
+    }
+
+    public function testWhenSetBulbColorAndDeviceIsLocal()
+    {
+        // Arrange        
+        $wifiBulb = new \coolweb\mystrom\MystromWifiBulb();
+        $wifiBulb->id = "1234";
+        $wifiBulb->isLocal = true;
+        $wifiBulb->ipAddress = "192.168.1.25";
+        $wifiBulb->macAddress = "ACEFDFD";
+        $this->addLocalBulb(
+            "7C2F1D4G5H", 
+            $wifiBulb->ipAddress, 
+            true, 
+            2.5, 
+            "");
+
+        $this->initTestData();
+
+        // Act
+        $this->target->setBulbColor($wifiBulb, "#00ff11");        
+
+        // Assert
+        $bulb = $this->mystromLocalDevices[0];
+        $this->assertEquals("124;100;100", $bulb->color);
     }
 
     public function testLoadAllDevicesWhenLoadReportDataShouldReturnTheConsumptions()

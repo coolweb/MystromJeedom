@@ -790,7 +790,7 @@ class mystromCmd extends cmd
                     $changed = $this->checkAndUpdateCmd('state', $state) || $changed;
                     $changed = $this->checkAndUpdateCmd('stateBinary', $stateBinary) || $changed;
                 
-                    $this->event($state);
+                    // $this->event($state);
                 
                     if ($changed) {
                         $this->refreshWidget();
