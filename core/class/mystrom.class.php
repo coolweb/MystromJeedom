@@ -726,6 +726,7 @@ class mystromCmd extends cmd
             $mystromId = $this->getEqLogicLogicalId();
             $deviceType = $this->getEqLogicConfiguration('mystromType');
             $isLocal = $this->getEqLogicConfiguration('isLocal');
+            $ipAddress = $this->getEqLogicConfiguration('ipAddress');
             $macAddress = $this->getEqLogicConfiguration('macAddress');
             $state = '';
             $cmdLogicalId = $this->getLogicalId();
@@ -741,14 +742,28 @@ class mystromCmd extends cmd
                 $commandOk = true;
                 $state = 'on';
                 $stateBinary = '1';
-                $this->_mystromService->setState($mystromId, $deviceType, true);
+
+                if($isLocal)
+                {
+                    $this->_mystromService->setStateLocalDevice($ipAddress, $macAddress, true);
+                }
+                else {
+                    $this->_mystromService->setState($mystromId, $deviceType, true);
+                }
             }
         
             if ($cmdLogicalId == 'off') {
                 $commandOk = true;
                 $state = 'off';
                 $stateBinary = '0';
-                $this->_mystromService->setState($mystromId, $deviceType, false);
+                
+                if($isLocal)
+                {
+                    $this->_mystromService->setStateLocalDevice($ipAddress, $macAddress, false);
+                }
+                else {
+                    $this->_mystromService->setState($mystromId, $deviceType, false);
+                }
             }
         
             if ($cmdLogicalId == 'restart') {
@@ -793,7 +808,8 @@ class mystromCmd extends cmd
                 $bulbDevice->id = $mystromId;
                 $bulbDevice->isLocal = $isLocal;
                 $bulbDevice->macAddress = $macAddress;
-                
+                $bulbDevice->ipAddress = $ipAddress;
+
                 $this->_mystromService->setBulbColor($bulbDevice, $_options["color"]);
                 $changed = $this->checkAndUpdateCmd('colorRgb', $_options["color"]) || $changed;
             }

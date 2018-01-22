@@ -247,6 +247,27 @@ class MyStromService
             
         return $result;
     }
+
+    /**
+     * Set state for local mystrom device.
+     *
+     * @param [string] $ipAddress The ip address of the device.
+     * @param [string] $macAddress The mac address of the device.
+     * @param [bool] $isOn Indicates to switch on or off.
+     * @return void
+     */
+    public function setStateLocalDevice($ipAddress, $macAddress, $isOn)
+    {
+        $stateUrl = "http://" . $ipAddress . "/api/v1/device/" . $macAddress;
+        $dataAction = new \stdClass();
+        @$dataAction->action = ($isOn == true) ? "on" : "off";
+        $data = array($macAddress => $dataAction);
+        $dataJson = json_encode($data);
+
+        $result = $jsonObj = $this->doHttpCall($stateUrl, $dataJson);
+            
+        return $result;
+    }
         
     /**
     * Retrieve the information for a local wifi button.

@@ -317,7 +317,15 @@ class mystromServiceTest extends TestCase
                             
                             if($device->ipAddress == $deviceIpAddress)
                             {
-                                $device->color = $dataObj->$macAddress->color;
+                                if(isset($dataObj->$macAddress->color))
+                                {
+                                    $device->color = $dataObj->$macAddress->color;
+                                }
+
+                                if(isset($dataObj->$macAddress->action))
+                                {
+                                    $device->on = $dataObj->$macAddress->action == "on";
+                                }
                             }
                         }
                     }
@@ -550,7 +558,32 @@ class mystromServiceTest extends TestCase
         $this->assertEquals($this->mystromServerDevices[0]->color, "124;100;100");
     }
 
-    public function testWhenSetBulbColorAndDeviceIsLocal()
+    public function testWhenSetBulbColorAndDeviceIsLocal_ItShouldSetColor()
+    {
+        // Arrange        
+        $wifiBulb = new \coolweb\mystrom\MystromWifiBulb();
+        $wifiBulb->id = "1234";
+        $wifiBulb->isLocal = true;
+        $wifiBulb->ipAddress = "192.168.1.25";
+        $wifiBulb->macAddress = "ACEFDFD";
+        $this->addLocalBulb(
+            "7C2F1D4G5H", 
+            $wifiBulb->ipAddress, 
+            true, 
+            2.5, 
+            "");
+
+        $this->initTestData();
+
+        // Act
+        $this->target->setStateLocalDevice($wifiBulb->ipAddress, $wifiBulb->macAddress, false);
+
+        // Assert
+        $bulb = $this->mystromLocalDevices[0];
+        $this->assertEquals(false, $bulb->on);
+    }
+
+    public function testWhenSetStateAndDeviceIsLocal_ItShouldSetState()
     {
         // Arrange        
         $wifiBulb = new \coolweb\mystrom\MystromWifiBulb();
