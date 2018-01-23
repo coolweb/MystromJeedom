@@ -11,6 +11,7 @@ class eqLogic
     public $cmds = [];
     public $isLocal = false;
     public $ipAddress = null;
+    public $macAddress = "";
 
     public function getConfiguration($key)
     {

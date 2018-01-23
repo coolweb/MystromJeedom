@@ -34,7 +34,7 @@ class MyStromService
     
     public function doHttpCall($url, $data, $method = "POST")
     {
-        $this->jeedomHelper->logDebug("Do http call url: " . $url);
+        $this->jeedomHelper->logDebug("Do http call url: " . $url . " data: " . $data);
         
         if ($method == "POST") {
             $curl = curl_init();
@@ -259,12 +259,8 @@ class MyStromService
     public function setStateLocalDevice($ipAddress, $macAddress, $isOn)
     {
         $stateUrl = "http://" . $ipAddress . "/api/v1/device/" . $macAddress;
-        $dataAction = new \stdClass();
-        @$dataAction->action = ($isOn == true) ? "on" : "off";
-        $data = array($macAddress => $dataAction);
-        $dataJson = json_encode($data);
 
-        $result = $jsonObj = $this->doHttpCall($stateUrl, $dataJson);
+        $result = $jsonObj = $this->doHttpCall($stateUrl, "action=" . (($isOn == true) ? "on" : "off"));
             
         return $result;
     }
@@ -443,13 +439,9 @@ class MyStromService
 
         if($bulbDevice->isLocal == true)
         {
-            $url = "http://" . $bulbDevice->ipAddress . "/api/v1/device";
-            $dataColor = new \stdClass();
-            @$dataColor->color = $hsvQueryParam;
-            $data = array($bulbDevice->macAddress => $dataColor);
-            $dataJson = json_encode($data);
+            $url = "http://" . $bulbDevice->ipAddress . "/api/v1/device/" . $bulbDevice->macAddress;
 
-            $resultHttp = $this->doHttpCall($url, $dataJson, "POST");
+            $resultHttp = $this->doHttpCall($url, "color=" . $hsvQueryParam, "POST");
             if ($resultHttp === false) {
                 $result->status = "ko";
                 $result->error = "Error setting color of local bulb " . $bulbDevice->ipAddress;

@@ -100,6 +100,22 @@ class mystrom extends eqLogic
             if ($this->getConfiguration('ipAddress') == null || $this->getConfiguration('ipAddress') == '') {
                 throw new Exception('Veuillez introduire l\'adresse ip de l\'équipement', 1);
             }
+
+            if ($this->getConfiguration('mystromType') == 'wrb')
+            {
+                $bulbIp = $this->getConfiguration('ipAddress');
+
+                if (is_null($bulbIp) === false && $bulbIp != '') {
+                    $bulb = $this->_mystromService->RetrieveLocalRgbBulbInfo($bulbIp);
+                    
+                    if ($bulb === null) {
+                        throw new Exception('La lampe ne semble pas accessible, vérifiez l\'ip', 1);
+                    }
+
+                    $this->_jeedomHelper->logDebug("Save mac address " . $bulb->macAddress);
+                    $this->setConfiguration("macAddress", $bulb->macAddress);                        
+                }
+            }
         }
     }
     
@@ -277,21 +293,7 @@ class mystrom extends eqLogic
                 }
 
                 $color->setValue($colorRgb->getId());
-                $color->save();
-
-                if ($this->getConfiguration('isLocal') == true) {
-                    $bulbIp = $this->getConfiguration('ipAddress');
-
-                    if (is_null($bulbIp) === false && $bulbIp != '') {
-                        $bulb = $this->_mystromService->RetrieveLocalRgbBulbInfo($bulbIp);
-                        
-                        if ($bulb === null) {
-                            throw new Exception('La lampe ne semble pas accessible, vérifiez l\'ip', 1);
-                        }
-
-                        $this->setConfiguration("macAddress", $bulb->macAddress);
-                    }
-                }
+                $color->save();                
             }
         } else {
             $isTouchedCmd = $this->getCmd(null, 'isTouched');
