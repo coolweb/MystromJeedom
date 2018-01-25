@@ -136,7 +136,8 @@ foreach (object::all() as $object) {
 
         if(eqId !== '')
         {
-            var currentEqLogic = jeedom.eqLogic.cache.byId[eqId].result;
+            var currentEqLogic = jeedom.eqLogic.cache.byId[eqId] && 
+                jeedom.eqLogic.cache.byId[eqId].result;
 
             if(!currentEqLogic)
             {
