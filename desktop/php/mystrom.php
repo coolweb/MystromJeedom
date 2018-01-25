@@ -72,8 +72,8 @@ foreach ($eqLogics as $eqLogic) {
             <div class="form-group">
                 <label class="col-sm-3 control-label">{{Nom de l'équipement MyStrom}}</label>
                 <div class="col-sm-3">
-                    <input type="text" class="eqLogicAttr form-control" data-l1key="id" style="display : none;" />
-                    <input disabled type="text" class="eqLogicAttr form-control" data-l1key="name" placeholder="{{Nom de l'équipement MyStrom}}"/>
+                    <input id="eqLogicId" type="text" class="eqLogicAttr form-control" data-l1key="id" style="display : none;" />
+                    <input id="eqLogicName" type="text" class="eqLogicAttr form-control" data-l1key="name" placeholder="{{Nom de l\'équipement MyStrom}}"/>
                 </div>
             </div>
             <div class="form-group">
@@ -130,6 +130,29 @@ foreach (object::all() as $object) {
 			 	</div>
 		 </div>
 </fieldset>
+<script>    
+    $('#eqLogicId').change(function(){
+        var eqId = $('#eqLogicId').val();
+
+        if(eqId !== '')
+        {
+            var currentEqLogic = jeedom.eqLogic.cache.byId[eqId].result;
+
+            if(!currentEqLogic)
+            {
+                jeedom.eqLogic.byId({id:eqId, async: false});
+                currentEqLogic = jeedom.eqLogic.cache.byId[eqId].result;
+            }
+
+            if(currentEqLogic.configuration.isLocal === true)
+            {
+                $('#eqLogicName').prop("disabled", false);
+            } else {
+                $('#eqLogicName').prop("disabled", true);
+            }
+        }
+    });    
+</script>
 </form>
 
 <legend>{{Equipement MyStrom}}</legend>
@@ -152,7 +175,6 @@ foreach (object::all() as $object) {
         </div>
     </fieldset>
 </form>
-
 </div>
 </div>
 
