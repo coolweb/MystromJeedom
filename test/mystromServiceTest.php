@@ -323,7 +323,12 @@ class mystromServiceTest extends TestCase
 
                                 if(key_exists("action", $query))
                                 {
-                                    $device->on = $query["action"] == "on";
+                                    if($query["action"] == "toggle")
+                                    {
+                                        $device->on = !$device->on;
+                                    } else {
+                                        $device->on = $query["action"] == "on";
+                                    }
                                 }
                             }
                         }
@@ -598,6 +603,31 @@ class mystromServiceTest extends TestCase
 
         // Act
         $this->target->setStateLocalDevice($wifiBulb->ipAddress, $wifiBulb->macAddress, false);
+
+        // Assert
+        $bulb = $this->mystromLocalDevices[0];
+        $this->assertEquals(false, $bulb->on);
+    }
+
+    public function testWhenSetStateToggleAndDeviceIsLocal_ItShouldToggleSetState()
+    {
+        // Arrange        
+        $wifiBulb = new \coolweb\mystrom\MystromWifiBulb();
+        $wifiBulb->id = "1234";
+        $wifiBulb->isLocal = true;
+        $wifiBulb->ipAddress = "192.168.1.25";
+        $wifiBulb->macAddress = "ACEFDFD";
+        $this->addLocalBulb(
+            "7C2F1D4G5H", 
+            $wifiBulb->ipAddress, 
+            true, 
+            2.5, 
+            "");
+
+        $this->initTestData();
+
+        // Act
+        $this->target->setStateLocalDevice($wifiBulb->ipAddress, $wifiBulb->macAddress, true, true);
 
         // Assert
         $bulb = $this->mystromLocalDevices[0];
