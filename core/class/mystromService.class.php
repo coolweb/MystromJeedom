@@ -218,13 +218,27 @@ class MyStromService
     * @param $deviceId string The id of the device to change the state
     * @param $deviceType string The type of the device
     * @param $isOn boolean Indicating if the state should be on or off
+    * @param $isToggle boolean Indicating if the action is toogle, if true, $isOn is ignored.
     * @return MyStromApiResult The result of the call
     */
-    public function setState($deviceId, $deviceType, $isOn)
+    public function setState($deviceId, $deviceType, $isOn, $isToggle = false)
     {
+        $action = "";
+        if($isToggle)
+        {
+            $action = "toggle";
+        } else {
+            if($isOn)
+            {
+                $action = "on";
+            } else {
+                $action = "off";
+            }
+        }
+
         $authToken = $this->jeedomHelper->loadPluginConfiguration("authToken");
         $stateUrl = $this->myStromApiUrl . "/device/switch?authToken=" . $authToken
-            . "&id=" . $deviceId . "&on=" . (($isOn) ? "true" : "false");
+            . "&id=" . $deviceId . "&action=" . $action;
         $restartUrl = $this->myStromApiUrl . "/device/restart?authToken=" . $authToken
             . "&id=" . $deviceId;
             

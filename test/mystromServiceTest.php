@@ -105,7 +105,7 @@ class mystromServiceTest extends TestCase
         $this->setStateUrl = $this->myStromApiUrl . "/switch?" .
         "authToken=" . $this->loginTokenInJeedom;
 
-        $this->setStateUrlRestartMaster = $this->myStromApiUrl . "/restart?" .
+        $this->setStateUrlRestartMaster = $this->myStromApiUrl . "/device/restart?" .
         "authToken=" . $this->loginTokenInJeedom;
 
         $this->setStateObject = new \stdClass();
@@ -349,7 +349,7 @@ class mystromServiceTest extends TestCase
             return $this->loadDevicesServerObject;
         }
 
-        if(strpos($url, $this->setStateUrlRestartMaster) == 0){
+        if(strpos($url, $this->setStateUrlRestartMaster) === 0){
             foreach ($this->mystromServerDevices as $device) {
                 if($device->type != "mst"){
                     $device->state = "offline";
@@ -362,6 +362,8 @@ class mystromServiceTest extends TestCase
             parse_str($parts["query"], $query);
 
             $isColor = false;
+            $action = "";
+            $isRestart = false;
 
             $on = false;
             if(strpos($url, "true") != false){
@@ -373,13 +375,33 @@ class mystromServiceTest extends TestCase
                 $isColor = true;
             }
 
+            if(key_exists("action", $query))
+            {
+                $action = $query["action"];
+            }
+
+            if(strpos($url, "restart") != false)
+            {
+                $isRestart = true;
+            }
+
             $deviceId = $query["id"];
             
             foreach ($this->mystromServerDevices as $device) {
                 if($device->id == $deviceId){
                     if($isColor == false)
                     {
-                        $device->state = $on == true ? "on" : "off";
+                        if($action !== "")
+                        {
+                            if($action == "toggle")
+                            {
+                                $device->state = $device->state == "on" ? "off" : "on";
+                            } else {
+                                $device->state = $action;
+                            }
+                        } else {
+                            $device->state = $on == true ? "on" : "off";
+                        }
                     } else {
                         $device->color = $query["color"];
                     }
@@ -648,6 +670,16 @@ class mystromServiceTest extends TestCase
         $this->initTestData();
 
         $result = $this->target->setState('1234', 'eth', false);
+        
+        $this->assertEquals($this->mystromServerDevices[0]->state, 'off');
+    }
+
+    public function testSetStateWhenToggleShouldToggleTheState()
+    {
+        $this->addDeviceOnMystromServer('1234', 'eth', 'device1', 'on', '1');
+        $this->initTestData();
+
+        $result = $this->target->setState('1234', 'eth', true, true);
         
         $this->assertEquals($this->mystromServerDevices[0]->state, 'off');
     }

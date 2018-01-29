@@ -195,6 +195,18 @@ class mystrom extends eqLogic
                     $off->save();
                 }
 
+                $toggle = $this->getCmd(null, 'toggle');
+                if (!is_object($toggle)) {
+                    $toggle = new mystromCmd();
+                    $toggle->setLogicalId('toggle');
+                    $toggle->setName(__('Basculer', __FILE__));
+                    $toggle->setType('action');
+                    $toggle->setSubType('other');
+                    $toggle->setDisplay('showNameOndashboard', '0');
+                    $toggle->setEqLogic_id($this->getId());
+                    $toggle->save();
+                }
+
                 if ($deviceType == 'wse') {
                     $temperature = $this->getCmd(null, "temperature");
                     if (!is_object($temperature)) {
