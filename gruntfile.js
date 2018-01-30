@@ -19,7 +19,8 @@ module.exports = function (grunt) {
             },
             clean:{
                 build:['dist'],
-                vendor:['dist/vendor', 'dist/composer.json', 'dist/composer.lock']
+                vendor:['dist/vendor', 'dist/composer.json', 'dist/composer.lock'],
+                zipDist:['dist/mystrom.zip']
             },
             phpunit: {
                 classes: {
@@ -38,7 +39,14 @@ module.exports = function (grunt) {
                         cwd: 'dist'
                     }
                 }
-            }
+            },
+            zip: {
+                'dist': {
+                    cwd: 'dist/',
+                    src: ['dist/**'],
+                    dest: 'dist/mystrom.zip'
+                  }
+              }
         });
     
         grunt.loadNpmTasks('grunt-contrib-copy');
@@ -47,6 +55,7 @@ module.exports = function (grunt) {
         //grunt.loadNpmTasks('grunt-phplint');
         //grunt.loadNpmTasks('grunt-phpcs');
         grunt.loadNpmTasks('grunt-composer');
+        grunt.loadNpmTasks('grunt-zip');
     
         grunt.registerTask('default', ['']);
         grunt.registerTask('update', 
@@ -59,4 +68,7 @@ module.exports = function (grunt) {
         'composer:production:install',
         'copy:vendor',
         'clean:vendor']);
+        grunt.registerTask('zipDist', 
+            ['clean:zipDist',
+            'zip']);
     };
