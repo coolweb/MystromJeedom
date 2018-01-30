@@ -15,18 +15,15 @@ class eqLogic
 
     public function getConfiguration($key)
     {
-        if($key == "isLocal")
-        {
+        if ($key == "isLocal") {
             return $this->isLocal;
         }
 
-        if($key == "ipAddress")
-        {
+        if ($key == "ipAddress") {
             return $this->ipAddress;
         }
 
-        if($key == "mystromType")
-        {
+        if ($key == "mystromType") {
             return $this->mystromType;
         }
 
@@ -46,5 +43,16 @@ class eqLogic
     public function checkAndUpdateCmd($cmdName, $cmdValue)
     {
         return false;
+    }
+
+    public function getCmd($type, $logicalId)
+    {
+        foreach ($this->cmds as $cmd) {
+            if ($cmd->logicalId == $logicalId) {
+                return $cmd;
+            }
+        }
+
+        return null;
     }
 }

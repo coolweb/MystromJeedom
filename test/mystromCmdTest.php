@@ -104,9 +104,6 @@ class mystromCmdTest extends TestCase
         $this->target->method("checkAndUpdateCmd")
         ->will($this->returnCallBack(array($this, 'checkAndUpdateCmd')));
 
-        $this->target->method("getCmd")
-        ->will($this->returnCallBack(array($this, 'getCmd')));
-
         $this->mystromService->method("setBulbColor")
         ->will($this->returnCallBack(array($this, 'setBulbColor')));
 
@@ -127,17 +124,6 @@ class mystromCmdTest extends TestCase
         if ($isToggle === true) {
             $foundDevice->state = $foundDevice->state == "on" ? "off" : "on";
         }
-    }
-
-    public function getCmd($type, $logicalId)
-    {
-        foreach ($this->currentEqLogic->cmds as $cmd) {
-            if ($cmd->logicalId == $logicalId) {
-                return $cmd;
-            }
-        }
-
-        return null;
     }
 
     public function setBulbColor(MystromWifiBulb $bulbDevice, $color)

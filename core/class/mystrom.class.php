@@ -789,7 +789,7 @@ class mystromCmd extends cmd
             }
 
             if ($cmdLogicalId == 'toggle') {
-                $stateBinaryCmd = $this->getCmd(null, 'stateBinary');
+                $stateBinaryCmd = $this->getEqLogic()->getCmd(null, 'stateBinary');
                 
                 $commandOk = true;
                 $state = $stateBinaryCmd->getValue() == '1' ? 'off' : 'on';
