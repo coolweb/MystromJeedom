@@ -11,6 +11,7 @@ include_once('./core/class/mystromService.class.php');
 include_once('./core/class/mystrom.class.php');
 include_once('./core/class/jeedomHelper.class.php');
 
+use coolweb\mystrom\mystromDevice;
 use coolweb\mystrom\MystromWifiBulb;
 use coolweb\mystrom\MyStromService;
 use coolweb\mystrom\jeedomHelper;
@@ -36,7 +37,7 @@ class mystromCmdTest extends TestCase
     private $eqLogics = [];
     private $cmds = [];
 
-    private $mystromServerDevices = Array();
+    private $mystromServerDevices = array();
 
     /**
      * The current linked eqLogic to the cmd
@@ -45,13 +46,12 @@ class mystromCmdTest extends TestCase
      */
     private $currentEqLogicInJeedom;
 
-    private function launchExecuteEvent($eqLogicId, $cmdLogicalId, $cmdType, $cmdOptions = Array())
+    private function launchExecuteEvent($eqLogicId, $cmdLogicalId, $cmdType, $cmdOptions = array())
     {
         $this->currentEqLogicId = $eqLogicId;
 
         foreach ($this->eqLogics as $eqLogic) {
-            if($eqLogic->logicalId == $this->currentEqLogicId)
-            {
+            if ($eqLogic->logicalId == $this->currentEqLogicId) {
                 $this->currentEqLogic = $eqLogic;
             }
         }
@@ -64,6 +64,16 @@ class mystromCmdTest extends TestCase
         $this->target->execute($cmdOptions);
     }
 
+    /**
+     * Add eq logic into jeedom.
+     *
+     * @param string $logicalId The identifier of eq logic into Jeedom
+     * @param string $name The name of the device.
+     * @param string $mystromType The code type of mytrom device
+     * @param Array $cmds Array of commands attached to the eq logic.
+     * @param boolean $isLocal
+     * @return void
+     */
     private function addEqLogicInJeedom($logicalId, $name, $mystromType, $cmds, $isLocal = false)
     {
         $eqLogic = new eqLogic();
@@ -94,8 +104,40 @@ class mystromCmdTest extends TestCase
         $this->target->method("checkAndUpdateCmd")
         ->will($this->returnCallBack(array($this, 'checkAndUpdateCmd')));
 
+        $this->target->method("getCmd")
+        ->will($this->returnCallBack(array($this, 'getCmd')));
+
         $this->mystromService->method("setBulbColor")
         ->will($this->returnCallBack(array($this, 'setBulbColor')));
+
+        $this->mystromService->method("setState")
+        ->will($this->returnCallBack(array($this, 'setState')));
+    }
+
+    public function setState($eqLogicId, $deviceType, $isOn, $isToggle)
+    {
+        $foundDevice = null;
+
+        foreach ($this->mystromServerDevices as $mystromDevice) {
+            if ($mystromDevice->id == $eqLogicId) {
+                $foundDevice = $mystromDevice;
+            }
+        }
+
+        if ($isToggle === true) {
+            $foundDevice->state = $foundDevice->state == "on" ? "off" : "on";
+        }
+    }
+
+    public function getCmd($type, $logicalId)
+    {
+        foreach ($this->currentEqLogic->cmds as $cmd) {
+            if ($cmd->logicalId == $logicalId) {
+                return $cmd;
+            }
+        }
+
+        return null;
     }
 
     public function setBulbColor(MystromWifiBulb $bulbDevice, $color)
@@ -103,14 +145,12 @@ class mystromCmdTest extends TestCase
         $foundDevice = null;
 
         foreach ($this->mystromServerDevices as $mystromDevice) {
-            if($mystromDevice->id == $bulbDevice->id)
-            {
+            if ($mystromDevice->id == $bulbDevice->id) {
                 $foundDevice = $mystromDevice;
             }
         }
 
-        if($foundDevice == null)
-        {
+        if ($foundDevice == null) {
             $foundDevice = $bulbDevice;
             array_push($this->mystromServerDevices, $bulbDevice);
         }
@@ -138,15 +178,13 @@ class mystromCmdTest extends TestCase
         $cmdFound = false;
 
         foreach ($this->currentEqLogic->cmds as $cmd) {
-            if($cmd->logicalId == $cmdName)
-            {
+            if ($cmd->logicalId == $cmdName) {
                 $cmd->value = $cmdValue;
                 $cmdFound = true;
             }
         }
 
-        if($cmdFound == false)
-        {
+        if ($cmdFound == false) {
             $cmdToAdd = new Cmd();
             $cmdToAdd->logicalId = $cmdName;
             $cmdToAdd->value = $cmdValue;
@@ -158,8 +196,7 @@ class mystromCmdTest extends TestCase
     public function getEqLogicConfiguration($key)
     {
         foreach ($this->eqLogics as $eqLogic) {
-            if($eqLogic->getLogicalId() == $this->currentEqLogicId)
-            {
+            if ($eqLogic->getLogicalId() == $this->currentEqLogicId) {
                 switch ($key) {
                     case 'mystromType':
                         return $eqLogic->mystromType;
@@ -183,28 +220,29 @@ class mystromCmdTest extends TestCase
         $this->currentEqLogicId = "";
         $this->eqLogics = [];
         $this->cmds = [];
-        $this->mystromServerDevices = Array();
+        $this->mystromServerDevices = array();
 
         $this->mystromService = $this->getMockBuilder(MyStromService::class)
-        ->disableOriginalConstructor()        
+        ->disableOriginalConstructor()
         ->getMock();
 
         $this->jeedomHelper = $this->getMockBuilder(JeedomHelper::class)
-        ->getMock();            
+        ->getMock();
 
         $this->target = $this->getMockBuilder(mystromCmd::class)
         ->setConstructorArgs([$this->jeedomHelper, $this->mystromService])
         ->setMethods([
-            'getEqLogicLogicalId', 
-            'getEqLogicConfiguration', 
-            'getLogicalId', 
-            'getType', 
-            'checkAndUpdateCmd', 
-            'getEqLogic'])
+            'getEqLogicLogicalId',
+            'getEqLogicConfiguration',
+            'getLogicalId',
+            'getType',
+            'checkAndUpdateCmd',
+            'getEqLogic',
+            'getCmd'])
         ->getMock();
     }
 
-    public function testWhenButtonTouched_ItShouldSetTheTouchedInfoOn()
+    public function testWhenButtonTouchedItShouldSetTheTouchedInfoOn()
     {
         // Arrange
         $cmd = new Cmd();
@@ -215,7 +253,7 @@ class mystromCmdTest extends TestCase
         $cmdTouched->type = "info";
         $cmdTouched->logicalId = "isTouched";
 
-        $this->addEqLogicInJeedom("def", "test device", "wbp", Array($cmd, $cmdTouched));
+        $this->addEqLogicInJeedom("def", "test device", "wbp", array($cmd, $cmdTouched));
         $this->initTestData();
 
         // Act
@@ -225,19 +263,19 @@ class mystromCmdTest extends TestCase
         $this->assertEquals($cmdTouched->value, 1);
     }
 
-    public function testWhenBulbChangeColor_ItShouldChangeColorOfBulb()
+    public function testWhenBulbChangeColorItShouldChangeColorOfBulb()
     {
         // Arrange
         $cmd = new Cmd();
         $cmd->type = "color";
         $cmd->logicalId = "color";
-        $options = Array("color" => "#00ff11");
+        $options = array("color" => "#00ff11");
 
         $cmdRgb = new Cmd();
         $cmdRgb->type = "string";
         $cmdRgb->logicalId = "colorRgb";
 
-        $this->addEqLogicInJeedom("def", "test device", "wrb", Array($cmd, $cmdRgb));
+        $this->addEqLogicInJeedom("def", "test device", "wrb", array($cmd, $cmdRgb));
         $this->initTestData();
 
         // Act
@@ -246,5 +284,43 @@ class mystromCmdTest extends TestCase
         // Assert
         $this->assertEquals($this->mystromServerDevices[0]->color, "#00ff11");
         $this->assertEquals($cmdRgb->value, "#00ff11");
+    }
+
+    /**
+     * Test toggle cmd.
+     *
+     * @return void
+     */
+    public function testWhenToggleOffDeviceItShouldSetItOn()
+    {
+        // Arrange
+        $cmd = new Cmd();
+        $cmd->type = "action";
+        $cmd->logicalId = "toggle";
+
+        $cmdState = new Cmd();
+        $cmdState->type = "info";
+        $cmdState->logicalId = "state";
+        $cmdState->value = "off";
+
+        $cmdStateBinary = new Cmd();
+        $cmdStateBinary->type = "info";
+        $cmdStateBinary->logicalId = "stateBinary";
+        $cmdStateBinary->value = "0";
+
+        $deviceServer = new mystromDevice();
+        $deviceServer->id = "def";
+        $deviceServer->state = "off";
+        array_push($this->mystromServerDevices, $deviceServer);
+
+        $this->addEqLogicInJeedom("def", "test device", "wrb", array($cmd, $cmdState, $cmdStateBinary));
+        $this->initTestData();
+
+        // Act
+        $this->launchExecuteEvent("def", $cmd->logicalId, $cmd->type, null);
+
+        // Assert
+        $this->assertEquals($cmdState->value, "on");
+        $this->assertEquals($deviceServer->state, "on");
     }
 }

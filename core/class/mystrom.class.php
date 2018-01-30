@@ -746,11 +746,12 @@ class mystromCmd extends cmd
             $cmdLogicalId = $this->getLogicalId();
         
             $this->_jeedomHelper->logDebug(
-            'Execute cmd ' .
-            $cmdLogicalId .
-            ' with options ' .
-            print_r($_options, true) .
-            ' (' . $this->getEqLogic()->getName() . ')');
+                'Execute cmd ' .
+                $cmdLogicalId .
+                ' with options ' .
+                print_r($_options, true) .
+                ' (' . $this->getEqLogic()->getName() . ')'
+            );
         
             if ($cmdLogicalId == 'on') {
                 $commandOk = true;
@@ -785,6 +786,20 @@ class mystromCmd extends cmd
                 $state = 'off';
                 $stateBinary = '0';
                 $this->_mystromService->setState($mystromId, $deviceType, false);
+            }
+
+            if ($cmdLogicalId == 'toggle') {
+                $stateBinaryCmd = $this->getCmd(null, 'stateBinary');
+                
+                $commandOk = true;
+                $state = $stateBinaryCmd->getValue() == '1' ? 'off' : 'on';
+                $stateBinary = $stateBinaryCmd->getValue() == '1' ? '0' : '1';
+
+                if ($isLocal) {
+                    $this->_mystromService->setStateLocalDevice($ipAddress, $macAddress, true, true);
+                } else {
+                    $this->_mystromService->setState($mystromId, $deviceType, true, true);
+                }
             }
         
             if ($cmdLogicalId == 'isTouchedAction') {
