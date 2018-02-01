@@ -26,6 +26,7 @@ class mystromTest extends TestCase
     private $mystromService;
     private $target;
     private $jeedomHelper;
+    private $messages;
     
     private function setJeedomDevices($target, $eqLogics)
     {
@@ -62,39 +63,43 @@ class mystromTest extends TestCase
         ->willReturn($result);
     }
 
-    private function setCmdStateDeprecated($eqLogic)
+    private function setCmdStateDeprecated($eqLogic, $deprecated = true)
     {
         $eqLogic->expects($this->at(0))
         ->method('checkAndUpdateCmd')
         ->with($this->equalTo('state'))
-        ->willReturn(true);
+        ->willReturn($deprecated);
 
         $eqLogic->expects($this->at(1))
         ->method('checkAndUpdateCmd')
         ->with($this->equalTo('stateBinary'))
-        ->willReturn(true);
+        ->willReturn($deprecated);
 
         $eqLogic->expects($this->at(2))
         ->method('checkAndUpdateCmd')
         ->with($this->equalTo('conso'))
-        ->willReturn(true);
+        ->willReturn($deprecated);
 
         $eqLogic->expects($this->at(3))
         ->method('checkAndUpdateCmd')
         ->with($this->equalTo('dailyConso'))
-        ->willReturn(true);
+        ->willReturn($deprecated);
 
         $eqLogic->expects($this->at(4))
         ->method('checkAndUpdateCmd')
         ->with($this->equalTo('monthlyConso'))
-        ->willReturn(true);
+        ->willReturn($deprecated);
 
-        $eqLogic->expects($this->once())
-        ->method('refreshWidget');
+        if ($deprecated === true) {
+            $eqLogic->expects($this->once())
+            ->method('refreshWidget');
+        }
     }
 
     protected function setUp()
     {
+        $this->messages = array();
+
         $this->mystromService = $this->getMockBuilder(MyStromService::class)
         ->disableOriginalConstructor()
         ->setMethods(['loadAllDevicesFromServer', 'RetrieveLocalRgbBulbInfo'])
@@ -103,10 +108,18 @@ class mystromTest extends TestCase
         $this->jeedomHelper = $this->getMockBuilder(JeedomHelper::class)
         ->getMock();
 
+        $this->jeedomHelper->method('addMessage')
+        ->will($this->returnCallBack(array($this, 'addMessage')));
+
         $this->target = $this->getMockBuilder(mystrom::class)
         ->setConstructorArgs([$this->jeedomHelper, $this->mystromService])
         ->setMethods(['logError', 'loadEqLogic', 'logDebug', 'getLogicalId', 'setConfiguration', 'getConfiguration'])
         ->getMock();
+    }
+
+    public function addMessage($message)
+    {
+        array_push($this->messages, $message);
     }
 
     public function testPullWhen1DeviceExistAt2Sides_ItShouldRefreshJeedom()
@@ -131,6 +144,33 @@ class mystromTest extends TestCase
         $this->setMystromDevices($this->mystromService, $devices);
 
         $this->target->pull();
+    }
+
+    public function testPullWhenDeviceOfflineBeforeAndNowItShouldAddMessageToCenterMessage()
+    {
+        $eqLogic = $this->getMockBuilder(eqLogic::class)
+        ->setMethods(['checkAndUpdateCmd', 'refreshWidget'])
+        ->getMock();
+
+        $eqLogic->logicalId = '1234';
+        $this->setCmdStateDeprecated($eqLogic, false);
+
+        $eqLogics = array();
+        array_push($eqLogics, $eqLogic);
+
+        $device = new MyStromDevice();
+        $device->id = '1234';
+        $device->state = "offline";
+
+        $devices = array();
+        array_push($devices, $device);
+
+        $this->setJeedomDevices($this->target, $eqLogics);
+        $this->setMystromDevices($this->mystromService, $devices);
+
+        $this->target->pull();
+
+        $this->assertEquals(sizeof($this->messages), 1);
     }
 
     public function testPullWhenWifiSwitchEurope_ItShouldUpdateTemperature()

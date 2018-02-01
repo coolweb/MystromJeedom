@@ -617,6 +617,11 @@ class mystrom extends eqLogic
                 }
                 
                 $changed = $eqLogic->checkAndUpdateCmd('state', $foundMystromDevice->state) || $changed;
+
+                if($foundMystromDevice->state == "offline" && $changed === false){
+                    $this->_jeedomHelper->addMessage("L'équipement " . $eqLogic->getName() . " est offline");
+                }
+
                 $changed = $eqLogic->checkAndUpdateCmd('stateBinary', (($foundMystromDevice->state == 'on') ? '1' : '0')) || $changed;
                 $changed = $eqLogic->checkAndUpdateCmd('conso', $foundMystromDevice->power) || $changed;
                 $changed = $eqLogic->checkAndUpdateCmd('dailyConso', $foundMystromDevice->daylyConsumption) || $changed;

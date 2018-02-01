@@ -58,6 +58,17 @@ class JeedomHelper
     {
         \log::add("mystrom", "warning", $message);
     }
+
+    /**
+     * Add a message to jeedom center message.
+     *
+     * @param string $message The message to add.
+     * @return void
+     */
+    public function addMessage($message)
+    {
+        \message::add("mystrom", $message);
+    }
     
     /**
     * Retrieve eqLogic by logical id
