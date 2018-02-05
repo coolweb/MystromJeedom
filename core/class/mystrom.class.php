@@ -597,6 +597,11 @@ class mystrom extends eqLogic
         }
         
         foreach (mystrom::$_eqLogics as $eqLogic) {
+            if ($eqLogic->getIsEnable() == 0) {
+                $this->_jeedomHelper->logDebug("Equipement " . $eqLogic->getName() . " n'est pas activé");
+                continue;
+            }
+
             $foundMystromDevice = null;
             $changed = false;
             $isLocal = $eqLogic->getConfiguration('isLocal');
@@ -618,8 +623,12 @@ class mystrom extends eqLogic
                 
                 $changed = $eqLogic->checkAndUpdateCmd('state', $foundMystromDevice->state) || $changed;
 
-                if($foundMystromDevice->state == "offline" && $changed === false){
-                    $this->_jeedomHelper->addMessage("L'équipement " . $eqLogic->getName() . " est offline");
+                if ($foundMystromDevice->state == "offline" && $changed === false) {
+                    if ($foundMystromDevice->type !== "wbp" &&
+                        $foundMystromDevice->type !== "wbs" &&
+                        $foundMystromDevice->type !== "wrb") {
+                        $this->_jeedomHelper->addMessage("L'équipement " . $eqLogic->getName() . " est offline");
+                    }
                 }
 
                 $changed = $eqLogic->checkAndUpdateCmd('stateBinary', (($foundMystromDevice->state == 'on') ? '1' : '0')) || $changed;

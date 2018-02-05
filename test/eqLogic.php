@@ -12,6 +12,7 @@ class eqLogic
     public $isLocal = false;
     public $ipAddress = null;
     public $macAddress = "";
+    public $isEnable = 1;
 
     public function getConfiguration($key)
     {
@@ -38,6 +39,11 @@ class eqLogic
     public function getName()
     {
         return $this->name;
+    }
+
+    public function getIsEnable()
+    {
+        return $this->isEnable;
     }
 
     public function checkAndUpdateCmd($cmdName, $cmdValue)

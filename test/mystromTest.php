@@ -173,6 +173,90 @@ class mystromTest extends TestCase
         $this->assertEquals(sizeof($this->messages), 1);
     }
 
+    public function testPullWhenDeviceOfflineBeforeAndNowAndDeviceIsDisabledItShouldNotAddMessageToCenterMessage()
+    {
+        $eqLogic = $this->getMockBuilder(eqLogic::class)
+        ->setMethods(['checkAndUpdateCmd', 'refreshWidget',])
+        ->getMock();
+
+        $eqLogic->isEnable = 0;
+
+        $eqLogic->logicalId = '1234';
+
+        $eqLogics = array();
+        array_push($eqLogics, $eqLogic);
+
+        $device = new MyStromDevice();
+        $device->id = '1234';
+        $device->state = "offline";
+
+        $devices = array();
+        array_push($devices, $device);
+
+        $this->setJeedomDevices($this->target, $eqLogics);
+        $this->setMystromDevices($this->mystromService, $devices);
+
+        $this->target->pull();
+
+        $this->assertEquals(sizeof($this->messages), 0);
+    }
+
+    public function testPullWhenButtonIsOfflineBeforeAndNowAndItShouldNotAddMessageToCenterMessage()
+    {
+        $eqLogic = $this->getMockBuilder(eqLogic::class)
+        ->setMethods(['checkAndUpdateCmd', 'refreshWidget'])
+        ->getMock();
+
+        $eqLogic->logicalId = '1234';
+        $eqLogic->mystromType = 'wbp';
+
+        $eqLogics = array();
+        array_push($eqLogics, $eqLogic);
+
+        $device = new MyStromDevice();
+        $device->id = '1234';
+        $device->state = "offline";
+        $device->type = "wbp";
+
+        $devices = array();
+        array_push($devices, $device);
+
+        $this->setJeedomDevices($this->target, $eqLogics);
+        $this->setMystromDevices($this->mystromService, $devices);
+
+        $this->target->pull();
+
+        $this->assertEquals(0, sizeof($this->messages));
+    }
+
+    public function testPullWhenBulbIsOfflineBeforeAndNowAndItShouldNotAddMessageToCenterMessage()
+    {
+        $eqLogic = $this->getMockBuilder(eqLogic::class)
+        ->setMethods(['checkAndUpdateCmd', 'refreshWidget'])
+        ->getMock();
+
+        $eqLogic->logicalId = '1234';
+        $eqLogic->mystromType = 'wrb';
+
+        $eqLogics = array();
+        array_push($eqLogics, $eqLogic);
+
+        $device = new MyStromDevice();
+        $device->id = '1234';
+        $device->state = "offline";
+        $device->type = "wrb";
+
+        $devices = array();
+        array_push($devices, $device);
+
+        $this->setJeedomDevices($this->target, $eqLogics);
+        $this->setMystromDevices($this->mystromService, $devices);
+
+        $this->target->pull();
+
+        $this->assertEquals(0, sizeof($this->messages));
+    }
+
     public function testPullWhenWifiSwitchEurope_ItShouldUpdateTemperature()
     {
         $eqLogic = $this->getMockBuilder(eqLogic::class)
