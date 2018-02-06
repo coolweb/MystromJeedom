@@ -37,7 +37,9 @@ foreach ($eqLogics as $eqLogic) {
 		if($eqLogic->getConfiguration('mystromType') == 'eth'){
 			echo '<img src="plugins/mystrom/doc/images/ecn_eth_fr.png" height="105" />';
 		} else {
-			if($eqLogic->getConfiguration('mystromType') == 'wsw'){
+            if($eqLogic->getConfiguration('mystromType') == 'wsw' ||
+               $eqLogic->getConfiguration('mystromType') == 'wse' || 
+               $eqLogic->getConfiguration('mystromType') == 'wse' ){
 				echo '<img src="plugins/mystrom/doc/images/ecn_wsw.png" height="105" />';
 			} else {
                 if($eqLogic->getConfiguration('mystromType') == 'wbp'){
@@ -85,6 +87,7 @@ foreach ($eqLogics as $eqLogic) {
                         <option value="sw">{{CPL escalve (blanc)}}</option>
                         <option value="eth">{{CPL avec internet (bleu)}}</option>
                         <option value="wsw">{{Interrupteur wifi swiss}}</option>
+                        <option value="ws2">{{Interrupteur wifi swiss v2}}</option>
                         <option value="wse">{{Interrupteur wifi europe}}</option>
                         <option value="wbp">{{Wifi bouton plus}}</option>
                         <option value="wbs">{{Wifi bouton simple}}</option>

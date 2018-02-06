@@ -329,7 +329,7 @@ class MyStromService
     /**
      * Retrieve information of local rgb bulb
      *
-     * @param [string] $ipAddress
+     * @param string $ipAddress
      * @return MyStromWifiBulb The bulb if found otherwise null.
      */
     public function RetrieveLocalRgbBulbInfo($ipAddress)
@@ -361,6 +361,37 @@ class MyStromService
             return $mystromBulb;
         } catch (Exception $e) {
             $this->jeedomHelper->logWarning("RetrieveLocalRgbBulbInfo - " . $e);
+            return null;
+        }
+    }
+
+    /**
+     * Retrieve information about wifi switch device.
+     *
+     * @param string $ipAddress The ip address of the device.
+     * @return The device otherwise null.
+     */
+    public function retrieveLocalWifiSwitchDeviceInformation($ipAddress)
+    {
+        try {
+            $this->jeedomHelper->logDebug("Retrieve info of wifi switch device " . $ipAddress);
+            $url = "http://" . $ipAddress . "/report";
+            $result = $this->doHttpCall($url, null, "GET");
+            if ($result === false) {
+                return null;
+            }
+                
+            $mystromDevice = new MystromWifiSwitchEurope();
+
+            $jsonObj = json_decode($result);
+
+            $mystromDevice->ipAddress = $ipAddress;
+            $mystromDevice->state = $jsonObj->relay == true ? "on" : "off";
+            $mystromDevice->power = $jsonObj->power;
+
+            return $mystromDevice;
+        } catch (Exception $e) {
+            $this->jeedomHelper->logWarning("RetrieveLocalWifiSwitchDeviceInformation - " . $e);
             return null;
         }
     }

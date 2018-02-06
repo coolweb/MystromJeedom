@@ -176,6 +176,17 @@ class mystromServiceTest extends TestCase
         array_push($this->mystromLocalDevices, $bulb);
     }
 
+    public function addLocalWifiSwitch($ipAddress, $on, $power)
+    {
+        $wifiSwitch = new \stdClass();
+        $wifiSwitch->ipAddress = $ipAddress;
+        $wifiSwitch->relay = $on;
+        $wifiSwitch->power = $power;
+        $wifiSwitch->type = "ws";
+
+        array_push($this->mystromLocalDevices, $wifiSwitch);
+    }
+
     public function loadPluginConfiguration($key)
     {
         if ($key == "authToken") {
@@ -218,6 +229,21 @@ class mystromServiceTest extends TestCase
                         $jsonData = "{\"" . $device->macAddress .
                             "\":" . json_encode($device) . ", \"123\": {}}";
                         return $jsonData;
+                    }
+                }
+            }
+
+            if (strpos($url, "/report") != false) {
+                $deviceIpAddressPos = strpos($url, "http://") + 7;
+                $deviceIpAddressEndPos = strpos($url, "/report", $deviceIpAddressPos);
+                $deviceIpAddress = substr($url, $deviceIpAddressPos, $deviceIpAddressEndPos - $deviceIpAddressPos);
+
+                foreach ($this->mystromLocalDevices as $device) {
+                    if ($device->ipAddress == $deviceIpAddress) {
+                        $jsonData = new \stdClass();
+                        @$jsonData->relay = $device->relay;
+                        @$jsonData->power = $device->power;
+                        return json_encode($jsonData);
                     }
                 }
             }
@@ -746,6 +772,17 @@ class mystromServiceTest extends TestCase
         $buttonInfo = $this->target->RetrieveLocalButtonInfo("192.168.1.2");
 
         $this->assertEquals($buttonInfo->macAddress, "7C2F1D4G5H");
+    }
+
+    public function testWhenRetrieveLocalWifiSwitchInfoShouldReturnCorrectInfo()
+    {
+        $this->addLocalWifiSwitch("192.168.1.2", true, 2.5);
+        $this->initTestData();
+
+        $wifiSwitchInfo = $this->target->RetrieveLocalWifiSwitchDeviceInformation("192.168.1.2");
+
+        $this->assertEquals($wifiSwitchInfo->state, "on");
+        $this->assertEquals($wifiSwitchInfo->power, "2.5");
     }
 
     public function testSaveUrlsForLocalWifiButtonPlusWhenSaved_ShouldSaveUrls()

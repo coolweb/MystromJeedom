@@ -69,7 +69,7 @@ class mystrom extends eqLogic
     */
     public static function cron()
     {
-        $plugin = new mystrom();        
+        $plugin = new mystrom();
         $plugin->pull();
     }
     
@@ -90,19 +90,21 @@ class mystrom extends eqLogic
     public function preSave()
     {
         if ($this->getConfiguration('isLocal') == true) {
-            // only mystrom button/wifi bulb is supported for the moment
-            if (!($this->getConfiguration('mystromType') == 'wbp' 
+            if (!($this->getConfiguration('mystromType') == 'wbp'
             || $this->getConfiguration('mystromType') == 'wbs'
-            || $this->getConfiguration('mystromType') == 'wrb')) {
-                throw new Exception('Vous ne pouvez créer que le type Wifi Bouton Plus, Wifi Bouton ou la lampe RGB', 1);
+            || $this->getConfiguration('mystromType') == 'wrb'
+            || $this->getConfiguration('mystromType') == 'wsw'
+            || $this->getConfiguration('mystromType') == 'ws2'
+            || $this->getConfiguration('mystromType') == 'wse'
+            || $this->getConfiguration('mystromType') == 'wsw')) {
+                throw new Exception('Vous ne pouvez créer que le type Wifi Bouton Plus, Wifi Bouton, la lampe RGB ou les prises wifi', 1);
             }
             
             if ($this->getConfiguration('ipAddress') == null || $this->getConfiguration('ipAddress') == '') {
                 throw new Exception('Veuillez introduire l\'adresse ip de l\'équipement', 1);
             }
 
-            if ($this->getConfiguration('mystromType') == 'wrb')
-            {
+            if ($this->getConfiguration('mystromType') == 'wrb') {
                 $bulbIp = $this->getConfiguration('ipAddress');
 
                 if (is_null($bulbIp) === false && $bulbIp != '') {
@@ -113,7 +115,7 @@ class mystrom extends eqLogic
                     }
 
                     $this->_jeedomHelper->logDebug("Save mac address " . $bulb->macAddress);
-                    $this->setConfiguration("macAddress", $bulb->macAddress);                        
+                    $this->setConfiguration("macAddress", $bulb->macAddress);
                 }
             }
         }
@@ -131,6 +133,7 @@ class mystrom extends eqLogic
             $deviceType == 'eth' ||
             $deviceType == 'sw' ||
             $deviceType == 'wsw' ||
+            $deviceType == 'ws2' ||
             $deviceType == 'wse' ||
             $deviceType == 'wrb') {
             $state = $this->getCmd(null, 'state');
@@ -207,7 +210,8 @@ class mystrom extends eqLogic
                     $toggle->save();
                 }
 
-                if ($deviceType == 'wse') {
+                if ($deviceType == 'wse' ||
+                $deviceType == 'ws2') {
                     $temperature = $this->getCmd(null, "temperature");
                     if (!is_object($temperature)) {
                         $temperature = new mystromCmd();
@@ -219,7 +223,7 @@ class mystrom extends eqLogic
                         $temperature->setEqLogic_id($this->getId());
                         $temperature->save();
                     }
-                }                
+                }
             } else {
                 $restart = $this->getCmd(null, 'restart');
                 if (!is_object($restart)) {
@@ -278,7 +282,7 @@ class mystrom extends eqLogic
                 $cmd->save();
             }
 
-            if($deviceType == "wrb"){                    
+            if($deviceType == "wrb"){
                 $colorRgb = $this->getCmd(null, 'colorRgb');
                 if (!is_object($colorRgb)) {
                     $colorRgb = new mystromCmd();
@@ -659,18 +663,28 @@ class mystrom extends eqLogic
         $mystromType = $eqLogic->getConfiguration("mystromType");
         $ipAddress = $eqLogic->getConfiguration("ipAddress");
 
-        if($mystromType == "wrb")
-        {
+        if ($mystromType == "wrb") {
             $localBulbInfo = $this->_mystromService->RetrieveLocalRgbBulbInfo($ipAddress);
 
-            if($localBulbInfo != null)
-            {
+            if ($localBulbInfo != null) {
                 $changed = $eqLogic->checkAndUpdateCmd('state', $localBulbInfo->state) || $changed;
                 $changed = $eqLogic->checkAndUpdateCmd('stateBinary', (($localBulbInfo->state == 'on') ? '1' : '0')) || $changed;
                 $changed = $eqLogic->checkAndUpdateCmd('conso', $localBulbInfo->power) || $changed;
                 $changed = $eqLogic->checkAndUpdateCmd('colorRgb', $localBulbInfo->color) || $changed;
             } else {
                 $this->_jeedomHelper->logWarning("Impossible de contacter la lampe RGB ip:" . $ipAddress);
+            }
+        }
+
+        if ($mystromType == "wsw" || $mystromType == "wse" || $mystromType == "ws2") {
+            $localWifiSwitch = $this->_mystromService->retrieveLocalWifiSwitchDeviceInformation($ipAddress);
+
+            if ($localWifiSwitch != null) {
+                $changed = $eqLogic->checkAndUpdateCmd('state', $localWifiSwitch->state) || $changed;
+                $changed = $eqLogic->checkAndUpdateCmd('stateBinary', (($localWifiSwitch->state == 'on') ? '1' : '0')) || $changed;
+                $changed = $eqLogic->checkAndUpdateCmd('conso', $localWifiSwitch->power) || $changed;
+            } else {
+                $this->_jeedomHelper->logWarning("Impossible de contacter la prise wifi ip:" . $ipAddress);
             }
         }
 
