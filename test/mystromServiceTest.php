@@ -180,7 +180,7 @@ class mystromServiceTest extends TestCase
     {
         $wifiSwitch = new \stdClass();
         $wifiSwitch->ipAddress = $ipAddress;
-        $wifiSwitch->relay = $on;
+        $wifiSwitch->state = $on == true ? "on" : "off";
         $wifiSwitch->power = $power;
         $wifiSwitch->type = "ws";
 
@@ -244,6 +244,33 @@ class mystromServiceTest extends TestCase
                         @$jsonData->relay = $device->relay;
                         @$jsonData->power = $device->power;
                         return json_encode($jsonData);
+                    }
+                }
+            }
+
+            if (strpos($url, "/relay") != false) {
+                $deviceIpAddressPos = strpos($url, "http://") + 7;
+                $deviceIpAddressEndPos = strpos($url, "/relay", $deviceIpAddressPos);
+                $deviceIpAddress = substr($url, $deviceIpAddressPos, $deviceIpAddressEndPos - $deviceIpAddressPos);
+
+                $parts = parse_url($url);
+                parse_str($parts["query"], $query);
+
+                foreach ($this->mystromLocalDevices as $device) {
+                    if ($device->ipAddress == $deviceIpAddress) {
+                        $device->state = $query["state"] == "1" ? "on" : "off";
+                    }
+                }
+            }
+
+            if (strpos($url, "/toggle") != false) {
+                $deviceIpAddressPos = strpos($url, "http://") + 7;
+                $deviceIpAddressEndPos = strpos($url, "/toggle", $deviceIpAddressPos);
+                $deviceIpAddress = substr($url, $deviceIpAddressPos, $deviceIpAddressEndPos - $deviceIpAddressPos);
+
+                foreach ($this->mystromLocalDevices as $device) {
+                    if ($device->ipAddress == $deviceIpAddress) {
+                        $device->state = $device->state == "off" ? "on" : "off";
                     }
                 }
             }
@@ -610,7 +637,7 @@ class mystromServiceTest extends TestCase
         $this->assertEquals($this->mystromServerDevices[0]->color, "124;100;100");
     }
 
-    public function testWhenSetStateAndDeviceIsLocal_ItShouldSetState()
+    public function testWhenSetStateAndBulbIsLocal_ItShouldSetState()
     {
         // Arrange        
         $wifiBulb = new \coolweb\mystrom\MystromWifiBulb();
@@ -635,7 +662,30 @@ class mystromServiceTest extends TestCase
         $this->assertEquals(false, $bulb->on);
     }
 
-    public function testWhenSetStateToggleAndDeviceIsLocal_ItShouldToggleSetState()
+    public function testWhenSetStateAndWifiSwitchbIsLocalItShouldSetState()
+    {
+        // Arrange
+        $wifiSwitch = new \coolweb\mystrom\MystromWifiSwitchEurope();
+        $wifiSwitch->id = "1234";
+        $wifiSwitch->isLocal = true;
+        $wifiSwitch->ipAddress = "192.168.1.25";
+        $this->addLocalWifiSwitch(
+            $wifiSwitch->ipAddress,
+            true,
+            2.5
+        );
+
+        $this->initTestData();
+
+        // Act
+        $this->target->setStateLocalDevice($wifiSwitch->ipAddress, null, false);
+
+        // Assert
+        $wifiSwitch = $this->mystromLocalDevices[0];
+        $this->assertEquals("off", $wifiSwitch->state);
+    }
+
+    public function testWhenSetStateToggleAndBulbIsLocalItShouldToggleSetState()
     {
         // Arrange        
         $wifiBulb = new \coolweb\mystrom\MystromWifiBulb();
@@ -658,6 +708,30 @@ class mystromServiceTest extends TestCase
         // Assert
         $bulb = $this->mystromLocalDevices[0];
         $this->assertEquals(false, $bulb->on);
+    }
+
+    public function testWhenSetStateToggleAndWifiSwitchIsLocalItShouldToggleSetState()
+    {
+        // Arrange
+        $wifiSwitch = new \coolweb\mystrom\mystromWifiSwitchEurope();
+        $wifiSwitch->id = "1234";
+        $wifiSwitch->isLocal = true;
+        $wifiSwitch->ipAddress = "192.168.1.25";
+        
+        $this->addLocalWifiSwitch(
+            $wifiSwitch->ipAddress,
+            true,
+            2.5
+        );
+
+        $this->initTestData();
+
+        // Act
+        $this->target->setStateLocalDevice($wifiSwitch->ipAddress, null, true, true);
+
+        // Assert
+        $wifiSwitch = $this->mystromLocalDevices[0];
+        $this->assertEquals("off", $wifiSwitch->state);
     }
 
     public function testWhenSetBulbColorAndDeviceIsLocal_ItShouldSetColor()

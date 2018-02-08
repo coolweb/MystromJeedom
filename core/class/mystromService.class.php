@@ -266,7 +266,7 @@ class MyStromService
      * Set state for local mystrom device.
      *
      * @param [string] $ipAddress The ip address of the device.
-     * @param [string] $macAddress The mac address of the device.
+     * @param [string] $macAddress The mac address of the device, optional.
      * @param [bool] $isOn Indicates to switch on or off.
      * @param $isToggle boolean Indicating if the action is toogle, if true, $isOn is ignored.
      * @return void
@@ -274,21 +274,29 @@ class MyStromService
     public function setStateLocalDevice($ipAddress, $macAddress, $isOn, $isToggle = false)
     {
         $action = "";
-        if($isToggle)
-        {
+        if ($isToggle) {
             $action = "toggle";
         } else {
-            if($isOn)
-            {
+            if ($isOn) {
                 $action = "on";
             } else {
                 $action = "off";
             }
         }
 
-        $stateUrl = "http://" . $ipAddress . "/api/v1/device/" . $macAddress;
+        if ($macAddress != null && $macAddress != "") {
+            $stateUrl = "http://" . $ipAddress . "/api/v1/device/" . $macAddress;
 
-        $result = $jsonObj = $this->doHttpCall($stateUrl, "action=" . $action);
+            $result = $jsonObj = $this->doHttpCall($stateUrl, "action=" . $action);
+        } else {
+            if ($action == "toggle") {
+                $stateUrl = "http://" . $ipAddress . "/toggle";
+            } else {
+                $stateUrl = "http://" . $ipAddress . "/relay?state=" . ($action == "on" ? "1" : "0");
+            }
+
+            $result = $jsonObj = $this->doHttpCall($stateUrl, null, "GET");
+        }
             
         return $result;
     }
