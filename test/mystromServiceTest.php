@@ -241,7 +241,7 @@ class mystromServiceTest extends TestCase
                 foreach ($this->mystromLocalDevices as $device) {
                     if ($device->ipAddress == $deviceIpAddress) {
                         $jsonData = new \stdClass();
-                        @$jsonData->relay = $device->relay;
+                        @$jsonData->relay = $device->state == "on" ? true : false;
                         @$jsonData->power = $device->power;
                         return json_encode($jsonData);
                     }
