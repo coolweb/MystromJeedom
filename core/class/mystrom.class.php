@@ -780,6 +780,8 @@ class mystromCmd extends cmd
                 print_r($_options, true) .
                 ' (' . $this->getEqLogic()->getName() . ')'
             );
+
+            $this->_jeedomHelper->logDebug("MacAddress:" . $macAddress);
         
             if ($cmdLogicalId == 'on') {
                 $commandOk = true;

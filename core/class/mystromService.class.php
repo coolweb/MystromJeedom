@@ -154,18 +154,19 @@ class MyStromService
                         $mystromDevice->power = $device->power;
                         
                         if ($withReportData) {
-                            $mystromDevice->daylyConsumption = $device->energyReport->daylyConsumption;
+                            $mystromDevice->daylyConsumption = $device->energyReport->dailyConsumption;
                             $mystromDevice->monthlyConsumption = $device->energyReport->monthlyConsumption;
                         }
                         break;
 
                     case "wse":
+                    case "ws2":
                         $mystromDevice = new MystromWifiSwitchEurope();
                         $mystromDevice->power = $device->power;
                         $mystromDevice->temperature = $device->wifiSwitchTemp;
 
                         if ($withReportData) {
-                            $mystromDevice->daylyConsumption = $device->energyReport->daylyConsumption;
+                            $mystromDevice->daylyConsumption = $device->energyReport->dailyConsumption;
                             $mystromDevice->monthlyConsumption = $device->energyReport->monthlyConsumption;
                         }
                         break;
@@ -180,7 +181,7 @@ class MyStromService
                         $mystromDevice->power = $device->power;
                         
                         if ($withReportData) {
-                            $mystromDevice->daylyConsumption = $device->energyReport->daylyConsumption;
+                            $mystromDevice->daylyConsumption = $device->energyReport->dayliConsumption;
                             $mystromDevice->monthlyConsumption = $device->energyReport->monthlyConsumption;
                         }
 

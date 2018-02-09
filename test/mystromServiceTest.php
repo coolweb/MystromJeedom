@@ -143,7 +143,7 @@ class mystromServiceTest extends TestCase
         @$device1->bulbColor = $color;
         @$device1->wifiSwitchTemp = $temperature;
         $energyReport = new \stdClass();
-        @$energyReport->daylyConsumption = 15;
+        @$energyReport->dailyConsumption = 15;
         @$energyReport->monthlyConsumption = 110;
         @$device1->energyReport = $energyReport;
 
@@ -770,7 +770,7 @@ class mystromServiceTest extends TestCase
         $this->assertEquals($result->devices[0]->id, $this->mystromServerDevices[0]->id);
         $this->assertEquals($result->devices[0]->type, $this->mystromServerDevices[0]->type);
         $this->assertEquals($result->devices[0]->name, $this->mystromServerDevices[0]->name);
-        $this->assertEquals($result->devices[0]->daylyConsumption, $this->mystromServerDevices[0]->energyReport->daylyConsumption);
+        $this->assertEquals($result->devices[0]->daylyConsumption, $this->mystromServerDevices[0]->energyReport->dailyConsumption);
         $this->assertEquals($result->devices[0]->monthlyConsumption, $this->mystromServerDevices[0]->energyReport->monthlyConsumption);
     }
     
