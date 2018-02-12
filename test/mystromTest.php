@@ -102,7 +102,10 @@ class mystromTest extends TestCase
 
         $this->mystromService = $this->getMockBuilder(MyStromService::class)
         ->disableOriginalConstructor()
-        ->setMethods(['loadAllDevicesFromServer', 'RetrieveLocalRgbBulbInfo'])
+        ->setMethods([
+            'loadAllDevicesFromServer', 
+            'RetrieveLocalRgbBulbInfo', 
+            'retrieveLocalWifiSwitchDeviceInformation'])
         ->getMock();
 
         $this->jeedomHelper = $this->getMockBuilder(JeedomHelper::class)
@@ -373,6 +376,32 @@ class mystromTest extends TestCase
             ["colorRgb", "124;100;100"]);
 
         $this->target->pull();        
+    }
+
+    public function testPullWhenLocalDeviceAndIsNotReachableItShouldSetDeviceOfflineIntoJeedom()
+    {
+        $this->setMystromDevices($this->mystromService, array());
+
+        $eqLogic = $this->getMockBuilder(eqLogic::class)
+        ->setMethods(['checkAndUpdateCmd', 'refreshWidget', 'getName'])
+        ->getMock();
+        $eqLogic->logicalId = '1234';
+        $eqLogic->isLocal = true;
+        $eqLogic->ipAddress = "192.168.1.2";
+        $eqLogic->mystromType = "wse";
+        
+        $eqLogics = array();
+        array_push($eqLogics, $eqLogic);
+        $this->setJeedomDevices($this->target, $eqLogics);
+        
+        $eqLogic->expects($this->exactly(2))
+        ->method('checkAndUpdateCmd')
+        ->withConsecutive(
+            ["state", "offline"],
+            ["conso", "0"]
+        );
+
+        $this->target->pull();
     }
 
     public function testPreInsertWhenUserCreated_ItShouldSetIsLocal()

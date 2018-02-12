@@ -672,6 +672,8 @@ class mystrom extends eqLogic
                 $changed = $eqLogic->checkAndUpdateCmd('conso', $localBulbInfo->power) || $changed;
                 $changed = $eqLogic->checkAndUpdateCmd('colorRgb', $localBulbInfo->color) || $changed;
             } else {
+                $changed = $eqLogic->checkAndUpdateCmd('state', 'offline') || $changed;
+                $changed = $eqLogic->checkAndUpdateCmd('conso', '0') || $changed;
                 $this->_jeedomHelper->logWarning("Impossible de contacter la lampe RGB ip:" . $ipAddress);
             }
         }
@@ -684,6 +686,8 @@ class mystrom extends eqLogic
                 $changed = $eqLogic->checkAndUpdateCmd('stateBinary', (($localWifiSwitch->state == 'on') ? '1' : '0')) || $changed;
                 $changed = $eqLogic->checkAndUpdateCmd('conso', $localWifiSwitch->power) || $changed;
             } else {
+                $changed = $eqLogic->checkAndUpdateCmd('state', 'offline') || $changed;
+                $changed = $eqLogic->checkAndUpdateCmd('conso', '0') || $changed;
                 $this->_jeedomHelper->logWarning("Impossible de contacter la prise wifi ip:" . $ipAddress);
             }
         }
