@@ -15,6 +15,24 @@
  * along with Jeedom. If not, see <http://www.gnu.org/licenses/>.
  */
 
+$(document).ready(function(){
+    $('span[data-l1key="logicalId"]').off('change').on('change', function(){
+        var selectMystromType = this.value;
+        var mystromServerId = $('span[data-l1key="logicalId"]')[0].innerText;
+
+        if(mystromServerId == ''){
+            // new device, local mode, so show ip address
+            $('#ipAddressCtrl').show();
+            $('#logicalIdCtrl').hide();
+            $('select[data-l2key="mystromType"]').prop('disabled', false);
+            // for the moment only mystrom button is allowed, so select it
+        } else {
+            $('#ipAddressCtrl').hide();
+            $('#logicalIdCtrl').show();
+            $('select[data-l2key="mystromType"]').prop('disabled', true);
+        }
+    });
+});
 
 $("#table_cmd").sortable({axis: "y", cursor: "move", items: ".cmd", placeholder: "ui-state-highlight", tolerance: "intersect", forcePlaceholderSize: true});
 /*

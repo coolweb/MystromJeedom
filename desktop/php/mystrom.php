@@ -2,14 +2,16 @@
 if (!isConnect('admin')) {
 	throw new Exception('{{401 - Accès non autorisé}}');
 }
-sendVarToJS('eqType', 'mystrom');
-$eqLogics = eqLogic::byType('mystrom');
+$plugin = plugin::byId('mystrom');
+sendVarToJS('eqType', $plugin->getId());
+$eqLogics = eqLogic::byType($plugin->getId());
 ?>
 
 <div class="row row-overflow">
     <div class="col-lg-2 col-md-3 col-sm-4">
         <div class="bs-sidebar">
             <ul id="ul_eqLogic" class="nav nav-list bs-sidenav">
+                <a class="btn btn-default eqLogicAction" style="width : 100%;margin-top : 5px;margin-bottom: 5px;" data-action="add"><i class="fa fa-plus-circle"></i> {{Ajouter un équipement}}</a>
                 <li class="filter" style="margin-bottom: 5px;"><input class="filter form-control input-sm" placeholder="{{Rechercher}}" style="width: 100%"/></li>
                 <?php
 foreach ($eqLogics as $eqLogic) {
@@ -35,10 +37,24 @@ foreach ($eqLogics as $eqLogic) {
 		if($eqLogic->getConfiguration('mystromType') == 'eth'){
 			echo '<img src="plugins/mystrom/doc/images/ecn_eth_fr.png" height="105" />';
 		} else {
-			if($eqLogic->getConfiguration('mystromType') == 'wsw'){
+            if($eqLogic->getConfiguration('mystromType') == 'wsw' ||
+               $eqLogic->getConfiguration('mystromType') == 'wse' || 
+               $eqLogic->getConfiguration('mystromType') == 'wse' ){
 				echo '<img src="plugins/mystrom/doc/images/ecn_wsw.png" height="105" />';
 			} else {
-				echo '<img src="plugins/mystrom/doc/images/ecn_sw_fr.png" height="105" />';
+                if($eqLogic->getConfiguration('mystromType') == 'wbp'){
+                    echo '<img src="plugins/mystrom/doc/images/wpb.png" height="105" />';
+                } else {
+                    if($eqLogic->getConfiguration('mystromType') == 'wbs'){
+                        echo '<img src="plugins/mystrom/doc/images/wbs.png" height="105" />';
+                    } else {
+                        if($eqLogic->getConfiguration('mystromType') == 'wrb'){
+                            echo '<img src="plugins/mystrom/doc/images/wrb.png" height="105" />';
+                        } else {
+                            echo '<img src="plugins/mystrom/doc/images/ecn_sw_fr.png" height="105" />';
+                        }
+                    }
+                }
 			}
 		}
 	}
@@ -50,6 +66,7 @@ foreach ($eqLogics as $eqLogic) {
 </div>
 </div>
 
+<!-- edit/new form -->
 <div class="col-lg-10 col-md-9 col-sm-8 eqLogic" style="border-left: solid 1px #EEE; padding-left: 25px;display: none;">
     <form class="form-horizontal">
         <fieldset>
@@ -57,8 +74,31 @@ foreach ($eqLogics as $eqLogic) {
             <div class="form-group">
                 <label class="col-sm-3 control-label">{{Nom de l'équipement MyStrom}}</label>
                 <div class="col-sm-3">
-                    <input type="text" class="eqLogicAttr form-control" data-l1key="id" style="display : none;" />
-                    <input disabled type="text" class="eqLogicAttr form-control" data-l1key="name" placeholder="{{Nom de l'équipement MyStrom}}"/>
+                    <input id="eqLogicId" type="text" class="eqLogicAttr form-control" data-l1key="id" style="display : none;" />
+                    <input id="eqLogicName" type="text" class="eqLogicAttr form-control" data-l1key="name" placeholder="{{Nom de l\'équipement MyStrom}}"/>
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="col-sm-3 control-label" >{{Type}}</label>
+                <div class="col-sm-3">
+                    <select id="sel_object" class="eqLogicAttr form-control" data-l1key="configuration" data-l2key="mystromType">
+                        <option value="">{{Aucun}}</option>
+                        <option value="mst">{{CPL master (rouge)}}</option>
+                        <option value="sw">{{CPL escalve (blanc)}}</option>
+                        <option value="eth">{{CPL avec internet (bleu)}}</option>
+                        <option value="wsw">{{Interrupteur wifi swiss}}</option>
+                        <option value="ws2">{{Interrupteur wifi swiss v2}}</option>
+                        <option value="wse">{{Interrupteur wifi europe}}</option>
+                        <option value="wbp">{{Wifi bouton plus}}</option>
+                        <option value="wbs">{{Wifi bouton simple}}</option>
+                        <option value="wrb">{{Ampoule}}</option>
+                   </select>
+               </div>
+           </div>
+            <div class="form-group" id="ipAddressCtrl">
+                <label class="col-sm-3 control-label">{{Adresse IP}}</label>
+                <div class="col-sm-3">
+                    <input type="text" class="eqLogicAttr form-control" data-l1key="configuration" data-l2key="ipAddress" placeholder="{{192.168.1.12}}"/>
                 </div>
             </div>
             <div class="form-group">
@@ -77,21 +117,49 @@ foreach (object::all() as $object) {
        <div class="form-group">
             <label class="col-sm-3 control-label" >{{Activer}}</label>
             <div class="col-sm-9">
-               <input type="checkbox" class="eqLogicAttr bootstrapSwitch" data-label-text="{{Activer}}" data-l1key="isEnable" checked/>
-               <input type="checkbox" class="eqLogicAttr bootstrapSwitch" data-label-text="{{Visible}}" data-l1key="isVisible" checked/>
-           </div>
+               <input type="checkbox" class="eqLogicAttr" data-label-text="{{Activer}}" data-l1key="isEnable" checked/>
+           </div>           
        </div>
-			 <div class="form-group">
+        <div class="form-group">
+            <label class="col-sm-3 control-label" >{{Visible}}</label>
+            <div class="col-sm-9">
+               <input type="checkbox" class="eqLogicAttr" data-label-text="{{Visible}}" data-l1key="isVisible" checked/>
+           </div>
+        </div>
+			 <div class="form-group" id="logicalIdCtrl">
 			 	<label class="col-sm-3 control-label">{{Identifiant}}</label>
 			 	<div class="col-sm-9">
 				 	<span class="eqLogicAttr label label-info" style="font-size:1em;" data-l1key="logicalId"></span>
 			 	</div>
 		 </div>
 </fieldset>
+<script>    
+    $('#eqLogicId').change(function(){
+        var eqId = $('#eqLogicId').val();
+
+        if(eqId !== '')
+        {
+            var currentEqLogic = jeedom.eqLogic.cache.byId[eqId] && 
+                jeedom.eqLogic.cache.byId[eqId].result;
+
+            if(!currentEqLogic)
+            {
+                jeedom.eqLogic.byId({id:eqId, async: false});
+                currentEqLogic = jeedom.eqLogic.cache.byId[eqId].result;
+            }
+
+            if(currentEqLogic.configuration.isLocal === true)
+            {
+                $('#eqLogicName').prop("disabled", false);
+            } else {
+                $('#eqLogicName').prop("disabled", true);
+            }
+        }
+    });    
+</script>
 </form>
 
 <legend>{{Equipement MyStrom}}</legend>
-<a class="btn btn-success btn-sm cmdAction" data-action="add"><i class="fa fa-plus-circle"></i> {{Commandes}}</a><br/><br/>
 <table id="table_cmd" class="table table-bordered table-condensed">
     <thead>
         <tr>
@@ -110,9 +178,8 @@ foreach (object::all() as $object) {
         </div>
     </fieldset>
 </form>
-
 </div>
 </div>
 
-<?php include_file('desktop', 'mystrom', 'js', 'mystrom');?>
 <?php include_file('core', 'plugin.template', 'js');?>
+<?php include_file('desktop', 'mystrom', 'js', 'mystrom');?>
