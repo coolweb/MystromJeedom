@@ -26,8 +26,8 @@ Vous retrouvez ici toute la configuration de votre équipement :
 
 * *Nom de l'équipement MyStrom* : nom de votre équipement dans votre compte
 MyStrom.
-* *Objet parent* : indique l'objet parent auquel appartient l'équipement.
-* *Activer* : permet de rendre votre équipement actif.
+* *Parent object*: Specifies the parent object that owns the equipment,
+* *Activate*: to make your equipment active,
 * *Visible* : le rend visible sur le dashboard.
 * *Identifiant* : Identifiant de l'équipement sur le serveur MyStrom.
 
