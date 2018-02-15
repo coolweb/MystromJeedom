@@ -14,7 +14,9 @@
     "grunt-phpunit": "^0.3.6",
     "grunt-zip": "^0.17.1"
   },
-  "devDependencies": {},
+  "devDependencies": {
+    "grunt-composer": "^0.4.5"
+  },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
