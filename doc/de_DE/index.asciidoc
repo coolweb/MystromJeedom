@@ -2,11 +2,12 @@
 == MyStrom
 
 === Beschreibung
-Plugin, das es erlaubt, eco lan MyStrom zu steuern.
-Die Geräte müssen auf dem Server von MyStrom registriert werden.
+Plugin permettant de piloter les équipements MyStrom.
+Les équipements peuvent être gérés via le serveur de MyStrom ou
+en local si les équipements que vous possédez le supporte.
 
 '''
-=== Plugin Konfiguration
+=== Configuration
 include::configuration.asciidoc[]
 
 '''

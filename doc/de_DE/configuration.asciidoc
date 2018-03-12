@@ -1,14 +1,16 @@
-== Plugin Konfiguration
+==== Configuration du plugin
 
 image::../images/docConfiguration.png[]
 
-Pour configurer le plugin vous devez introduire l'adresse email ainsi que
+Si vous souhaitez gérer vos équipements via le serveur Mystrom, vous devez introduire l'adresse email ainsi que
 le mot de passe de votre compte MyStrom.
 Ensuite il est très important de sauver avant de continuer!
 
 Cliquez sur le bouton *Rechercher les équipements MyStrom*.
 
-== Geräte Konfiguration
+Le plugin créera tous les équipements trouvés sur le serveur Mystrom dans Jeedom.
+
+==== Configuration des équipements
 La configuration des équipements MyStrom est accessible à partir du menu
 Plugin :
 
@@ -27,20 +29,18 @@ Hier finden Sie die ganze Konfiguration des Geräts:
 * *Nom de l'équipement MyStrom* : nom de votre équipement dans votre compte
 MyStrom.
 * *Objet parent* : indique l'objet parent auquel appartient l'équipement.
-* *Activer* : permet de rendre votre équipement actif.
+* *Activer* : permet de rendre votre équipement actif, si un équipement est actif et qu'il est offline 
+au moins pendant 1 minute, celui-ci appraîtra dans le centre de message à l'exception des lampes RGB et 
+des boutons.
 * *Visible* : le rend visible sur le dashboard.
 * *Identifiant* : Identifiant de l'équipement sur le serveur MyStrom.
 
-En dessous vous retrouvez la liste des commandes :
+En dessous vous retrouvez la liste des commandes qui diffèrent suivant 
+le type d'équipement.
 
-* *Consommation* : Consommation actuelle de l'équipement en watt.
-* *Consommation journalière* : Consommation totale de la journée en Kw.
-* *Consommation mensuelle* : Consommation totale du mois en cours en Kw.
-* *Etat binaire* : 1 si l'équipement est on, 0 si il est off.
-* *Etat* : contient l'état de l'équipement, on, off ou offline.
-* *Off* : Action permettant d'éteindre l'équipement.
-* *On* : Action permettant d'allumer l'équipement.
+include::EcoLan.asciidoc[]
+include::WifiSwitch.asciidoc[]
+include::button.asciidoc[]
+include::rgbBulb.asciidoc[]
 
-WARNING: Si l'équipement est le master, celui-ci n'a pas les commandes
-On et Off mais une commande *Restart* qui permet de redémarrer
-Geräte.
+include::createLocalDevice.asciidoc[]
