@@ -39,7 +39,7 @@ foreach ($eqLogics as $eqLogic) {
 		} else {
             if($eqLogic->getConfiguration('mystromType') == 'wsw' ||
                $eqLogic->getConfiguration('mystromType') == 'wse' || 
-               $eqLogic->getConfiguration('mystromType') == 'wse' ){
+               $eqLogic->getConfiguration('mystromType') == 'ws2' ){
 				echo '<img src="plugins/mystrom/doc/images/ecn_wsw.png" height="105" />';
 			} else {
                 if($eqLogic->getConfiguration('mystromType') == 'wbp'){
