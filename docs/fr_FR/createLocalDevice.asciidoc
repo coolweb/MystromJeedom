@@ -28,4 +28,4 @@ dans le bouton lors de la sauvegarde de l'équipement. Afin de les connecter à 
 il faut pour le bouton plus, enlever les piles et les remettre, le bouton doit clignoter blanc, pour le 
 bouton simple, il faut le connecter en usb à un ordinateur ou un chargeur. A ce moment là, vous avez 
 peu de temps, sauvegarder votre équipement, si le bouton n'est pas connecté à votre réseau lors 
-de la sauvegarde vous aurez un message d'erreur.
+de la sauvegarde vous aurez un message d'erreur. 
