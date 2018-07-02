@@ -40,7 +40,7 @@ des boutons.
 En dessous vous retrouvez la liste des commandes qui diffèrent suivant 
 le type d'équipement.
 
-{% include_relative EcoLan.md %}
+{% include_relative ecoLan.md %}
 {% include_relative WifiSwitch.md %}
 {% include_relative button.md %}
 {% include_relative rgbBulb.md %}
