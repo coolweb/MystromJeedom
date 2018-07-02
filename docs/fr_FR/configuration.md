@@ -40,9 +40,9 @@ des boutons.
 En dessous vous retrouvez la liste des commandes qui diffèrent suivant 
 le type d'équipement.
 
-[text](EcoLan.md)
-[text](WifiSwitch.md)
-[text](button.md)
-[text](rgbBulb.md)
+[EcoLan](EcoLan.md)
+[WifiSwitch](WifiSwitch.md)
+[Button](button.md)
+[Rgb Bulb](rgbBulb.md)
 
-[text](createLocalDevice.md)
+[Créer un équipement sur le réseau local](createLocalDevice.md)
