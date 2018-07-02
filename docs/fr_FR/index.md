@@ -1,6 +1,3 @@
-MyStrom
-==
-
 Description
 ===
 Plugin permettant de piloter les équipements MyStrom.
