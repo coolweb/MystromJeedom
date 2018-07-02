@@ -1,5 +1,5 @@
 Bouton
-=====
+---
 
 Les boutons simples et plus sont pris en charge.
 

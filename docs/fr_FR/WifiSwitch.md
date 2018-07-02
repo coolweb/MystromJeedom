@@ -1,5 +1,5 @@
 Prise Wifi
-====
+---
 
 * *Consommation* : Consommation actuelle de l'équipement en watt.
 * *Consommation journalière* : Consommation totale de la journée en Kw. (uniquement si géré par le serveur Mystrom)
