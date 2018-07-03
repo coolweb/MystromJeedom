@@ -1,5 +1,9 @@
 Change log
 ==
+2018-07-03 v1.3.2
+
+    - Migration de la documentation au nouveau format
+    
 2018-06-28 v1.3.2
 
     - Ajout de l'icône dans le répertoire spécifié par la documentation Jeedom.
