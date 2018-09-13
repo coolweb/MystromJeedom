@@ -1,0 +1,32 @@
+Créer un équipement local
+====
+
+Quand vous cliquez sur "Rechercher les équipements" dans la page de configuration Mystrom, le plugin 
+récupère vos équipements Mystrom que vous avez associez à votre compte Mystrom. 
+Le fait de gérer vos équipements via le serveur Mystrom offre l'avantage que le serveur compte pour vous 
+la consommation électrique journalière et mensuelle mais a le désavantage de passer par internet, donc plus lent 
+et indisponible si vous n'avez plus d'internet. Les équipements Mystrom (sauf les ECO lan) offrent la possibilité de les 
+piloter directement via votre réseau local sans les associer à votre compte Mystrom.
+
+* Pour créer un équipement local Mystrom, vous devez d'abord avoir suivi la procédure Mystrom pour connecter 
+celui-ci sur votre réseau et vous devez lui donner une adresse Ip fixe.
+* Allez dans le menu Plugins->Energie->MyStrom, ouvrez le menu de gauche et cliquez sur 
+"Ajouter un équipement".
+* Donnez un nom à votre équipement.
+* Dans type, choisissez le type Mystrom, lampe, prise, ...
+* Adresse Ip, indiquez l'adresse Ip que vous avez donné à votre équipement dans votre réseau.
+* Objet parent, objet parent dans Jeedom.
+* Activer, cochez cette case pour activer votre équipement.
+* Visible, cochez cette case pour rendre visible votre équipement dans le dashboard Jeedom.
+* Identifiant, cette zone contiendra l'Identifiant de l'équipement dans le serveur Mystrom, vide 
+dans le cas d'une gestion locale.
+* Cliquez sur sauvegarder, les commandes correspondants au type d'équipement choisi sont créées
+
+> **Important**
+> Pour les boutons, la manipulation est un peu compliquée car ceux-ci se connectent uniquement 
+à votre réseau quand on appuie dessus et pendant quelques secondes. Le plugin a besoin de stocker des urls 
+dans le bouton lors de la sauvegarde de l'équipement. Afin de les connecter à votre réseau pendant 2 minutes, 
+il faut pour le bouton plus, enlever les piles et les remettre, le bouton doit clignoter blanc, pour le 
+bouton simple, il faut le connecter en usb à un ordinateur ou un chargeur. A ce moment là, vous avez 
+peu de temps, sauvegarder votre équipement, si le bouton n'est pas connecté à votre réseau lors 
+de la sauvegarde vous aurez un message d'erreur.

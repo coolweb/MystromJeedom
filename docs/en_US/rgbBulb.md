@@ -1,4 +1,5 @@
-===== Prise Wifi
+Lampe RGB
+---
 
 * *Consommation* : Consommation actuelle de l'équipement en watt.
 * *Consommation journalière* : Consommation totale de la journée en Kw. (uniquement si géré par le serveur Mystrom)
@@ -8,4 +9,5 @@
 * *Off* : Action permettant d'éteindre l'équipement.
 * *On* : Action permettant d'allumer l'équipement.
 * *Basculer* : Action permettant d'inverser l'état allumé/éteint de l'équipement.
-* *Température* : Température relevée dans la pièce. Pas sur les prises wifi de 1ère génération.
+* *Etat couleur* : Couleur actuelle de la lampe au format #RRGGBB.
+* *Couleur* : Action permettant de changer la couleur de la lampe.

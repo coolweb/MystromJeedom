@@ -1,4 +1,5 @@
-===== Eco lan (CPL)
+Eco lan (CPL)
+---
 
 * *Consommation* : Consommation actuelle de l'équipement en watt.
 * *Consommation journalière* : Consommation totale de la journée en Kw. (uniquement si géré par le serveur Mystrom)
@@ -12,3 +13,4 @@
 WARNING: Si l'équipement est le master, celui-ci n'a pas les commandes
 On et Off mais une commande *Restart* qui permet de redémarrer
 l'équipement.
+

@@ -1,4 +1,5 @@
-===== Bouton
+Bouton
+---
 
 Les boutons simples et plus sont pris en charge.
 
@@ -12,3 +13,4 @@ Ces informations contiennent 0 à la création de l'équipement, ensuite une foi
 a été exécutée au moins une fois, la valeur de la commande contiendra toujours 0, donc ne testez pas 
 la valeur dans vos scénarios, ces commandes ont comme mode de répétition de valeur "Toujours répéter".
 Vous pouvez utiliser ces commandes comme déclencheur de vos scénarios.
+

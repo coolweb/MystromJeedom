@@ -1,4 +1,5 @@
-===== Lampe RGB
+Eco lan (CPL)
+---
 
 * *Consommation* : Consommation actuelle de l'équipement en watt.
 * *Consommation journalière* : Consommation totale de la journée en Kw. (uniquement si géré par le serveur Mystrom)
@@ -8,5 +9,8 @@
 * *Off* : Action permettant d'éteindre l'équipement.
 * *On* : Action permettant d'allumer l'équipement.
 * *Basculer* : Action permettant d'inverser l'état allumé/éteint de l'équipement.
-* *Etat couleur* : Couleur actuelle de la lampe au format #RRGGBB.
-* *Couleur* : Action permettant de changer la couleur de la lampe.
+
+WARNING: Si l'équipement est le master, celui-ci n'a pas les commandes
+On et Off mais une commande *Restart* qui permet de redémarrer
+l'équipement.
+

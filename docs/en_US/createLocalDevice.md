@@ -1,4 +1,5 @@
-==== Créer un équipement local
+Créer un équipement local
+====
 
 Quand vous cliquez sur "Rechercher les équipements" dans la page de configuration Mystrom, le plugin 
 récupère vos équipements Mystrom que vous avez associez à votre compte Mystrom. 
@@ -21,7 +22,8 @@ celui-ci sur votre réseau et vous devez lui donner une adresse Ip fixe.
 dans le cas d'une gestion locale.
 * Cliquez sur sauvegarder, les commandes correspondants au type d'équipement choisi sont créées
 
-WARNING: Pour les boutons, la manipulation est un peu compliquée car ceux-ci se connectent uniquement 
+> **Important**
+> Pour les boutons, la manipulation est un peu compliquée car ceux-ci se connectent uniquement 
 à votre réseau quand on appuie dessus et pendant quelques secondes. Le plugin a besoin de stocker des urls 
 dans le bouton lors de la sauvegarde de l'équipement. Afin de les connecter à votre réseau pendant 2 minutes, 
 il faut pour le bouton plus, enlever les piles et les remettre, le bouton doit clignoter blanc, pour le 

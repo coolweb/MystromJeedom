@@ -1,6 +1,7 @@
-==== Configuration du plugin
+Configuration du plugin
+====
 
-image::../images/docConfiguration.png[]
+![alt](../images/docConfiguration.png)
 
 Si vous souhaitez gérer vos équipements via le serveur Mystrom, vous devez introduire l'adresse email ainsi que
 le mot de passe de votre compte MyStrom.
@@ -10,21 +11,22 @@ Cliquez sur le bouton *Rechercher les équipements MyStrom*.
 
 Le plugin créera tous les équipements trouvés sur le serveur Mystrom dans Jeedom.
 
-==== Configuration des équipements
+Configuration des équipements
+====
 La configuration des équipements MyStrom est accessible à partir du menu
-Plugin :
+plugin :
 
-image::../images/docConfigurationEquipementMenu.png[]
+![alt](../images/docConfigurationEquipementMenu.png)
 
 Vous y retrouvez la liste des équipements trouvés dans votre compte MyStrom:
 
-image::../images/docConfigurationEquipements.png[]
+![alt](../images/docConfigurationEquipements.png)
 
 Une fois que vous cliquez sur un équipement vous obtenez :
 
-image::../images/docConfigurationEquipement.png[]
+![alt](../images/docConfigurationEquipement.png)
 
-Hier finden Sie die ganze Konfiguration des Geräts:
+Vous retrouvez ici toute la configuration de votre équipement :
 
 * *Nom de l'équipement MyStrom* : nom de votre équipement dans votre compte
 MyStrom.
@@ -38,9 +40,9 @@ des boutons.
 En dessous vous retrouvez la liste des commandes qui diffèrent suivant 
 le type d'équipement.
 
-include::EcoLan.asciidoc[]
-include::WifiSwitch.asciidoc[]
-include::button.asciidoc[]
-include::rgbBulb.asciidoc[]
+{% include_relative ecoLan.md %}
+{% include_relative WifiSwitch.md %}
+{% include_relative button.md %}
+{% include_relative rgbBulb.md %}
 
-include::createLocalDevice.asciidoc[]
+{% include_relative createLocalDevice.md %}
