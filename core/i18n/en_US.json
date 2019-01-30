@@ -11,7 +11,7 @@
 	},
 	"plugins\/mystrom\/desktop\/php\/mystrom.php": {
 		"Rechercher" : "Search",
-		"Nom de l'équipement MyStrom" : "Name of the MyStrom device",
+		"Nom de l'équipement MyStrom" : "MyStrom device name",
 		"Objet parent" : "Parent object",
 		"Activer" : "Enable",
 		"Identifiant" : "Identifier",
